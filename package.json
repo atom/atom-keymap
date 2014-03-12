@@ -21,6 +21,9 @@
     }
   ],
   "dependencies": {
+    "pegjs": "^0.8.0",
+    "clear-cut": "^0.3.0",
+    "loophole": "^1.0.0"
   },
   "devDependencies": {
     "coffee-script": "^1.7.0",
@@ -32,6 +35,7 @@
     "grunt-coffeelint": "^0.0.6",
     "rimraf": "^2.2.2",
     "coffee-cache": "^0.2.0",
-    "temp": "^0.6.0"
+    "temp": "^0.6.0",
+    "space-pencil": "^0.3.0"
   }
 }

@@ -7,6 +7,26 @@ describe "Keymap", ->
   beforeEach ->
     keymap = new Keymap
 
+  describe "::addKeyBindings(source, bindings)", ->
+    it "normalizes keystrokes containing capitalized alphabetic characters", ->
+      keymap.addKeyBindings 'test', '*': 'ctrl-shift-l': 'a'
+      keymap.addKeyBindings 'test', '*': 'ctrl-shift-L': 'b'
+      keymap.addKeyBindings 'test', '*': 'ctrl-L': 'c'
+      expect(keymap.keyBindingsForCommand('a')[0].keystroke).toBe 'ctrl-shift-L'
+      expect(keymap.keyBindingsForCommand('b')[0].keystroke).toBe 'ctrl-shift-L'
+      expect(keymap.keyBindingsForCommand('c')[0].keystroke).toBe 'ctrl-shift-L'
+
+    it "normalizes the order of modifier keys based on the Apple interface guidelines", ->
+      keymap.addKeyBindings 'test', '*': 'alt-cmd-ctrl-shift-l': 'a'
+      keymap.addKeyBindings 'test', '*': 'shift-ctrl-l': 'b'
+      keymap.addKeyBindings 'test', '*': 'alt-ctrl-l': 'c'
+      keymap.addKeyBindings 'test', '*': 'ctrl-alt--': 'd'
+
+      expect(keymap.keyBindingsForCommand('a')[0].keystroke).toBe 'ctrl-alt-shift-cmd-L'
+      expect(keymap.keyBindingsForCommand('b')[0].keystroke).toBe 'ctrl-shift-L'
+      expect(keymap.keyBindingsForCommand('c')[0].keystroke).toBe 'ctrl-alt-l'
+      expect(keymap.keyBindingsForCommand('d')[0].keystroke).toBe 'ctrl-alt--'
+
   describe "::keystrokeStringForKeyboardEvent(event)", ->
     describe "when no modifiers are pressed", ->
       it "returns a string that identifies the unmodified keystroke", ->
