@@ -26,3 +26,7 @@ describe "Keymap", ->
         expect(keymap.keystrokeStringForKeyboardEvent(keydownEvent('{', shift: true))).toBe '{'
         expect(keymap.keystrokeStringForKeyboardEvent(keydownEvent('left', shift: true))).toBe 'shift-left'
         expect(keymap.keystrokeStringForKeyboardEvent(keydownEvent('Left', shift: true))).toBe 'shift-left'
+
+    describe "when a non-English keyboard language is used", ->
+      it "uses the physical character pressed instead of the character it maps to in the current language", ->
+        expect(keymap.keystrokeStringForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
