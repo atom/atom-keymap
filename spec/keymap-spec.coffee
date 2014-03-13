@@ -25,8 +25,8 @@ describe "Keymap", ->
         elementB = elementA.querySelector('.b')
 
         events = []
-        elementA.addEventListener 'x-command', ((e) -> events.push(e)), false
-        elementA.addEventListener 'y-command', ((e) -> events.push(e)), false
+        elementA.addEventListener 'x-command', (e) -> events.push(e)
+        elementA.addEventListener 'y-command', (e) -> events.push(e)
 
         keymap.addKeyBindings "test",
           ".a":
@@ -45,12 +45,23 @@ describe "Keymap", ->
         keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
         expect(events.length).toBe 1
         expect(events[0].type).toBe 'x-command'
-        expect(events[0].target).toBe elementB
+        expect(events[0].target).toBe elementA
 
       it "prevents the default action", ->
         event = keydownEvent('y', ctrl: true, target: elementB)
         keymap.handleKeyboardEvent(event)
         expect(event.defaultPrevented).toBe true
+
+      it "proceeds directly to the next matching binding if `.abortKeyBinding()` is called on the command event", ->
+        elementB.addEventListener 'y-command', (e) -> events.push(e); e.abortKeyBinding()
+        elementB.addEventListener 'y-command', (e) -> events.push(e) # should never be called
+        keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
+
+        expect(events.length).toBe 2
+        expect(events[0].type).toBe 'y-command'
+        expect(events[0].target).toBe elementB
+        expect(events[1].type).toBe 'y-command'
+        expect(events[1].target).toBe elementA
 
   describe "when the keystroke matches multiple bindings on the same element", ->
     [elementA, elementB, events] = []

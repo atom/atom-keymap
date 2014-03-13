@@ -42,18 +42,21 @@ class Keymap
       candidateBindings = @keyBindingsForKeystrokeSequenceAndTarget(keystrokeSequence, target)
       if candidateBindings.length > 0
         @keystrokes = []
-        @dispatchCommandEvent(event, event.target, candidateBindings[0].command)
-        event.preventDefault()
-        return
+        if @dispatchCommandEvent(event, target, candidateBindings[0].command)
+          event.preventDefault()
+          return
       target = target.parentElement
 
   dispatchCommandEvent: (keyboardEvent, target, command) ->
-    bubbles = true
-    cancelable = false
-    detail = {originalEvent: keyboardEvent}
     commandEvent = document.createEvent("CustomEvent")
-    commandEvent.initCustomEvent(command, bubbles, cancelable, detail)
+    commandEvent.initCustomEvent(command, bubbles = true, cancelable = true)
+    commandEvent.originalEvent = keyboardEvent
+    commandEvent.keyBindingAborted = false
+    commandEvent.abortKeyBinding = ->
+      @stopImmediatePropagation()
+      @keyBindingAborted = true
     target.dispatchEvent(commandEvent)
+    not commandEvent.keyBindingAborted
 
   keyBindingsForKeystrokeSequenceAndTarget: (keystrokeSequence, target) ->
     @keyBindings
