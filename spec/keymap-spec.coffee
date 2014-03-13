@@ -12,9 +12,9 @@ describe "Keymap", ->
       keymap.addKeyBindings 'test', '*': 'ctrl-shift-l': 'a'
       keymap.addKeyBindings 'test', '*': 'ctrl-shift-L': 'b'
       keymap.addKeyBindings 'test', '*': 'ctrl-L': 'c'
-      expect(keymap.keyBindingsForCommand('a')[0].keystroke).toBe 'ctrl-shift-L'
-      expect(keymap.keyBindingsForCommand('b')[0].keystroke).toBe 'ctrl-shift-L'
-      expect(keymap.keyBindingsForCommand('c')[0].keystroke).toBe 'ctrl-shift-L'
+      expect(keymap.keyBindingsForCommand('a')[0].keystrokeSequence).toBe 'ctrl-shift-L'
+      expect(keymap.keyBindingsForCommand('b')[0].keystrokeSequence).toBe 'ctrl-shift-L'
+      expect(keymap.keyBindingsForCommand('c')[0].keystrokeSequence).toBe 'ctrl-shift-L'
 
     it "normalizes the order of modifier keys based on the Apple interface guidelines", ->
       keymap.addKeyBindings 'test', '*': 'alt-cmd-ctrl-shift-l': 'a'
@@ -22,10 +22,10 @@ describe "Keymap", ->
       keymap.addKeyBindings 'test', '*': 'alt-ctrl-l': 'c'
       keymap.addKeyBindings 'test', '*': 'ctrl-alt--': 'd'
 
-      expect(keymap.keyBindingsForCommand('a')[0].keystroke).toBe 'ctrl-alt-shift-cmd-L'
-      expect(keymap.keyBindingsForCommand('b')[0].keystroke).toBe 'ctrl-shift-L'
-      expect(keymap.keyBindingsForCommand('c')[0].keystroke).toBe 'ctrl-alt-l'
-      expect(keymap.keyBindingsForCommand('d')[0].keystroke).toBe 'ctrl-alt--'
+      expect(keymap.keyBindingsForCommand('a')[0].keystrokeSequence).toBe 'ctrl-alt-shift-cmd-L'
+      expect(keymap.keyBindingsForCommand('b')[0].keystrokeSequence).toBe 'ctrl-shift-L'
+      expect(keymap.keyBindingsForCommand('c')[0].keystrokeSequence).toBe 'ctrl-alt-l'
+      expect(keymap.keyBindingsForCommand('d')[0].keystrokeSequence).toBe 'ctrl-alt--'
 
   describe "::keystrokeForKeyboardEvent(event)", ->
     describe "when no modifiers are pressed", ->

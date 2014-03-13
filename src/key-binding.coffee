@@ -4,11 +4,11 @@ module.exports =
 class KeyBinding
   @currentIndex: 1
 
-  constructor: (@source, @command, keystroke, selector) ->
-    @keystroke = normalizeKeystrokeSequence(keystroke)
+  constructor: (@source, @command, keystrokeSequence, selector) ->
+    @keystrokeSequence = normalizeKeystrokeSequence(keystrokeSequence)
     @selector = selector.replace(/!important/g, '')
     @specificity = calculateSpecificity(selector)
-    @index = KeyBinding.currentIndex++
+    @index = @constructor.currentIndex++
 
   matches: (keystroke) ->
     multiKeystroke = /\s/.test keystroke
@@ -18,7 +18,7 @@ class KeyBinding
       keystroke.split(' ')[0] == @keystroke.split(' ')[0]
 
   compare: (keyBinding) ->
-    if keyBinding.specificity == @specificity
+    if keyBinding.specificity is @specificity
       keyBinding.index - @index
     else
       keyBinding.specificity - @specificity
