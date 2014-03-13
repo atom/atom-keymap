@@ -3,13 +3,16 @@ require 'coffee-cache'
 beforeEach ->
   document.querySelector('#jasmine-content').innerHTML = ""
 
-exports.keydownEvent = (keyIdentifier, {ctrl, shift, alt, cmd, which, target}={}) ->
+exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, target}={}) ->
   event = document.createEvent('KeyboardEvent')
   bubbles = true
   cancelable = true
   view = null
-  keyIdentifier = keyIdentifier.toUpperCase() if /^[a-z]$/.test(keyIdentifier) and shift
-  keyIdentifier = "U+#{keyIdentifier.charCodeAt(0).toString(16)}" if keyIdentifier.length is 1
+  key = key.toUpperCase() if /^[a-z]$/.test(key) and shift
+  if key.length is 1
+    keyIdentifier = "U+#{key.charCodeAt(0).toString(16)}"
+  else
+    keyIdentifier = key[0].toUpperCase() + key[1..]
   location = KeyboardEvent.DOM_KEY_LOCATION_STANDARD
   event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
   Object.defineProperty(event, 'target', get: -> target) if target?
