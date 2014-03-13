@@ -1,5 +1,8 @@
 require 'coffee-cache'
 
+beforeEach ->
+  document.querySelector('#jasmine-content').innerHTML = ""
+
 exports.keydownEvent = (keyIdentifier, {ctrl, shift, alt, cmd, which, target}={}) ->
   event = document.createEvent('KeyboardEvent')
   bubbles = true
@@ -11,3 +14,7 @@ exports.keydownEvent = (keyIdentifier, {ctrl, shift, alt, cmd, which, target}={}
   Object.defineProperty(event, 'target', get: -> target) if target?
   Object.defineProperty(event, 'which', get: -> which) if which?
   event
+
+exports.appendContent = (element) ->
+  document.querySelector('#jasmine-content').appendChild(element)
+  element

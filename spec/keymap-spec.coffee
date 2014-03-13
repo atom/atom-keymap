@@ -1,11 +1,48 @@
+{$$} = require 'space-pencil'
 Keymap = require '../src/keymap'
-{keydownEvent} = require './spec-helper'
+{keydownEvent, appendContent} = require './spec-helper'
 
 describe "Keymap", ->
   keymap = null
 
   beforeEach ->
     keymap = new Keymap
+
+  describe "::handleKeyboardEvent(event)", ->
+    describe "when the keystroke matches no bindings", ->
+      it "does not stop propagation of the event", ->
+        event = keydownEvent('q')
+        spyOn(event, 'stopPropagation')
+        spyOn(event, 'stopImmediatePropagation')
+        keymap.handleKeyboardEvent(event)
+        expect(event.stopPropagation).not.toHaveBeenCalled()
+        expect(event.stopImmediatePropagation).not.toHaveBeenCalled()
+
+    describe "when the keystroke matches a single binding", ->
+      [events, elementA, elementB] = []
+
+      beforeEach ->
+        elementA = appendContent $$ ->
+          @div class: 'a', ->
+            @div class: 'b'
+        elementB = elementA.querySelector('.b')
+
+        events = []
+        elementA.addEventListener 'x-command', ((e) -> events.push(e)), false
+        elementA.addEventListener 'y-command', ((e) -> events.push(e)), false
+
+        keymap.addKeyBindings "test",
+          ".a":
+            "ctrl-x": "x-command"
+            "ctrl-y": "y-command"
+          ".b":
+            "ctrl-y": "y-command"
+
+      it "dispatches the command event on the first ancestor of the target with a matching binding", ->
+        keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
+        expect(events.length).toBe 1
+        expect(events[0].type).toBe 'y-command'
+        expect(events[0].target).toBe elementB
 
   describe "::addKeyBindings(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->

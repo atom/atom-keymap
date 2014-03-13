@@ -7,6 +7,7 @@ module.exports =
 class Keymap
   constructor: ->
     @keyBindings = []
+    @keystrokes = []
 
   # Public: Add sets of key bindings grouped by CSS selector.
   #
@@ -27,8 +28,33 @@ class Keymap
         keyBinding = new KeyBinding(source, command, keystroke, selector)
         @keyBindings.push(keyBinding)
 
+  handleKeyboardEvent: (event) ->
+    @keystrokes.push(@keystrokeForKeyboardEvent(event))
+    candidateBindings = @keyBindingsForKeystrokeSequenceAndTarget(@keystrokes.join(' '), event.target)
+    if candidateBindings.length > 0
+      command = candidateBindings[0].command
+      @dispatchCommandEvent(event, event.target, command)
+
+  dispatchCommandEvent: (keyboardEvent, target, command) ->
+    bubbles = true
+    cancelable = false
+    detail = {originalEvent: keyboardEvent}
+    commandEvent = document.createEvent("CustomEvent")
+    commandEvent.initCustomEvent(command, bubbles, cancelable, detail)
+    target.dispatchEvent(commandEvent)
+
+  keyBindingsForKeystrokeSequenceAndTarget: (keystrokeSequence, target) ->
+    @keyBindings
+      .filter (binding) ->
+        binding.keystrokeSequence.indexOf(keystrokeSequence) is 0 \
+          and target.webkitMatchesSelector(binding.selector)
+      .sort (a, b) -> a.compare(b)
+
   keyBindingsForCommand: (command) ->
     @keyBindings.filter (binding) -> binding.command is command
+
+  keyBindingsForKeystrokeSequence: (keystrokeSequence) ->
+    @keyBindings.filter (binding) -> binding.keystrokeSequence.indexOf(keystrokeSequence) is 0
 
   # Public: Translate a keydown event to a keystroke string.
   #
@@ -41,6 +67,11 @@ class Keymap
   # Deprecated: Use {::addKeyBindings} instead.
   add: (bindings) ->
     @addKeyBindings(bindings)
+
+  # Deprecated: Handle a jQuery keyboard event. Use {::handleKeyboardEvent} with
+  # a raw keyboard event instead.
+  handleEvent: (event) ->
+    @handleKeyboardEvent(event.originalEvent ? event)
 
   # Deprecated: Translate a jQuery keyboard event to a keystroke string. Use
   # {::keystrokeForKeyboardEvent} with a raw KeyboardEvent instead.
