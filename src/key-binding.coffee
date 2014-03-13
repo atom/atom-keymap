@@ -6,6 +6,7 @@ class KeyBinding
 
   constructor: (@source, @command, keystrokes, selector) ->
     @keystrokes = normalizeKeystrokes(keystrokes)
+    @keystroke = @keystrokes # deprecated property
     @selector = selector.replace(/!important/g, '')
     @specificity = calculateSpecificity(selector)
     @index = @constructor.currentIndex++
