@@ -126,6 +126,15 @@ class Keymap
   bindKeys: (source, selector, keyBindings) ->
     @addKeyBindingsForSelector(source, selector, keyBindings)
 
-  # Deprecated: Use {::keyBindingsForCommand} with the second element argument.
+  # Deprecated: Use {::findKeyBindings} with the 'command' param.
+  keyBindingsForCommand: (command) ->
+    @findKeyBindings({command})
+
+  # Deprecated: Use {::findKeyBindings} with the 'command' and 'target'
+  # params
   keyBindingsForCommandMatchingElement: (command, target) ->
     @findKeyBindings({command, target: target[0] ? target})
+
+  # Deprecated: Use {::findKeyBindings} with the 'target' param.
+  keyBindingsMatchingElement: (target) ->
+    @findKeyBindings({target: target[0] ? target})
