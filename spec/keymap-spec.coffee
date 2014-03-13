@@ -130,9 +130,9 @@ describe "Keymap", ->
       keymap.addKeyBindings 'test', '*': 'ctrl-shift-l': 'a'
       keymap.addKeyBindings 'test', '*': 'ctrl-shift-L': 'b'
       keymap.addKeyBindings 'test', '*': 'ctrl-L': 'c'
-      expect(keymap.keyBindingsForCommand('a')[0].keystrokeSequence).toBe 'ctrl-shift-L'
-      expect(keymap.keyBindingsForCommand('b')[0].keystrokeSequence).toBe 'ctrl-shift-L'
-      expect(keymap.keyBindingsForCommand('c')[0].keystrokeSequence).toBe 'ctrl-shift-L'
+      expect(keymap.findKeyBindings(command: 'a')[0].keystrokeSequence).toBe 'ctrl-shift-L'
+      expect(keymap.findKeyBindings(command: 'b')[0].keystrokeSequence).toBe 'ctrl-shift-L'
+      expect(keymap.findKeyBindings(command: 'c')[0].keystrokeSequence).toBe 'ctrl-shift-L'
 
     it "normalizes the order of modifier keys based on the Apple interface guidelines", ->
       keymap.addKeyBindings 'test', '*': 'alt-cmd-ctrl-shift-l': 'a'
@@ -140,10 +140,10 @@ describe "Keymap", ->
       keymap.addKeyBindings 'test', '*': 'alt-ctrl-l': 'c'
       keymap.addKeyBindings 'test', '*': 'ctrl-alt--': 'd'
 
-      expect(keymap.keyBindingsForCommand('a')[0].keystrokeSequence).toBe 'ctrl-alt-shift-cmd-L'
-      expect(keymap.keyBindingsForCommand('b')[0].keystrokeSequence).toBe 'ctrl-shift-L'
-      expect(keymap.keyBindingsForCommand('c')[0].keystrokeSequence).toBe 'ctrl-alt-l'
-      expect(keymap.keyBindingsForCommand('d')[0].keystrokeSequence).toBe 'ctrl-alt--'
+      expect(keymap.findKeyBindings(command: 'a')[0].keystrokeSequence).toBe 'ctrl-alt-shift-cmd-L'
+      expect(keymap.findKeyBindings(command: 'b')[0].keystrokeSequence).toBe 'ctrl-shift-L'
+      expect(keymap.findKeyBindings(command: 'c')[0].keystrokeSequence).toBe 'ctrl-alt-l'
+      expect(keymap.findKeyBindings(command: 'd')[0].keystrokeSequence).toBe 'ctrl-alt--'
 
   describe "::keystrokeForKeyboardEvent(event)", ->
     describe "when no modifiers are pressed", ->
@@ -169,7 +169,7 @@ describe "Keymap", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
         expect(keymap.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
 
-  describe "::keyBindingsForCommand(command, [targetElement])", ->
+  describe "::findKeyBindings({command, target})", ->
     [elementA, elementB] = []
     beforeEach ->
       elementA = appendContent $$ ->
@@ -191,10 +191,10 @@ describe "Keymap", ->
 
     describe "when only passed a command", ->
       it "returns all bindings that invoke the given command", ->
-        keystrokes = keymap.keyBindingsForCommand('x').map((b) -> b.keystrokeSequence).sort()
+        keystrokes = keymap.findKeyBindings(command: 'x').map((b) -> b.keystrokeSequence).sort()
         expect(keystrokes).toEqual ['ctrl-a', 'ctrl-c', 'ctrl-d', 'ctrl-e']
 
-    describe "when passed a command and a target element", ->
+    describe "when passed a command and a target", ->
       it "returns all bindings that would invoke the given command from the given target element, ordered by specificity", ->
-        keystrokes = keymap.keyBindingsForCommand('x', elementB).map((b) -> b.keystrokeSequence)
+        keystrokes = keymap.findKeyBindings(command: 'x', target: elementB).map((b) -> b.keystrokeSequence)
         expect(keystrokes).toEqual ['ctrl-d', 'ctrl-c', 'ctrl-a']

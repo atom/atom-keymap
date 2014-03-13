@@ -69,23 +69,26 @@ class Keymap
 
   # Public: Get the keybindings for a given command and optional target.
   #
-  # command - A {String} representing the name of a command, such as
-  #   'editor:backspace'
-  # targetElement - An optional DOM element constraining the search. If this
-  #   argument is supplied, the call will only return bindings that can be
-  #   invoked by a KeyboardEvent targeting the given element.
-  keyBindingsForCommand: (command, targetElement) ->
+  # params - An {Object} whose keys constrain the binding search:
+  #   :command - A {String} representing the name of a command, such as
+  #     'editor:backspace'
+  #   :target - An optional DOM element constraining the search. If this
+  #     parameter is supplied, the call will only return bindings that can be
+  #     invoked by a KeyboardEvent originating from the target element.
+  findKeyBindings: (params={}) ->
+    {command, target} = params
+
     bindings = @keyBindings.filter (binding) -> binding.command is command
-    if targetElement?
+    if target?
       candidateBindings = bindings
       bindings = []
-      target = targetElement
-      while target? and target isnt document
+      element = target
+      while element? and element isnt document
         matchingBindings = candidateBindings
-          .filter (binding) -> target.webkitMatchesSelector(binding.selector)
+          .filter (binding) -> element.webkitMatchesSelector(binding.selector)
           .sort (a, b) -> a.compare(b)
         bindings.push(matchingBindings...)
-        target = target.parentElement
+        element = element.parentElement
     bindings
 
   keyBindingsForKeystrokeSequence: (keystrokeSequence) ->
@@ -115,6 +118,10 @@ class Keymap
   keystrokeStringForEvent: (event) ->
     @keystrokeForKeyboardEvent(event.originalEvent ? event)
 
-  # Deprecated: Use addKeyBindings with a map from selectors to keybindings
+  # Deprecated: Use {::addKeyBindings} with a map from selectors to keybindings.
   bindKeys: (source, selector, keyBindings) ->
     @addKeyBindingsForSelector(source, selector, keyBindings)
+
+  # Deprecated: Use {::keyBindingsForCommand} with the second element argument.
+  keyBindingsForCommandMatchingElement: (command, target) ->
+    @findKeyBindings({command, target})
