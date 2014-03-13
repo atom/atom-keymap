@@ -9,6 +9,8 @@ class Keymap
     @keyBindings = []
     @keystrokes = []
 
+  destroy: ->
+
   # Public: Add sets of key bindings grouped by CSS selector.
   #
   # source - A {String} (usually a path) uniquely identifying the given bindings
@@ -17,16 +19,19 @@ class Keymap
   #   keystroke patterns to commands.
   addKeyBindings: (source, keyBindingsBySelector) ->
     for selector, keyBindings of keyBindingsBySelector
-      # Verify selector is valid before registering any bindings
-      try
-        document.body.webkitMatchesSelector(selector)
-      catch
-        console.warn("Encountered an invalid selector adding keybindings from '#{source}': '#{selector}'")
-        continue
+      @addKeyBindingsForSelector(source, selector, keyBindings)
 
-      for keystroke, command of keyBindings
-        keyBinding = new KeyBinding(source, command, keystroke, selector)
-        @keyBindings.push(keyBinding)
+  addKeyBindingsForSelector: (source, selector, keyBindings) ->
+    # Verify selector is valid before registering any bindings
+    try
+      document.body.webkitMatchesSelector(selector)
+    catch
+      console.warn("Encountered an invalid selector adding keybindings from '#{source}': '#{selector}'")
+      return
+
+    for keystroke, command of keyBindings
+      keyBinding = new KeyBinding(source, command, keystroke, selector)
+      @keyBindings.push(keyBinding)
 
   handleKeyboardEvent: (event) ->
     @keystrokes.push(@keystrokeForKeyboardEvent(event))
@@ -77,10 +82,16 @@ class Keymap
 
   # Deprecated: Handle a jQuery keyboard event. Use {::handleKeyboardEvent} with
   # a raw keyboard event instead.
-  handleEvent: (event) ->
-    @handleKeyboardEvent(event.originalEvent ? event)
+  handleKeyEvent: (event) ->
+    event = event.originalEvent ? event
+    @handleKeyboardEvent(event)
+    false if event.defaultPrevented
 
   # Deprecated: Translate a jQuery keyboard event to a keystroke string. Use
   # {::keystrokeForKeyboardEvent} with a raw KeyboardEvent instead.
   keystrokeStringForEvent: (event) ->
     @keystrokeForKeyboardEvent(event.originalEvent ? event)
+
+  # Deprecated: Use addKeyBindings with a map from selectors to keybindings
+  bindKeys: (source, selector, keyBindings) ->
+    @addKeyBindingsForSelector(source, selector, keyBindings)
