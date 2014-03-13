@@ -64,6 +64,13 @@ describe "Keymap", ->
           expect(events[1].type).toBe 'y-command'
           expect(events[1].target).toBe elementA
 
+      describe "if the keyboard event's target is document.body", ->
+        it "starts matching keybindings at the .defaultTarget", ->
+          keymap.defaultTarget = elementA
+          keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: document.body))
+          expect(events.length).toBe 1
+          expect(events[0].type).toBe 'y-command'
+          expect(events[0].target).toBe elementA
 
     describe "when the keystroke matches multiple bindings on the same element", ->
       [elementA, elementB, events] = []

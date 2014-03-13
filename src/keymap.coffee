@@ -5,7 +5,8 @@ Modifiers = ['Control', 'Alt', 'Shift', 'Meta']
 
 module.exports =
 class Keymap
-  constructor: ->
+  constructor: (options) ->
+    @defaultTarget = options?.defaultTarget
     @keyBindings = []
     @keystrokes = []
 
@@ -38,6 +39,7 @@ class Keymap
     keystrokeSequence = @keystrokes.join(' ')
 
     target = event.target
+    target = @defaultTarget if event.target is document.body and @defaultTarget?
     while target? and target isnt document
       candidateBindings = @keyBindingsForKeystrokeSequenceAndTarget(keystrokeSequence, target)
       if candidateBindings.length > 0
