@@ -24,7 +24,7 @@ class Keymap
   addKeyBindingsForSelector: (source, selector, keyBindings) ->
     # Verify selector is valid before registering any bindings
     try
-      document.body.webkitMatchesSelector(selector)
+      document.body.webkitMatchesSelector(selector.replace(/!important/g, ''))
     catch
       console.warn("Encountered an invalid selector adding keybindings from '#{source}': '#{selector}'")
       return
