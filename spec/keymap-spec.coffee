@@ -52,16 +52,18 @@ describe "Keymap", ->
         keymap.handleKeyboardEvent(event)
         expect(event.defaultPrevented).toBe true
 
-      it "proceeds directly to the next matching binding if `.abortKeyBinding()` is called on the command event", ->
-        elementB.addEventListener 'y-command', (e) -> events.push(e); e.abortKeyBinding()
-        elementB.addEventListener 'y-command', (e) -> events.push(e) # should never be called
-        keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
+      describe "if .abortKeyBinding() is called on the command event", ->
+        it "proceeds directly to the next matching binding", ->
+          elementB.addEventListener 'y-command', (e) -> events.push(e); e.abortKeyBinding()
+          elementB.addEventListener 'y-command', (e) -> events.push(e) # should never be called
+          keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
 
-        expect(events.length).toBe 2
-        expect(events[0].type).toBe 'y-command'
-        expect(events[0].target).toBe elementB
-        expect(events[1].type).toBe 'y-command'
-        expect(events[1].target).toBe elementA
+          expect(events.length).toBe 2
+          expect(events[0].type).toBe 'y-command'
+          expect(events[0].target).toBe elementB
+          expect(events[1].type).toBe 'y-command'
+          expect(events[1].target).toBe elementA
+
 
     describe "when the keystroke matches multiple bindings on the same element", ->
       [elementA, elementB, events] = []
