@@ -1,3 +1,4 @@
+{specificity} = require 'clear-cut'
 [parser, fs, loophole, pegjs] = []
 
 AtomModifiers = new Set
@@ -5,6 +6,8 @@ AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
 
 BrowserModifiers = new Set
 AtomModifiers.add(modifier) for modifier in ['Ctrl', 'Alt', 'Shift', 'Meta']
+
+SpecificityCache = {}
 
 exports.normalizeKeystrokeSequence = (keystrokeSequence) ->
   keystrokeSequence.split(/\s+/)
@@ -32,6 +35,9 @@ exports.keystrokeForKeyboardEvent = (event) ->
   keystroke.push 'cmd' if event.metaKey
   keystroke.push(key) if key?
   keystroke.join('-')
+
+exports.calculateSpecificity = (selector) ->
+  SpecificityCache[selector] ?= specificity(selector)
 
 normalizeKeystroke = (keystroke) ->
   keys = parseKeystroke(keystroke)
