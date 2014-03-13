@@ -36,12 +36,12 @@ class Keymap
 
   handleKeyboardEvent: (event) ->
     @keystrokes.push(@keystrokeForKeyboardEvent(event))
-    keystrokeSequence = @keystrokes.join(' ')
+    keystrokes = @keystrokes.join(' ')
 
     target = event.target
     target = @defaultTarget if event.target is document.body and @defaultTarget?
     while target? and target isnt document
-      candidateBindings = @keyBindingsForKeystrokeSequenceAndTarget(keystrokeSequence, target)
+      candidateBindings = @keyBindingsForKeystrokesAndTarget(keystrokes, target)
       if candidateBindings.length > 0
         @keystrokes = []
         return if @dispatchCommandEvent(event, target, candidateBindings[0].command)
@@ -60,10 +60,10 @@ class Keymap
     target.dispatchEvent(commandEvent)
     not commandEvent.keyBindingAborted
 
-  keyBindingsForKeystrokeSequenceAndTarget: (keystrokeSequence, target) ->
+  keyBindingsForKeystrokesAndTarget: (keystrokes, target) ->
     @keyBindings
       .filter (binding) ->
-        binding.keystrokeSequence.indexOf(keystrokeSequence) is 0 \
+        binding.keystrokes.indexOf(keystrokes) is 0 \
           and target.webkitMatchesSelector(binding.selector)
       .sort (a, b) -> a.compare(b)
 
@@ -91,8 +91,8 @@ class Keymap
         element = element.parentElement
     bindings
 
-  keyBindingsForKeystrokeSequence: (keystrokeSequence) ->
-    @keyBindings.filter (binding) -> binding.keystrokeSequence.indexOf(keystrokeSequence) is 0
+  keyBindingsForKeystrokes: (keystrokes) ->
+    @keyBindings.filter (binding) -> binding.keystrokes.indexOf(keystrokes) is 0
 
   # Public: Translate a keydown event to a keystroke string.
   #
@@ -103,8 +103,8 @@ class Keymap
     keystrokeForKeyboardEvent(event)
 
   # Deprecated: Use {::addKeyBindings} instead.
-  add: (bindings) ->
-    @addKeyBindings(bindings)
+  add: (source, bindings) ->
+    @addKeyBindings(source, bindings)
 
   # Deprecated: Handle a jQuery keyboard event. Use {::handleKeyboardEvent} with
   # a raw keyboard event instead.
@@ -124,4 +124,4 @@ class Keymap
 
   # Deprecated: Use {::keyBindingsForCommand} with the second element argument.
   keyBindingsForCommandMatchingElement: (command, target) ->
-    @findKeyBindings({command, target})
+    @findKeyBindings({command, target: target[0] ? target})

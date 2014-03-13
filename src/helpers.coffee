@@ -9,8 +9,8 @@ AtomModifiers.add(modifier) for modifier in ['Ctrl', 'Alt', 'Shift', 'Meta']
 
 SpecificityCache = {}
 
-exports.normalizeKeystrokeSequence = (keystrokeSequence) ->
-  keystrokeSequence.split(/\s+/)
+exports.normalizeKeystrokes = (keystrokes) ->
+  keystrokes.split(/\s+/)
     .map (keystroke) -> normalizeKeystroke(keystroke)
     .join(' ')
 

@@ -1,11 +1,11 @@
-{normalizeKeystrokeSequence, calculateSpecificity} = require './helpers'
+{normalizeKeystrokes, calculateSpecificity} = require './helpers'
 
 module.exports =
 class KeyBinding
   @currentIndex: 1
 
-  constructor: (@source, @command, keystrokeSequence, selector) ->
-    @keystrokeSequence = normalizeKeystrokeSequence(keystrokeSequence)
+  constructor: (@source, @command, keystrokes, selector) ->
+    @keystrokes = normalizeKeystrokes(keystrokes)
     @selector = selector.replace(/!important/g, '')
     @specificity = calculateSpecificity(selector)
     @index = @constructor.currentIndex++
