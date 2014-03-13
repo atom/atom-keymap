@@ -67,8 +67,26 @@ class Keymap
           and target.webkitMatchesSelector(binding.selector)
       .sort (a, b) -> a.compare(b)
 
-  keyBindingsForCommand: (command) ->
-    @keyBindings.filter (binding) -> binding.command is command
+  # Public: Get the keybindings for a given command and optional target.
+  #
+  # command - A {String} representing the name of a command, such as
+  #   'editor:backspace'
+  # targetElement - An optional DOM element constraining the search. If this
+  #   argument is supplied, the call will only return bindings that can be
+  #   invoked by a KeyboardEvent targeting the given element.
+  keyBindingsForCommand: (command, targetElement) ->
+    bindings = @keyBindings.filter (binding) -> binding.command is command
+    if targetElement?
+      candidateBindings = bindings
+      bindings = []
+      target = targetElement
+      while target? and target isnt document
+        matchingBindings = candidateBindings
+          .filter (binding) -> target.webkitMatchesSelector(binding.selector)
+          .sort (a, b) -> a.compare(b)
+        bindings.push(matchingBindings...)
+        target = target.parentElement
+    bindings
 
   keyBindingsForKeystrokeSequence: (keystrokeSequence) ->
     @keyBindings.filter (binding) -> binding.keystrokeSequence.indexOf(keystrokeSequence) is 0
@@ -90,7 +108,7 @@ class Keymap
   handleKeyEvent: (event) ->
     event = event.originalEvent ? event
     @handleKeyboardEvent(event)
-    false if event.defaultPrevented
+    not event.defaultPrevented
 
   # Deprecated: Translate a jQuery keyboard event to a keystroke string. Use
   # {::keystrokeForKeyboardEvent} with a raw KeyboardEvent instead.

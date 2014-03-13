@@ -168,3 +168,33 @@ describe "Keymap", ->
     describe "when a non-English keyboard language is used", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
         expect(keymap.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
+
+  describe "::keyBindingsForCommand(command, [targetElement])", ->
+    [elementA, elementB] = []
+    beforeEach ->
+      elementA = appendContent $$ ->
+        @div class: 'a', ->
+          @div class: 'b c'
+          @div class: 'd'
+      elementB = elementA.querySelector('.b.c')
+
+      keymap.addKeyBindings 'test',
+        '.a':
+          'ctrl-a': 'x'
+          'ctrl-b': 'y'
+        '.b':
+          'ctrl-c': 'x'
+        '.b.c':
+          'ctrl-d': 'x'
+        '.d':
+          'ctrl-e': 'x'
+
+    describe "when only passed a command", ->
+      it "returns all bindings that invoke the given command", ->
+        keystrokes = keymap.keyBindingsForCommand('x').map((b) -> b.keystrokeSequence).sort()
+        expect(keystrokes).toEqual ['ctrl-a', 'ctrl-c', 'ctrl-d', 'ctrl-e']
+
+    describe "when passed a command and a target element", ->
+      it "returns all bindings that would invoke the given command from the given target element, ordered by specificity", ->
+        keystrokes = keymap.keyBindingsForCommand('x', elementB).map((b) -> b.keystrokeSequence)
+        expect(keystrokes).toEqual ['ctrl-d', 'ctrl-c', 'ctrl-a']
