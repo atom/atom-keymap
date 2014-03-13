@@ -1,15 +1,37 @@
 [parser, fs, loophole, pegjs] = []
 
-Modifiers = new Set
-Modifiers.add 'ctrl'
-Modifiers.add 'alt'
-Modifiers.add 'shift'
-Modifiers.add 'cmd'
+AtomModifiers = new Set
+AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
+
+BrowserModifiers = new Set
+AtomModifiers.add(modifier) for modifier in ['Ctrl', 'Alt', 'Shift', 'Meta']
 
 exports.normalizeKeystrokeSequence = (keystrokeSequence) ->
   keystrokeSequence.split(/\s+/)
     .map (keystroke) -> normalizeKeystroke(keystroke)
     .join(' ')
+
+exports.keystrokeForKeyboardEvent = (event) ->
+  unless BrowserModifiers.has(event.keyIdentifier)
+    if event.keyIdentifier.indexOf('U+') is 0
+      hexCharCode = event.keyIdentifier[2..]
+      charCode = parseInt(hexCharCode, 16)
+      charCode = event.which if not isAscii(charCode) and isAscii(event.which)
+      key = keyFromCharCode(charCode)
+    else
+      key = event.keyIdentifier.toLowerCase()
+
+  keystroke = []
+  keystroke.push 'ctrl' if event.ctrlKey
+  keystroke.push 'alt' if event.altKey
+  if event.shiftKey
+    # Don't push 'shift' when modifying symbolic characters like '{'
+    keystroke.push 'shift' unless /^[^A-Za-z]$/.test(key)
+    # Only upper case alphabetic characters like 'a'
+    key = key.toUpperCase() if /^[^a-z]$/.test(key)
+  keystroke.push 'cmd' if event.metaKey
+  keystroke.push(key) if key?
+  keystroke.join('-')
 
 normalizeKeystroke = (keystroke) ->
   keys = parseKeystroke(keystroke)
@@ -17,7 +39,7 @@ normalizeKeystroke = (keystroke) ->
   modifiers = new Set
 
   for key in keys
-    if Modifiers.has(key)
+    if AtomModifiers.has(key)
       modifiers.add(key)
     else
       primaryKey = key
@@ -45,3 +67,16 @@ parseKeystroke = (keystroke) ->
       loophole.allowUnsafeEval => parser = pegjs.buildParser(keystrokeGrammar)
 
   parser.parse(keystroke)
+
+keyFromCharCode = (charCode) ->
+  switch charCode
+    when 8 then 'backspace'
+    when 9 then 'tab'
+    when 13 then 'enter'
+    when 27 then 'escape'
+    when 32 then 'space'
+    when 127 then 'delete'
+    else String.fromCharCode(charCode)
+
+isAscii = (charCode) ->
+  0 <= charCode <= 127
