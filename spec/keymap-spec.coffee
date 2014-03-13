@@ -50,6 +50,47 @@ describe "Keymap", ->
         expect(events[0].type).toBe 'x-command'
         expect(events[0].target).toBe elementB
 
+  describe "when the keystroke matches multiple bindings on the same element", ->
+    [elementA, elementB, events] = []
+
+    beforeEach ->
+      elementA = appendContent $$ ->
+        @div class: 'a', ->
+          @div class: 'b c d'
+      elementB = elementA.querySelector('.b')
+
+      events = []
+      elementA.addEventListener 'command-1', ((e) -> events.push(e)), false
+      elementA.addEventListener 'command-2', ((e) -> events.push(e)), false
+
+    describe "when the bindings have selectors with different specificity", ->
+      beforeEach ->
+        keymap.addKeyBindings "test",
+          ".b.c":
+            "ctrl-x": "command-1"
+          ".b":
+            "ctrl-x": "command-2"
+
+      it "dispatches the command associated with the most specific binding", ->
+        keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+        expect(events.length).toBe 1
+        expect(events[0].type).toBe 'command-1'
+        expect(events[0].target).toBe elementB
+
+    describe "when the bindings have selectors with the same specificity", ->
+      beforeEach ->
+        keymap.addKeyBindings "test",
+          ".b.c":
+            "ctrl-x": "command-1"
+          ".c.d":
+            "ctrl-x": "command-2"
+
+      it "dispatches the command associated with the most recently added binding", ->
+        keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+        expect(events.length).toBe 1
+        expect(events[0].type).toBe 'command-2'
+        expect(events[0].target).toBe elementB
+
   describe "::addKeyBindings(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->
       keymap.addKeyBindings 'test', '*': 'ctrl-shift-l': 'a'
