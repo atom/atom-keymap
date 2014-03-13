@@ -72,6 +72,18 @@ describe "Keymap", ->
           expect(events[0].type).toBe 'y-command'
           expect(events[0].target).toBe elementA
 
+      describe "if matching binding's command is 'native!'", ->
+        it "terminates without preventing the browser's default action", ->
+          keymap.addKeyBindings "test",
+            ".b":
+              "ctrl-y": "native!"
+          elementA.addEventListener 'native!', (e) -> events.push(e)
+
+          event = keydownEvent('y', ctrl: true, target: elementB)
+          keymap.handleKeyboardEvent(event)
+          expect(events).toEqual []
+          expect(event.defaultPrevented).toBe false
+
     describe "when the keystroke matches multiple bindings on the same element", ->
       [elementA, elementB, events] = []
 

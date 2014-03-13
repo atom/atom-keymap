@@ -44,12 +44,12 @@ class Keymap
       candidateBindings = @keyBindingsForKeystrokeSequenceAndTarget(keystrokeSequence, target)
       if candidateBindings.length > 0
         @keystrokes = []
-        if @dispatchCommandEvent(event, target, candidateBindings[0].command)
-          event.preventDefault()
-          return
+        return if @dispatchCommandEvent(event, target, candidateBindings[0].command)
       target = target.parentElement
 
   dispatchCommandEvent: (keyboardEvent, target, command) ->
+    return true if command is 'native!'
+    keyboardEvent.preventDefault()
     commandEvent = document.createEvent("CustomEvent")
     commandEvent.initCustomEvent(command, bubbles = true, cancelable = true)
     commandEvent.originalEvent = keyboardEvent
