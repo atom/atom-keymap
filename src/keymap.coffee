@@ -78,7 +78,11 @@ class Keymap
   findKeyBindings: (params={}) ->
     {command, target} = params
 
-    bindings = @keyBindings.filter (binding) -> binding.command is command
+    bindings = @keyBindings
+
+    if command?
+      bindings = bindings.filter (binding) -> binding.command is command
+
     if target?
       candidateBindings = bindings
       bindings = []

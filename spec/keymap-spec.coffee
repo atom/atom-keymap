@@ -190,9 +190,14 @@ describe "Keymap", ->
           'ctrl-e': 'x'
 
     describe "when only passed a command", ->
-      it "returns all bindings that invoke the given command", ->
+      it "returns all bindings that dispatch the given command", ->
         keystrokes = keymap.findKeyBindings(command: 'x').map((b) -> b.keystrokes).sort()
         expect(keystrokes).toEqual ['ctrl-a', 'ctrl-c', 'ctrl-d', 'ctrl-e']
+
+    describe "when only passed a target", ->
+      it "returns all bindings that can be invoked from the given target", ->
+        keystrokes = keymap.findKeyBindings(target: elementB).map((b) -> b.keystrokes)
+        expect(keystrokes).toEqual ['ctrl-d', 'ctrl-c', 'ctrl-b', 'ctrl-a']
 
     describe "when passed a command and a target", ->
       it "returns all bindings that would invoke the given command from the given target element, ordered by specificity", ->
