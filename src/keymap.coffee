@@ -30,10 +30,16 @@ class Keymap
 
   handleKeyboardEvent: (event) ->
     @keystrokes.push(@keystrokeForKeyboardEvent(event))
-    candidateBindings = @keyBindingsForKeystrokeSequenceAndTarget(@keystrokes.join(' '), event.target)
-    if candidateBindings.length > 0
-      command = candidateBindings[0].command
-      @dispatchCommandEvent(event, event.target, command)
+    keystrokeSequence = @keystrokes.join(' ')
+
+    target = event.target
+    while target? and target isnt document
+      candidateBindings = @keyBindingsForKeystrokeSequenceAndTarget(keystrokeSequence, target)
+      if candidateBindings.length > 0
+        @keystrokes = []
+        @dispatchCommandEvent(event, event.target, candidateBindings[0].command)
+        return
+      target = target.parentElement
 
   dispatchCommandEvent: (keyboardEvent, target, command) ->
     bubbles = true

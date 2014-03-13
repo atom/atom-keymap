@@ -18,7 +18,7 @@ describe "Keymap", ->
         expect(event.stopPropagation).not.toHaveBeenCalled()
         expect(event.stopImmediatePropagation).not.toHaveBeenCalled()
 
-    describe "when the keystroke matches a single binding", ->
+    describe "when the keystroke matches one binding on any particular element", ->
       [events, elementA, elementB] = []
 
       beforeEach ->
@@ -38,10 +38,16 @@ describe "Keymap", ->
           ".b":
             "ctrl-y": "y-command"
 
-      it "dispatches the command event on the first ancestor of the target with a matching binding", ->
+      it "dispatches the command event on the first matching ancestor of the target", ->
         keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
         expect(events.length).toBe 1
         expect(events[0].type).toBe 'y-command'
+        expect(events[0].target).toBe elementB
+
+        events = []
+        keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+        expect(events.length).toBe 1
+        expect(events[0].type).toBe 'x-command'
         expect(events[0].target).toBe elementB
 
   describe "::addKeyBindings(source, bindings)", ->
