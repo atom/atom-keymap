@@ -10,13 +10,10 @@ describe "Keymap", ->
 
   describe "::handleKeyboardEvent(event)", ->
     describe "when the keystroke matches no bindings", ->
-      it "does not stop propagation of the event", ->
+      it "does not prevent the event's default action", ->
         event = keydownEvent('q')
-        spyOn(event, 'stopPropagation')
-        spyOn(event, 'stopImmediatePropagation')
         keymap.handleKeyboardEvent(event)
-        expect(event.stopPropagation).not.toHaveBeenCalled()
-        expect(event.stopImmediatePropagation).not.toHaveBeenCalled()
+        expect(event.defaultPrevented).toBe false
 
     describe "when the keystroke matches one binding on any particular element", ->
       [events, elementA, elementB] = []
@@ -49,6 +46,11 @@ describe "Keymap", ->
         expect(events.length).toBe 1
         expect(events[0].type).toBe 'x-command'
         expect(events[0].target).toBe elementB
+
+      it "prevents the default action", ->
+        event = keydownEvent('y', ctrl: true, target: elementB)
+        keymap.handleKeyboardEvent(event)
+        expect(event.defaultPrevented).toBe true
 
   describe "when the keystroke matches multiple bindings on the same element", ->
     [elementA, elementB, events] = []
