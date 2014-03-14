@@ -5,7 +5,7 @@ path = require 'path'
 {File} = require 'pathwatcher'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
-{keystrokeForKeyboardEvent, isAtomModifier} = require './helpers'
+{keystrokeForKeyboardEvent, isAtomModifier, keydownEvent} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -13,6 +13,20 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 module.exports =
 class Keymap
   Emitter.includeInto(this)
+
+  # Public: Create a keydown DOM event for testing purposes.
+  #
+  # key - The key or keyIdentifier of the event. For example, 'a', '1',
+  #   'escape', 'backspace', etc.
+  # options - An {Object} containing any of the following:
+  #   :ctrl - A {Boolean} indicating the ctrl modifier key
+  #   :alt - A {Boolean} indicating the alt modifier key
+  #   :shift - A {Boolean} indicating the shift modifier key
+  #   :cmd - A {Boolean} indicating the cmd modifier key
+  #   :which - A {Number} indicating `which` value of the event. See
+  #      the docs for KeyboardEvent for more information.
+  #   :target - The target element of the event.
+  @keydownEvent: (key, options) -> keydownEvent(key, options)
 
   partialMatchTimeout: 200
   pendingPartialMatches: null

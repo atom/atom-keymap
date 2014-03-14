@@ -2,8 +2,9 @@ path = require 'path'
 fs = require 'fs-plus'
 temp = require 'temp'
 {$$} = require 'space-pencil'
-{keydownEvent, appendContent} = require './spec-helper'
+{appendContent} = require './spec-helper'
 Keymap = require '../src/keymap'
+{keydownEvent} = Keymap
 
 describe "Keymap", ->
   keymap = null
