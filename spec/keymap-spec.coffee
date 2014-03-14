@@ -5,7 +5,7 @@ temp = require 'temp'
 {keydownEvent, appendContent} = require './spec-helper'
 Keymap = require '../src/keymap'
 
-fdescribe "Keymap", ->
+describe "Keymap", ->
   keymap = null
 
   beforeEach ->
