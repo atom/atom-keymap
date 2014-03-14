@@ -157,15 +157,21 @@ fdescribe "Keymap", ->
 
       describe "when subsequent keystrokes yield no matches", ->
         it "disables the bindings with the longest keystroke sequences and replays the queued keystrokes", ->
-          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('w', target: editor))
+          keymap.handleKeyboardEvent(vEvent = keydownEvent('v', target: editor))
+          keymap.handleKeyboardEvent(iEvent = keydownEvent('i', target: editor))
+          keymap.handleKeyboardEvent(wEvent = keydownEvent('w', target: editor))
+          expect(vEvent.defaultPrevented).toBe true
+          expect(iEvent.defaultPrevented).toBe true
+          expect(wEvent.defaultPrevented).toBe true
           expect(events).toEqual ['enter-visual-mode', 'select-inside-word']
 
           events = []
-          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('k', target: editor))
+          keymap.handleKeyboardEvent(vEvent = keydownEvent('v', target: editor))
+          keymap.handleKeyboardEvent(iEvent = keydownEvent('i', target: editor))
+          keymap.handleKeyboardEvent(kEvent = keydownEvent('k', target: editor))
+          expect(vEvent.defaultPrevented).toBe true
+          expect(iEvent.defaultPrevented).toBe true
+          expect(kEvent.defaultPrevented).toBe false
           expect(events).toEqual ['enter-visual-mode']
           expect(clearTimeout).toHaveBeenCalled()
 

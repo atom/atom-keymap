@@ -116,6 +116,7 @@ class Keymap
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
     if partialMatches.length > 0
+      event.preventDefault()
       @enterPendingState(partialMatches)
     else
       if exactMatchCandidates.length > 0
