@@ -14,12 +14,19 @@ module.exports =
 class Keymap
   Emitter.includeInto(this)
 
+  # Public:
+  #
+  # options - An {Object} with the following optional keys:
+  #   :defaultTarget - This will be used as the target of events whose target
+  #     is `document.body` to allow for a catch-all element when nothing is
+  #     focused
   constructor: (options) ->
     @defaultTarget = options?.defaultTarget
     @keyBindings = []
     @keystrokes = []
     @watchSubscriptions = {}
 
+  # Public: Unwatch all watched paths.
   destroy: ->
     for filePath, subscription of @watchSubscriptions
       subscription.off()
@@ -30,7 +37,6 @@ class Keymap
   #   so they can be removed later.
   # bindings - An {Object} whose top-level keys point at sub-objects mapping
   #   keystroke patterns to commands.
-
   addKeyBindings: (source, keyBindingsBySelector) ->
     for selector, keyBindings of keyBindingsBySelector
       @addKeyBindingsForSelector(source, selector, keyBindings)
@@ -48,6 +54,80 @@ class Keymap
     else
       @addKeyBindings(bindingsPath, season.readFileSync(bindingsPath))
       @watchKeyBindings(bindingsPath) if options?.watch
+
+  # Public: Remove the key bindings added with {::addKeyBindings} or
+  # {::loadKeyBindings}.
+  #
+  # source - A {String} representing the `source` in a previous call to
+  #   {::addKeyBindings} or the path in {::loadKeyBindings}.
+  removeKeyBindings: (source) ->
+    @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
+
+  # Public: Dispatch a custom event associated with the matching key binding for
+  # the given {KeyboardEvent} if one can be found.
+  #
+  # If a matching binding is found on the event's target or one of its
+  # ancestors, `.preventDefault()` is called on the keyboard event and the
+  # binding's command is emitted as a custom event on the matching element.
+  #
+  # If the matching binding's command is 'native!', the method will terminate
+  # without calling `.preventDefault()` on the keyboard event, allowing the
+  # browser to handle it as normal.
+  #
+  # If the event's target is `document.body`, it will be treated as if its
+  # target is `.defaultTarget` if that property is assigned on the keymap.
+  handleKeyboardEvent: (event) ->
+    @keystrokes.push(@keystrokeForKeyboardEvent(event))
+    keystrokes = @keystrokes.join(' ')
+
+    target = event.target
+    target = @defaultTarget if event.target is document.body and @defaultTarget?
+    while target? and target isnt document
+      candidateBindings = @keyBindingsForKeystrokesAndTarget(keystrokes, target)
+      if candidateBindings.length > 0
+        @keystrokes = []
+        return if @dispatchCommandEvent(event, target, candidateBindings[0].command)
+      target = target.parentElement
+
+  addKeyBindingsForSelector: (source, selector, keyBindings) ->
+    # Verify selector is valid before registering any bindings
+    try
+      document.body.webkitMatchesSelector(selector.replace(/!important/g, ''))
+    catch e
+      console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
+      return
+
+    for keystroke, command of keyBindings
+      keyBinding = new KeyBinding(source, command, keystroke, selector)
+      @keyBindings.push(keyBinding)
+
+  # Public: Get the key bindings for a given command and optional target.
+  #
+  # params - An {Object} whose keys constrain the binding search:
+  #   :command - A {String} representing the name of a command, such as
+  #     'editor:backspace'
+  #   :target - An optional DOM element constraining the search. If this
+  #     parameter is supplied, the call will only return bindings that can be
+  #     invoked by a KeyboardEvent originating from the target element.
+  findKeyBindings: (params={}) ->
+    {command, target} = params
+
+    bindings = @keyBindings
+
+    if command?
+      bindings = bindings.filter (binding) -> binding.command is command
+
+    if target?
+      candidateBindings = bindings
+      bindings = []
+      element = target
+      while element? and element isnt document
+        matchingBindings = candidateBindings
+          .filter (binding) -> element.webkitMatchesSelector(binding.selector)
+          .sort (a, b) -> a.compare(b)
+        bindings.push(matchingBindings...)
+        element = element.parentElement
+    bindings
 
   watchKeyBindings: (filePath) ->
     unless @watchSubscriptions[filePath]?.cancelled is false
@@ -77,38 +157,12 @@ class Keymap
   # For testing purposes
   getOtherPlatforms: -> OtherPlatforms
 
-  # Public: Remove the key bindings added with {::addKeyBindings} or
-  # {::loadKeyBindings}.
-  #
-  # source - A {String} representing the `source` in a previous call to
-  #   {::addKeyBindings} or the path in {::loadKeyBindings}.
-  removeKeyBindings: (source) ->
-    @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
-
-  addKeyBindingsForSelector: (source, selector, keyBindings) ->
-    # Verify selector is valid before registering any bindings
-    try
-      document.body.webkitMatchesSelector(selector.replace(/!important/g, ''))
-    catch e
-      console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
-      return
-
-    for keystroke, command of keyBindings
-      keyBinding = new KeyBinding(source, command, keystroke, selector)
-      @keyBindings.push(keyBinding)
-
-  handleKeyboardEvent: (event) ->
-    @keystrokes.push(@keystrokeForKeyboardEvent(event))
-    keystrokes = @keystrokes.join(' ')
-
-    target = event.target
-    target = @defaultTarget if event.target is document.body and @defaultTarget?
-    while target? and target isnt document
-      candidateBindings = @keyBindingsForKeystrokesAndTarget(keystrokes, target)
-      if candidateBindings.length > 0
-        @keystrokes = []
-        return if @dispatchCommandEvent(event, target, candidateBindings[0].command)
-      target = target.parentElement
+  keyBindingsForKeystrokesAndTarget: (keystrokes, target) ->
+    @keyBindings
+      .filter (binding) ->
+        binding.keystrokes.indexOf(keystrokes) is 0 \
+          and target.webkitMatchesSelector(binding.selector)
+      .sort (a, b) -> a.compare(b)
 
   dispatchCommandEvent: (keyboardEvent, target, command) ->
     return true if command is 'native!'
@@ -122,41 +176,6 @@ class Keymap
       @keyBindingAborted = true
     target.dispatchEvent(commandEvent)
     not commandEvent.keyBindingAborted
-
-  keyBindingsForKeystrokesAndTarget: (keystrokes, target) ->
-    @keyBindings
-      .filter (binding) ->
-        binding.keystrokes.indexOf(keystrokes) is 0 \
-          and target.webkitMatchesSelector(binding.selector)
-      .sort (a, b) -> a.compare(b)
-
-  # Public: Get the key bindings for a given command and optional target.
-  #
-  # params - An {Object} whose keys constrain the binding search:
-  #   :command - A {String} representing the name of a command, such as
-  #     'editor:backspace'
-  #   :target - An optional DOM element constraining the search. If this
-  #     parameter is supplied, the call will only return bindings that can be
-  #     invoked by a KeyboardEvent originating from the target element.
-  findKeyBindings: (params={}) ->
-    {command, target} = params
-
-    bindings = @keyBindings
-
-    if command?
-      bindings = bindings.filter (binding) -> binding.command is command
-
-    if target?
-      candidateBindings = bindings
-      bindings = []
-      element = target
-      while element? and element isnt document
-        matchingBindings = candidateBindings
-          .filter (binding) -> element.webkitMatchesSelector(binding.selector)
-          .sort (a, b) -> a.compare(b)
-        bindings.push(matchingBindings...)
-        element = element.parentElement
-    bindings
 
   # Public: Translate a keydown event to a keystroke string.
   #
