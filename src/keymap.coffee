@@ -367,15 +367,20 @@ class Keymap
   keyBindingsForCommand: (command) ->
     @findKeyBindings({command})
 
-  # Deprecated: Use {::findKeyBindings} with the 'command' and 'target'
-  # params
-  keyBindingsForCommandMatchingElement: (command, target) ->
-    @findKeyBindings({command, target: target[0] ? target})
+  # Deprecated: Use {::findKeyBindings} with the 'keystrokes' param.
+  keyBindingsForKeystroke: (keystroke) ->
+    @findKeyBindings({keystrokes: keystroke})
 
   # Deprecated: Use {::findKeyBindings} with the 'target' param.
   keyBindingsMatchingElement: (target) ->
     @findKeyBindings({target: target[0] ? target})
 
-  # Deprecated: Use {::findKeyBindings} with the 'keystrokes' param.
-  keyBindingsForKeystroke: (keystroke) ->
-    @findKeyBindings({keystrokes: keystroke})
+  # Deprecated: Use {::findKeyBindings} with the 'command' and 'target'
+  # params
+  keyBindingsForCommandMatchingElement: (command, target) ->
+    @findKeyBindings({command, target: target[0] ? target})
+
+  # Deprecated: Use {::findKeyBindings} with the 'keystrokes' and 'target'
+  # params
+  keyBindingsForKeystrokeMatchingElement: (keystrokes, target) ->
+    @findKeyBindings({keystrokes, target: target[0] ? target})
