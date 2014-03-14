@@ -167,9 +167,9 @@ class Keymap
   #     parameter is supplied, the call will only return bindings that can be
   #     invoked by a KeyboardEvent originating from the target element.
   findKeyBindings: (params={}) ->
-    {keystrokes, command, target} = params
+    {keystrokes, command, target, keyBindings} = params
 
-    bindings = @keyBindings
+    bindings = keyBindings ? @keyBindings
 
     if command?
       bindings = bindings.filter (binding) -> binding.command is command
@@ -372,8 +372,8 @@ class Keymap
     @findKeyBindings({keystrokes: keystroke})
 
   # Deprecated: Use {::findKeyBindings} with the 'target' param.
-  keyBindingsMatchingElement: (target) ->
-    @findKeyBindings({target: target[0] ? target})
+  keyBindingsMatchingElement: (target, keyBindings) ->
+    @findKeyBindings({target: target[0] ? target, keyBindings})
 
   # Deprecated: Use {::findKeyBindings} with the 'command' and 'target'
   # params
