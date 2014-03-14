@@ -2,7 +2,7 @@
   "name": "atom-keymap",
   "version": "0.0.0",
   "description": "Atom's DOM-aware keymap module",
-  "main": "./lib/atom-keymap",
+  "main": "./lib/keymap",
   "scripts": {
     "prepublish": "grunt clean lint coffee",
     "test": "grunt test"
@@ -40,6 +40,7 @@
     "rimraf": "^2.2.2",
     "coffee-cache": "^0.2.0",
     "temp": "^0.6.0",
-    "space-pencil": "^0.3.0"
+    "space-pencil": "^0.3.0",
+    "grunt-peg": "^1.2.0"
   }
 }

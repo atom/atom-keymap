@@ -31,11 +31,17 @@ module.exports = (grunt) ->
           stderr: true
           failOnError: true
 
+    peg:
+      keystroke:
+        src: 'src/keystroke.pegjs'
+        dest: 'lib/keystroke.js'
+
   grunt.loadNpmTasks('grunt-contrib-coffee')
+  grunt.loadNpmTasks('grunt-peg')
   grunt.loadNpmTasks('grunt-shell')
   grunt.loadNpmTasks('grunt-coffeelint')
 
   grunt.registerTask 'clean', -> require('rimraf').sync('lib')
   grunt.registerTask('lint', ['coffeelint'])
-  grunt.registerTask('default', ['coffee', 'lint'])
+  grunt.registerTask('default', ['lint', 'coffee', 'peg'])
   grunt.registerTask('test', ['coffee', 'lint', 'shell:test'])
