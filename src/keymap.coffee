@@ -232,10 +232,10 @@ class Keymap
     @pendingPartialMatches = null
 
   # This is called by {::handleKeyboardEvent} when no matching bindings are
-  # found for the currently queued keystrokes. It disables the longest of the
-  # pending partially matching bindings, then replays the queued keyboard
-  # events to allow any bindings with shorter keystroke sequences to be matched
-  # unambiguously.
+  # found for the currently queued keystrokes or by the pending state timeout.
+  # It disables the longest of the pending partially matching bindings, then
+  # replays the queued keyboard events to allow any bindings with shorter
+  # keystroke sequences to be matched unambiguously.
   terminatePendingState: ->
     return unless @pendingPartialMatches? and @queuedKeyboardEvents.length > 0
 
