@@ -146,13 +146,14 @@ class Keymap
       @enterPendingState(partialMatches)
     else
       if exactMatchCandidates.length > 0
-        while target? and target isnt document
-          for exactMatch in @findExactMatches(exactMatchCandidates, target)
+        currentTarget = target
+        while currentTarget? and currentTarget isnt document
+          for exactMatch in @findExactMatches(exactMatchCandidates, currentTarget)
             foundMatch = true
             @clearQueuedKeystrokes()
             @cancelPendingState()
             return if @dispatchCommandEvent(exactMatch.command, target, event)
-          target = target.parentElement
+          currentTarget = currentTarget.parentElement
       unless foundMatch
         @terminatePendingState()
 

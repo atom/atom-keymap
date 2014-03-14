@@ -44,7 +44,7 @@ describe "Keymap", ->
           ".b":
             "ctrl-y": "y-command"
 
-      it "dispatches the command event on the first matching ancestor of the target", ->
+      it "dispatches the matching binding's command event on the keyboard event's target", ->
         keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
         expect(events.length).toBe 1
         expect(events[0].type).toBe 'y-command'
@@ -54,7 +54,7 @@ describe "Keymap", ->
         keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
         expect(events.length).toBe 1
         expect(events[0].type).toBe 'x-command'
-        expect(events[0].target).toBe elementA
+        expect(events[0].target).toBe elementB
 
       it "prevents the default action", ->
         event = keydownEvent('y', ctrl: true, target: elementB)
@@ -75,7 +75,7 @@ describe "Keymap", ->
           expect(events[1].type).toBe 'z-command'
           expect(events[1].target).toBe elementB
           expect(events[2].type).toBe 'y-command'
-          expect(events[2].target).toBe elementA
+          expect(events[2].target).toBe elementB
 
       describe "if the keyboard event's target is document.body", ->
         it "starts matching keybindings at the .defaultTarget", ->
