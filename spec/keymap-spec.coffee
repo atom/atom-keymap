@@ -1,4 +1,6 @@
-{join} = require 'path'
+path = require 'path'
+fs = require 'fs'
+temp = require 'temp'
 {$$} = require 'space-pencil'
 {keydownEvent, appendContent} = require './spec-helper'
 Keymap = require '../src/keymap'
@@ -230,13 +232,73 @@ describe "Keymap", ->
   describe "::loadKeyBindings(path, options)", ->
     describe "if called with a file path", ->
       it "loads the keybindings from the file at the given path", ->
-        keymap.loadKeyBindings(join(__dirname, 'fixtures', 'a.cson'))
+        keymap.loadKeyBindings(path.join(__dirname, 'fixtures', 'a.cson'))
         expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+
+      describe "if called with watch: true", ->
+        [keymapFilePath, subscription] = []
+
+        beforeEach ->
+          keymapFilePath = path.join(temp.mkdirSync('keymap-spec'), "keymap.cson")
+          fs.writeFileSync keymapFilePath, """
+            '.a': 'ctrl-a': 'x'
+          """
+          subscription = keymap.loadKeyBindings(keymapFilePath, watch: true)
+          expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+
+        it "reloads the key bindings when the file at the given path changes", ->
+          fs.writeFileSync keymapFilePath, """
+            '.a': 'ctrl-a': 'y'
+            '.b': 'ctrl-b': 'z'
+          """
+
+          waitsFor 100, (done) ->
+            keymap.once 'reloaded-key-bindings', done
+
+          runs ->
+            expect(keymap.findKeyBindings(command: 'x').length).toBe 0
+            expect(keymap.findKeyBindings(command: 'y').length).toBe 1
+            expect(keymap.findKeyBindings(command: 'z').length).toBe 1
+
+        it "logs a warning and does not reload if there is a problem loading the key bindings file", ->
+          spyOn(console, 'warn')
+          fs.writeFileSync keymapFilePath, "junk1."
+          waitsFor 100, -> console.warn.callCount > 0
+
+          runs ->
+            expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+
+        it "allows the watch to be cancelled via the returned subscription", ->
+          subscription.off()
+          fs.writeFileSync keymapFilePath, """
+            '.a': 'ctrl-a': 'y'
+            '.b': 'ctrl-b': 'z'
+          """
+
+          reloaded = false
+          keymap.on 'reloaded-key-bindings', -> reloaded = true
+
+          waits 100
+          runs ->
+            expect(reloaded).toBe false
+
+          # Can start watching again after cancelling
+          runs ->
+            keymap.loadKeyBindings(keymapFilePath, watch: true)
+            fs.writeFileSync keymapFilePath, """
+              '.a': 'ctrl-a': 'q'
+            """
+
+          waitsFor 100, (done) ->
+            keymap.once 'reloaded-key-bindings', done
+
+          runs ->
+            expect(keymap.findKeyBindings(command: 'q').length).toBe 1
 
     describe "if called with a directory path", ->
       it "loads all platform compatible keybindings files in the directory", ->
         spyOn(keymap, 'getOtherPlatforms').andReturn ['os2']
-        keymap.loadKeyBindings(join(__dirname, 'fixtures'))
+        keymap.loadKeyBindings(path.join(__dirname, 'fixtures'))
         expect(keymap.findKeyBindings(command: 'x').length).toBe 1
         expect(keymap.findKeyBindings(command: 'y').length).toBe 1
         expect(keymap.findKeyBindings(command: 'z').length).toBe 1

@@ -25,7 +25,9 @@
     "clear-cut": "^0.3.0",
     "loophole": "^1.0.0",
     "fs-plus": "^2.0.4",
-    "season": "^1.0.2"
+    "season": "^1.0.2",
+    "pathwatcher": "^0.20.0",
+    "emissary": "^1.1.0"
   },
   "devDependencies": {
     "coffee-script": "^1.7.0",

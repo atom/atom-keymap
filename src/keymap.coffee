@@ -1,6 +1,8 @@
 season = require 'season'
 fs = require 'fs-plus'
 path = require 'path'
+{Emitter} = require 'emissary'
+{File} = require 'pathwatcher'
 KeyBinding = require './key-binding'
 {keystrokeForKeyboardEvent} = require './helpers'
 
@@ -10,12 +12,17 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 
 module.exports =
 class Keymap
+  Emitter.includeInto(this)
+
   constructor: (options) ->
     @defaultTarget = options?.defaultTarget
     @keyBindings = []
     @keystrokes = []
+    @watchSubscriptions = {}
 
   destroy: ->
+    for filePath, subscription of @watchSubscriptions
+      subscription.off()
 
   # Public: Add sets of key bindings grouped by CSS selector.
   #
@@ -40,6 +47,22 @@ class Keymap
           @loadKeyBindings(filePath, checkIfDirectory: false)
     else
       @addKeyBindings(bindingsPath, season.readFileSync(bindingsPath))
+      @watchKeyBindings(bindingsPath) if options?.watch
+
+  watchKeyBindings: (filePath) ->
+    unless @watchSubscriptions[filePath]?.cancelled is false
+      @watchSubscriptions[filePath] =
+        new File(filePath).on 'contents-changed moved removed', =>
+          @reloadKeyBindings(filePath)
+
+  reloadKeyBindings: (filePath) ->
+    try
+      bindings = season.readFileSync(filePath)
+      @removeKeyBindings(filePath)
+      @addKeyBindings(filePath, bindings)
+      @emit 'reloaded-key-bindings', filePath
+    catch error
+      console.warn("Failed to reload key bindings file: #{filePath}", error.stack ? error)
 
   # Determine if the given path should be loaded on this platform. If the
   # filename has the pattern '<platform>.cson' or 'foo.<platform>.cson' and
