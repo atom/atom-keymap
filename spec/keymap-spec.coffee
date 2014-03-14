@@ -27,7 +27,7 @@ describe "Keymap", ->
       beforeEach ->
         elementA = appendContent $$ ->
           @div class: 'a', ->
-            @div class: 'b'
+            @div class: 'b c'
         elementB = elementA.firstChild
 
         events = []
@@ -38,6 +38,8 @@ describe "Keymap", ->
           ".a":
             "ctrl-x": "x-command"
             "ctrl-y": "y-command"
+          ".c":
+            "ctrl-y": "z-command"
           ".b":
             "ctrl-y": "y-command"
 
@@ -62,13 +64,17 @@ describe "Keymap", ->
         it "proceeds directly to the next matching binding", ->
           elementB.addEventListener 'y-command', (e) -> events.push(e); e.abortKeyBinding()
           elementB.addEventListener 'y-command', (e) -> events.push(e) # should never be called
+          elementB.addEventListener 'z-command', (e) -> events.push(e); e.abortKeyBinding()
+
           keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
 
-          expect(events.length).toBe 2
+          expect(events.length).toBe 3
           expect(events[0].type).toBe 'y-command'
           expect(events[0].target).toBe elementB
-          expect(events[1].type).toBe 'y-command'
-          expect(events[1].target).toBe elementA
+          expect(events[1].type).toBe 'z-command'
+          expect(events[1].target).toBe elementB
+          expect(events[2].type).toBe 'y-command'
+          expect(events[2].target).toBe elementA
 
       describe "if the keyboard event's target is document.body", ->
         it "starts matching keybindings at the .defaultTarget", ->

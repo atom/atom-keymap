@@ -133,7 +133,7 @@ class Keymap
     else
       if exactMatchCandidates.length > 0
         while target? and target isnt document
-          if exactMatch = @findExactMatch(exactMatchCandidates, target)
+          for exactMatch in @findExactMatches(exactMatchCandidates, target)
             foundMatch = true
             @clearQueuedKeystrokes()
             @cancelPendingState()
@@ -240,15 +240,14 @@ class Keymap
       target = target.parentElement
     partialMatches.sort (a, b) -> b.keystrokeCount - a.keystrokeCount
 
-  # Find the most specific binding among the given candidates for the given
-  # target. Does not traverse up the target's ancestors. This is used by
-  # {::handleKeyboardEvent} to find a matching binding when there are no
+  # Find the matching bindings among the given candidates for the given target,
+  # ordered by specificity. Does not traverse up the target's ancestors. This is
+  # used by {::handleKeyboardEvent} to find a matching binding when there are no
   # partially-matching bindings.
-  findExactMatch: (exactMatchCandidates, target) ->
+  findExactMatches: (exactMatchCandidates, target) ->
     exactMatches = exactMatchCandidates
       .filter (binding) -> target.webkitMatchesSelector(binding.selector)
       .sort (a, b) -> a.compare(b)
-    exactMatches[0]
 
   clearQueuedKeystrokes: ->
     @queuedKeyboardEvents = []
@@ -333,9 +332,10 @@ class Keymap
   # Deprecated: Handle a jQuery keyboard event. Use {::handleKeyboardEvent} with
   # a raw keyboard event instead.
   handleKeyEvent: (event) ->
-    event = event.originalEvent ? event
-    @handleKeyboardEvent(event)
-    not event.defaultPrevented
+    originalEvent = event.originalEvent ? event
+    Object.defineProperty(originalEvent, 'target', get: -> event.target) unless originalEvent.target?
+    @handleKeyboardEvent(originalEvent)
+    not originalEvent.defaultPrevented
 
   # Deprecated: Translate a jQuery keyboard event to a keystroke string. Use
   # {::keystrokeForKeyboardEvent} with a raw KeyboardEvent instead.
