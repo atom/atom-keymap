@@ -4,7 +4,7 @@ path = require 'path'
 {Emitter} = require 'emissary'
 {File} = require 'pathwatcher'
 KeyBinding = require './key-binding'
-{keystrokeForKeyboardEvent} = require './helpers'
+{keystrokeForKeyboardEvent, isAtomModifier} = require './helpers'
 
 Modifiers = ['Control', 'Alt', 'Shift', 'Meta']
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
@@ -105,8 +105,14 @@ class Keymap
   # If the event's target is `document.body`, it will be treated as if its
   # target is `.defaultTarget` if that property is assigned on the keymap.
   handleKeyboardEvent: (event, replaying) ->
+    keystroke = @keystrokeForKeyboardEvent(event)
+
+    if @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
+      event.preventDefault()
+      return
+
     @queuedKeyboardEvents.push(event)
-    @queuedKeystrokes.push(@keystrokeForKeyboardEvent(event))
+    @queuedKeystrokes.push(keystroke)
     keystrokes = @queuedKeystrokes.join(' ')
 
     target = event.target

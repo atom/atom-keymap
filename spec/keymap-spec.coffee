@@ -196,6 +196,26 @@ fdescribe "Keymap", ->
       keymap.handleKeyboardEvent(keydownEvent('a', ctrl: true, target: element))
       expect(events).toEqual ['command-b']
 
+    it "does not enqueue keydown events consisting only of modifier keys", ->
+      element = $$ -> @div class: 'a'
+      keymap.addKeyBindings 'test',
+        '.a':
+          'ctrl-a ctrl-b': 'command-a'
+          'ctrl': 'command-b'
+      events = []
+      element.addEventListener 'command-a', -> events.push('command-a')
+      element.addEventListener 'command-b', -> events.push('command-b')
+
+      # Simulate keydown events for the modifier key being pressed on its own
+      # prior to the key it is modifying.
+      keymap.handleKeyboardEvent(keydownEvent('ctrl', target: element))
+      keymap.handleKeyboardEvent(keydownEvent('a', ctrl: true, target: element))
+      keymap.handleKeyboardEvent(keydownEvent('ctrl', target: element))
+      keymap.handleKeyboardEvent(keydownEvent('b', ctrl: true, target: element))
+
+      # The first solo modifier matches, but the second one is not enqueued.
+      expect(events).toEqual ['command-b', 'command-a']
+
   describe "::addKeyBindings(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->
       keymap.addKeyBindings 'test', '*': 'ctrl-shift-l': 'a'

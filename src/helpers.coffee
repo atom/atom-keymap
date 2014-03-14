@@ -39,6 +39,9 @@ exports.keystrokeForKeyboardEvent = (event) ->
 exports.calculateSpecificity = (selector) ->
   SpecificityCache[selector] ?= specificity(selector)
 
+exports.isAtomModifier = (key) ->
+  AtomModifiers.has(key)
+
 normalizeKeystroke = (keystroke) ->
   keys = parseKeystroke(keystroke)
   primaryKey = null
