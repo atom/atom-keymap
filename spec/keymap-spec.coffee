@@ -300,7 +300,7 @@ fdescribe "Keymap", ->
             '.b': 'ctrl-b': 'z'
           """
 
-          waitsFor 100, (done) ->
+          waitsFor 300, (done) ->
             keymap.once 'reloaded-key-bindings', done
 
           runs ->
@@ -311,7 +311,7 @@ fdescribe "Keymap", ->
         it "logs a warning and does not reload if there is a problem loading the key bindings file", ->
           spyOn(console, 'warn')
           fs.writeFileSync keymapFilePath, "junk1."
-          waitsFor 100, -> console.warn.callCount > 0
+          waitsFor 300, -> console.warn.callCount > 0
 
           runs ->
             expect(keymap.findKeyBindings(command: 'x').length).toBe 1
@@ -326,7 +326,7 @@ fdescribe "Keymap", ->
           reloaded = false
           keymap.on 'reloaded-key-bindings', -> reloaded = true
 
-          waits 100
+          waits 300
           runs ->
             expect(reloaded).toBe false
 
@@ -337,7 +337,7 @@ fdescribe "Keymap", ->
               '.a': 'ctrl-a': 'q'
             """
 
-          waitsFor 100, (done) ->
+          waitsFor 300, (done) ->
             keymap.once 'reloaded-key-bindings', done
 
           runs ->
