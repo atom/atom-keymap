@@ -186,12 +186,14 @@ class Keymap
   findMatchCandidates: (keystrokes) ->
     partialMatchCandidates = []
     exactMatchCandidates = []
+
+    keystrokesWithSpace = keystrokes + ' '
+
     for binding in @keyBindings when binding.enabled
-      if binding.keystrokes.indexOf(keystrokes) is 0
-        if binding.keystrokes is keystrokes
-          exactMatchCandidates.push(binding)
-        else
-          partialMatchCandidates.push(binding)
+      if binding.keystrokes is keystrokes
+        exactMatchCandidates.push(binding)
+      else if binding.keystrokes.indexOf(keystrokesWithSpace) is 0
+        partialMatchCandidates.push(binding)
     {partialMatchCandidates, exactMatchCandidates}
 
   # Determine which of the given bindings have selectors matching the target or

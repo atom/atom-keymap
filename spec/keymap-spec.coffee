@@ -176,6 +176,20 @@ fdescribe "Keymap", ->
           advanceClock(keymap.partialMatchTimeout)
           expect(events).toEqual ['enter-visual-mode']
 
+    it "only counts entire keystrokes when checking for partial matches", ->
+      element = $$ -> @div class: 'a'
+      keymap.addKeyBindings 'test',
+        '.a':
+          'ctrl-alt-a': 'command-a'
+          'ctrl-a': 'command-b'
+      events = []
+      element.addEventListener 'command-a', -> events.push('command-a')
+      element.addEventListener 'command-b', -> events.push('command-b')
+
+      # Should *only* match ctrl-a, not ctrl-alt-a (can't just use a textual prefix match)
+      keymap.handleKeyboardEvent(keydownEvent('a', ctrl: true, target: element))
+      expect(events).toEqual ['command-b']
+
   describe "::addKeyBindings(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->
       keymap.addKeyBindings 'test', '*': 'ctrl-shift-l': 'a'
