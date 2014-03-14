@@ -246,7 +246,9 @@ class Keymap
   # replays the queued keyboard events to allow any bindings with shorter
   # keystroke sequences to be matched unambiguously.
   terminatePendingState: ->
-    return unless @pendingPartialMatches? and @queuedKeyboardEvents.length > 0
+    unless @pendingPartialMatches?
+      @clearQueuedKeystrokes()
+      return
 
     maxKeystrokeCount = @pendingPartialMatches[0].keystrokeCount
     bindingsToDisable = @pendingPartialMatches.filter (binding) ->binding.keystrokeCount is maxKeystrokeCount
