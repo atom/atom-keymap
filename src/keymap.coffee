@@ -95,7 +95,7 @@ class Keymap
       candidateBindings = @keyBindingsForKeystrokesAndTarget(keystrokes, target)
       if candidateBindings.length > 0
         @keystrokes = []
-        return if @dispatchCommandEvent(event, target, candidateBindings[0].command)
+        return if @dispatchCommandEvent(candidateBindings[0].command, target, event)
       target = target.parentElement
 
   # Public: Get the key bindings for a given command and optional target.
@@ -161,7 +161,7 @@ class Keymap
           and target.webkitMatchesSelector(binding.selector)
       .sort (a, b) -> a.compare(b)
 
-  dispatchCommandEvent: (keyboardEvent, target, command) ->
+  dispatchCommandEvent: (command, target, keyboardEvent) ->
     return true if command is 'native!'
     keyboardEvent.preventDefault()
     commandEvent = document.createEvent("CustomEvent")
