@@ -1,5 +1,5 @@
 path = require 'path'
-fs = require 'fs'
+fs = require 'fs-plus'
 temp = require 'temp'
 {$$} = require 'space-pencil'
 {keydownEvent, appendContent} = require './spec-helper'
@@ -10,6 +10,9 @@ fdescribe "Keymap", ->
 
   beforeEach ->
     keymap = new Keymap
+
+  afterEach ->
+    keymap.destroy()
 
   describe "::handleKeyboardEvent(event)", ->
     describe "when the keystroke matches no bindings", ->
@@ -343,27 +346,57 @@ fdescribe "Keymap", ->
           subscription = keymap.loadKeyBindings(keymapFilePath, watch: true)
           expect(keymap.findKeyBindings(command: 'x').length).toBe 1
 
-        it "reloads the key bindings when the file at the given path changes", ->
-          fs.writeFileSync keymapFilePath, """
-            '.a': 'ctrl-a': 'y'
-            '.b': 'ctrl-b': 'z'
-          """
+        describe "when the file is changed", ->
+          it "reloads the file's key bindings and emits 'reloaded-key-bindings' with the path", ->
+            fs.writeFileSync keymapFilePath, """
+              '.a': 'ctrl-a': 'y'
+              '.b': 'ctrl-b': 'z'
+            """
 
-          waitsFor 300, (done) ->
-            keymap.once 'reloaded-key-bindings', done
+            waitsFor 300, (done) ->
+              keymap.once 'reloaded-key-bindings', (filePath) ->
+                expect(filePath).toBe keymapFilePath
+                done()
 
-          runs ->
-            expect(keymap.findKeyBindings(command: 'x').length).toBe 0
-            expect(keymap.findKeyBindings(command: 'y').length).toBe 1
-            expect(keymap.findKeyBindings(command: 'z').length).toBe 1
+            runs ->
+              expect(keymap.findKeyBindings(command: 'x').length).toBe 0
+              expect(keymap.findKeyBindings(command: 'y').length).toBe 1
+              expect(keymap.findKeyBindings(command: 'z').length).toBe 1
 
-        it "logs a warning and does not reload if there is a problem loading the key bindings file", ->
-          spyOn(console, 'warn')
-          fs.writeFileSync keymapFilePath, "junk1."
-          waitsFor 300, -> console.warn.callCount > 0
+          it "logs a warning and does not reload if there is a problem reloading the file", ->
+            spyOn(console, 'warn')
+            fs.writeFileSync keymapFilePath, "junk1."
+            waitsFor 300, -> console.warn.callCount > 0
 
-          runs ->
-            expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+            runs ->
+              expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+
+        describe "when the file is removed", ->
+          it "removes the bindings and emits 'unloaded-key-bindings' with the path", ->
+            jasmine.unspy(global, 'setTimeout')
+            fs.removeSync(keymapFilePath)
+
+            waitsFor 300, (done) ->
+              keymap.once 'unloaded-key-bindings', (filePath) ->
+                expect(filePath).toBe keymapFilePath
+                done()
+
+            runs ->
+              expect(keymap.findKeyBindings(command: 'x').length).toBe 0
+
+        describe "when the file is moved", ->
+          it "removes the bindings", ->
+            jasmine.unspy(global, 'setTimeout')
+            newFilePath = path.join(temp.mkdirSync('keymap-spec'), "other-guy.cson")
+            fs.moveSync(keymapFilePath, newFilePath)
+
+            waitsFor 300, (done) ->
+              keymap.once 'unloaded-key-bindings', (filePath) ->
+                expect(filePath).toBe keymapFilePath
+                done()
+
+            runs ->
+              expect(keymap.findKeyBindings(command: 'x').length).toBe 0
 
         it "allows the watch to be cancelled via the returned subscription", ->
           subscription.off()

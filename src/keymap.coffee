@@ -177,13 +177,17 @@ class Keymap
   # Called by the path watcher callback to reload a file at the given path. If
   # we can't read the file cleanly, we don't proceed with the reload.
   reloadKeyBindings: (filePath) ->
-    try
-      bindings = season.readFileSync(filePath)
+    if fs.isFileSync(filePath)
+      try
+        bindings = season.readFileSync(filePath)
+        @removeKeyBindings(filePath)
+        @addKeyBindings(filePath, bindings)
+        @emit 'reloaded-key-bindings', filePath
+      catch error
+        console.warn("Failed to reload key bindings file: #{filePath}", error.stack ? error)
+    else
       @removeKeyBindings(filePath)
-      @addKeyBindings(filePath, bindings)
-      @emit 'reloaded-key-bindings', filePath
-    catch error
-      console.warn("Failed to reload key bindings file: #{filePath}", error.stack ? error)
+      @emit 'unloaded-key-bindings', filePath
 
   # Determine if the given path should be loaded on this platform. If the
   # filename has the pattern '<platform>.cson' or 'foo.<platform>.cson' and
