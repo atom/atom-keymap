@@ -54,6 +54,9 @@ class Keymap
   #
   # path - A {String} containing a path to a file or a directory. If the path is
   #   a directory, all files inside it will be loaded.
+  # options - An {Object} containing the following optional keys:
+  #   :watch - If `true`, the keymap will also reload the file at the given path
+  #     whenever it changes. This option cannot be used with directory paths.
   loadKeyBindings: (bindingsPath, options) ->
     checkIfDirectory = options?.checkIfDirectory ? true
     if checkIfDirectory and fs.isDirectorySync(bindingsPath)
@@ -63,6 +66,17 @@ class Keymap
     else
       @addKeyBindings(bindingsPath, season.readFileSync(bindingsPath))
       @watchKeyBindings(bindingsPath) if options?.watch
+
+  # Public: Cause the keymap to reload the key bindings file at the given path
+  # whenever it changes.
+  #
+  # This method doesn't perform the initial load of the key bindings file. If
+  # that's what you're looking for, call {::loadKeyBindings} with `watch: true`.
+  watchKeyBindings: (filePath) ->
+    unless @watchSubscriptions[filePath]?.cancelled is false
+      @watchSubscriptions[filePath] =
+        new File(filePath).on 'contents-changed moved removed', =>
+          @reloadKeyBindings(filePath)
 
   # Public: Remove the key bindings added with {::addKeyBindings} or
   # {::loadKeyBindings}.
@@ -125,12 +139,6 @@ class Keymap
         bindings.push(matchingBindings...)
         element = element.parentElement
     bindings
-
-  watchKeyBindings: (filePath) ->
-    unless @watchSubscriptions[filePath]?.cancelled is false
-      @watchSubscriptions[filePath] =
-        new File(filePath).on 'contents-changed moved removed', =>
-          @reloadKeyBindings(filePath)
 
   reloadKeyBindings: (filePath) ->
     try
