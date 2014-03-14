@@ -31,7 +31,10 @@ exports.keystrokeForKeyboardEvent = (event) ->
     # Don't push 'shift' when modifying symbolic characters like '{'
     keystroke.push 'shift' unless /^[^A-Za-z]$/.test(key)
     # Only upper case alphabetic characters like 'a'
-    key = key.toUpperCase() if /^[^a-z]$/.test(key)
+    key = key.toUpperCase() if /^[a-z]$/.test(key)
+  else
+    key = key.toLowerCase() if /^[A-Z]$/.test(key)
+
   keystroke.push 'cmd' if event.metaKey
   keystroke.push(key) if key?
   keystroke.join('-')
@@ -47,7 +50,7 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, target}={}) ->
   bubbles = true
   cancelable = true
   view = null
-  key = key.toUpperCase() if /^[a-z]$/.test(key) and shift
+  key = key.toUpperCase() if /^[a-z]$/.test(key)
   if key.length is 1
     keyIdentifier = "U+#{key.charCodeAt(0).toString(16)}"
   else
