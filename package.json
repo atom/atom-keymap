@@ -4,7 +4,7 @@
   "description": "Atom's DOM-aware keymap module",
   "main": "./lib/keymap",
   "scripts": {
-    "prepublish": "grunt clean lint coffee",
+    "prepublish": "grunt prepublish",
     "test": "grunt test"
   },
   "repository": {
