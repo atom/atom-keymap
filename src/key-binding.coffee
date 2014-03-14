@@ -4,9 +4,12 @@ module.exports =
 class KeyBinding
   @currentIndex: 1
 
+  enabled: true
+
   constructor: (@source, @command, keystrokes, selector) ->
     @keystrokes = normalizeKeystrokes(keystrokes)
     @keystroke = @keystrokes # deprecated property
+    @keystrokeCount = @keystrokes.split(' ').length
     @selector = selector.replace(/!important/g, '')
     @specificity = calculateSpecificity(selector)
     @index = @constructor.currentIndex++

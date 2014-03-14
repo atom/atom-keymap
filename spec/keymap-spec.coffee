@@ -5,7 +5,7 @@ temp = require 'temp'
 {keydownEvent, appendContent} = require './spec-helper'
 Keymap = require '../src/keymap'
 
-describe "Keymap", ->
+fdescribe "Keymap", ->
   keymap = null
 
   beforeEach ->
@@ -25,7 +25,7 @@ describe "Keymap", ->
         elementA = appendContent $$ ->
           @div class: 'a', ->
             @div class: 'b'
-        elementB = elementA.querySelector('.b')
+        elementB = elementA.firstChild
 
         events = []
         elementA.addEventListener 'x-command', (e) -> events.push(e)
@@ -94,7 +94,7 @@ describe "Keymap", ->
         elementA = appendContent $$ ->
           @div class: 'a', ->
             @div class: 'b c d'
-        elementB = elementA.querySelector('.b')
+        elementB = elementA.firstChild
 
         events = []
         elementA.addEventListener 'command-1', ((e) -> events.push(e)), false
@@ -127,6 +127,46 @@ describe "Keymap", ->
           expect(events.length).toBe 1
           expect(events[0].type).toBe 'command-2'
           expect(events[0].target).toBe elementB
+
+    describe "when the keystroke partially matches bindings", ->
+      [workspace, editor, events] = []
+
+      beforeEach ->
+        workspace = appendContent $$ ->
+          @div class: 'workspace', ->
+            @div class: 'editor'
+        editor = workspace.firstChild
+
+        keymap.addKeyBindings 'test',
+          '.workspace': 'v i v a': 'viva!'
+          '.editor': 'v': 'enter-visual-mode'
+          '.editor.visual-mode': 'i w': 'select-inside-word'
+
+        events = []
+        workspace.addEventListener 'viva!', -> events.push('viva!')
+        workspace.addEventListener 'select-inside-word', -> events.push('select-inside-word')
+        workspace.addEventListener 'enter-visual-mode', -> events.push('enter-visual-mode'); editor.classList.add('visual-mode')
+
+      describe "when subsequent keystrokes yield an exact match", ->
+        it "dispatches the command associated with the matched multi-keystroke binding", ->
+          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
+          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymap.handleKeyboardEvent(keydownEvent('a', target: editor))
+          expect(events).toEqual ['viva!']
+
+      describe "when subsequent keystrokes yield no matches", ->
+        it "disables the bindings with the longest keystroke sequences and replays the queued keystrokes", ->
+          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
+          keymap.handleKeyboardEvent(keydownEvent('w', target: editor))
+          expect(events).toEqual ['enter-visual-mode', 'select-inside-word']
+
+          events = []
+          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
+          keymap.handleKeyboardEvent(keydownEvent('k', target: editor))
+          expect(events).toEqual ['enter-visual-mode']
 
   describe "::addKeyBindings(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->

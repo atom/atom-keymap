@@ -14,6 +14,8 @@ module.exports =
 class Keymap
   Emitter.includeInto(this)
 
+  pendingPartialMatches: null
+
   # Public:
   #
   # options - An {Object} with the following optional keys:
@@ -23,7 +25,8 @@ class Keymap
   constructor: (options) ->
     @defaultTarget = options?.defaultTarget
     @keyBindings = []
-    @keystrokes = []
+    @queuedKeyboardEvents = []
+    @queuedKeystrokes = []
     @watchSubscriptions = {}
 
   # Public: Unwatch all watched paths.
@@ -99,18 +102,30 @@ class Keymap
   #
   # If the event's target is `document.body`, it will be treated as if its
   # target is `.defaultTarget` if that property is assigned on the keymap.
-  handleKeyboardEvent: (event) ->
-    @keystrokes.push(@keystrokeForKeyboardEvent(event))
-    keystrokes = @keystrokes.join(' ')
+  handleKeyboardEvent: (event, replaying) ->
+    @queuedKeyboardEvents.push(event)
+    @queuedKeystrokes.push(@keystrokeForKeyboardEvent(event))
+    keystrokes = @queuedKeystrokes.join(' ')
 
     target = event.target
     target = @defaultTarget if event.target is document.body and @defaultTarget?
-    while target? and target isnt document
-      candidateBindings = @keyBindingsForKeystrokesAndTarget(keystrokes, target)
-      if candidateBindings.length > 0
-        @keystrokes = []
-        return if @dispatchCommandEvent(candidateBindings[0].command, target, event)
-      target = target.parentElement
+
+    {partialMatchCandidates, exactMatchCandidates} = @findMatchCandidates(keystrokes)
+    partialMatches = @findPartialMatches(partialMatchCandidates, target)
+
+    if partialMatches.length > 0
+      @pendingPartialMatches = partialMatches
+    else
+      if exactMatchCandidates.length > 0
+        while target? and target isnt document
+          if exactMatch = @findExactMatch(exactMatchCandidates, target)
+            foundMatch = true
+            @clearQueuedKeystrokes()
+            @abortPendingState()
+            return if @dispatchCommandEvent(exactMatch.command, target, event)
+          target = target.parentElement
+      unless foundMatch
+        @terminatePendingState()
 
   # Public: Get the key bindings for a given command and optional target.
   #
@@ -164,12 +179,69 @@ class Keymap
   # For testing purposes
   getOtherPlatforms: -> OtherPlatforms
 
-  keyBindingsForKeystrokesAndTarget: (keystrokes, target) ->
-    @keyBindings
-      .filter (binding) ->
-        binding.keystrokes.indexOf(keystrokes) is 0 \
-          and target.webkitMatchesSelector(binding.selector)
+  # Finds all key bindings whose keystrokes match the given keystrokes. Returns
+  # both partial and exact matches.
+  findMatchCandidates: (keystrokes) ->
+    partialMatchCandidates = []
+    exactMatchCandidates = []
+    for binding in @keyBindings when binding.enabled
+      if binding.keystrokes.indexOf(keystrokes) is 0
+        if binding.keystrokes is keystrokes
+          exactMatchCandidates.push(binding)
+        else
+          partialMatchCandidates.push(binding)
+    {partialMatchCandidates, exactMatchCandidates}
+
+  # Determine which of the given bindings have selectors matching the target or
+  # one of its ancestors. This is used by {::handleKeyboardEvent} to determine
+  # if there are any partial matches for the keyboard event.
+  findPartialMatches: (partialMatchCandidates, target) ->
+    partialMatches = []
+    while partialMatchCandidates.length > 0 and target? and target isnt document
+      partialMatchCandidates = partialMatchCandidates.filter (binding) ->
+        if target.webkitMatchesSelector(binding.selector)
+          partialMatches.push(binding)
+          false
+        else
+          true
+      target = target.parentElement
+    partialMatches.sort (a, b) -> b.keystrokeCount - a.keystrokeCount
+
+  # Find the most specific binding among the given candidates for the given
+  # target. Does not traverse up the target's ancestors. This is used by
+  # {::handleKeyboardEvent} to find a matching binding when there are no
+  # partially-matching bindings.
+  findExactMatch: (exactMatchCandidates, target) ->
+    exactMatches = exactMatchCandidates
+      .filter (binding) -> target.webkitMatchesSelector(binding.selector)
       .sort (a, b) -> a.compare(b)
+    exactMatches[0]
+
+  clearQueuedKeystrokes: ->
+    @queuedKeyboardEvents = []
+    @queuedKeystrokes = []
+
+  abortPendingState: ->
+    @pendingPartialMatches = null
+
+  # This is called by {::handleKeyboardEvent} when no matching bindings are
+  # found for the currently queued keystrokes. It disables the longest of the
+  # pending partially matching bindings, then replays the queued keyboard
+  # events to allow any bindings with shorter keystroke sequences to be matched
+  # unambiguously.
+  terminatePendingState: ->
+    return unless @pendingPartialMatches? and @queuedKeyboardEvents.length > 0
+
+    maxKeystrokeCount = @pendingPartialMatches[0].keystrokeCount
+    bindingsToDisable = @pendingPartialMatches.filter (binding) ->binding.keystrokeCount is maxKeystrokeCount
+    @pendingPartialMatches = null
+
+    eventsToReplay = @queuedKeyboardEvents
+    @clearQueuedKeystrokes()
+
+    binding.enabled = false for binding in bindingsToDisable
+    @handleKeyboardEvent(event, true) for event in eventsToReplay
+    binding.enabled = true for binding in bindingsToDisable
 
   # After we match a binding, we call this method to dispatch a custom event
   # based on the binding's command.
