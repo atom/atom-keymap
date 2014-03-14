@@ -145,6 +145,28 @@ describe "Keymap", ->
       expect(keymap.findKeyBindings(command: 'c')[0].keystrokes).toBe 'ctrl-alt-l'
       expect(keymap.findKeyBindings(command: 'd')[0].keystrokes).toBe 'ctrl-alt--'
 
+  describe "::removeKeyBindings(source)", ->
+    it "removes all bindings originating from the given source", ->
+      keymap.addKeyBindings 'foo',
+        '.a':
+          'ctrl-a': 'x'
+        '.b':
+          'ctrl-b': 'y'
+
+      keymap.addKeyBindings 'bar',
+        '.c':
+          'ctrl-c': 'z'
+
+      expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+      expect(keymap.findKeyBindings(command: 'y').length).toBe 1
+      expect(keymap.findKeyBindings(command: 'z').length).toBe 1
+
+      keymap.removeKeyBindings('bar')
+
+      expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+      expect(keymap.findKeyBindings(command: 'y').length).toBe 1
+      expect(keymap.findKeyBindings(command: 'z').length).toBe 0
+
   describe "::keystrokeForKeyboardEvent(event)", ->
     describe "when no modifiers are pressed", ->
       it "returns a string that identifies the unmodified keystroke", ->

@@ -22,6 +22,9 @@ class Keymap
     for selector, keyBindings of keyBindingsBySelector
       @addKeyBindingsForSelector(source, selector, keyBindings)
 
+  removeKeyBindings: (source) ->
+    @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
+
   addKeyBindingsForSelector: (source, selector, keyBindings) ->
     # Verify selector is valid before registering any bindings
     try
@@ -109,6 +112,10 @@ class Keymap
   # Deprecated: Use {::addKeyBindings} instead.
   add: (source, bindings) ->
     @addKeyBindings(source, bindings)
+
+  # Deprecated: Use {::removeKeyBindings} instead.
+  remove: (source) ->
+    @removeKeyBindings(source)
 
   # Deprecated: Handle a jQuery keyboard event. Use {::handleKeyboardEvent} with
   # a raw keyboard event instead.
