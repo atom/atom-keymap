@@ -30,7 +30,7 @@ class Keymap
     try
       document.body.webkitMatchesSelector(selector.replace(/!important/g, ''))
     catch
-      console.warn("Encountered an invalid selector adding keybindings from '#{source}': '#{selector}'")
+      console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
       return
 
     for keystroke, command of keyBindings
@@ -70,7 +70,7 @@ class Keymap
           and target.webkitMatchesSelector(binding.selector)
       .sort (a, b) -> a.compare(b)
 
-  # Public: Get the keybindings for a given command and optional target.
+  # Public: Get the key bindings for a given command and optional target.
   #
   # params - An {Object} whose keys constrain the binding search:
   #   :command - A {String} representing the name of a command, such as
@@ -129,7 +129,8 @@ class Keymap
   keystrokeStringForEvent: (event) ->
     @keystrokeForKeyboardEvent(event.originalEvent ? event)
 
-  # Deprecated: Use {::addKeyBindings} with a map from selectors to keybindings.
+  # Deprecated: Use {::addKeyBindings} with a map from selectors to key
+  # bindings.
   bindKeys: (source, selector, keyBindings) ->
     @addKeyBindingsForSelector(source, selector, keyBindings)
 
