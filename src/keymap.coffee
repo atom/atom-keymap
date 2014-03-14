@@ -61,7 +61,7 @@ class Keymap
     # Verify selector is valid before registering any bindings
     try
       document.body.webkitMatchesSelector(selector.replace(/!important/g, ''))
-    catch
+    catch e
       console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
       return
 

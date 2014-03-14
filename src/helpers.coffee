@@ -65,7 +65,7 @@ parseKeystroke = (keystroke) ->
   unless parser?
     try
       parser = require './keystroke'
-    catch
+    catch e
       fs ?= require 'fs'
       loophole ?= require 'loophole'
       pegjs ?= require 'pegjs'
