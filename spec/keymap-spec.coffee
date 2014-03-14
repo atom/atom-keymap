@@ -286,7 +286,7 @@ fdescribe "Keymap", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
         expect(keymap.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
 
-  describe "::findKeyBindings({command, target})", ->
+  describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
     beforeEach ->
       elementA = appendContent $$ ->
@@ -315,6 +315,11 @@ fdescribe "Keymap", ->
       it "returns all bindings that can be invoked from the given target", ->
         keystrokes = keymap.findKeyBindings(target: elementB).map((b) -> b.keystrokes)
         expect(keystrokes).toEqual ['ctrl-d', 'ctrl-c', 'ctrl-b', 'ctrl-a']
+
+    describe "when passed keystrokes", ->
+      it "returns all bindings that can be invoked with the given keystrokes", ->
+        keystrokes = keymap.findKeyBindings(keystrokes: 'ctrl-a').map((b) -> b.keystrokes)
+        expect(keystrokes).toEqual ['ctrl-a']
 
     describe "when passed a command and a target", ->
       it "returns all bindings that would invoke the given command from the given target element, ordered by specificity", ->

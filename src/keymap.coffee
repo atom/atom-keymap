@@ -144,18 +144,23 @@ class Keymap
   # Public: Get the key bindings for a given command and optional target.
   #
   # params - An {Object} whose keys constrain the binding search:
+  #   :command - A {String} representing one or more keystrokes, such as
+  #     'ctrl-x ctrl-s'
   #   :command - A {String} representing the name of a command, such as
   #     'editor:backspace'
   #   :target - An optional DOM element constraining the search. If this
   #     parameter is supplied, the call will only return bindings that can be
   #     invoked by a KeyboardEvent originating from the target element.
   findKeyBindings: (params={}) ->
-    {command, target} = params
+    {keystrokes, command, target} = params
 
     bindings = @keyBindings
 
     if command?
       bindings = bindings.filter (binding) -> binding.command is command
+
+    if keystrokes?
+      bindings = bindings.filter (binding) -> binding.keystrokes is keystrokes
 
     if target?
       candidateBindings = bindings
@@ -328,3 +333,7 @@ class Keymap
   # Deprecated: Use {::findKeyBindings} with the 'target' param.
   keyBindingsMatchingElement: (target) ->
     @findKeyBindings({target: target[0] ? target})
+
+  # Deprecated: Use {::findKeyBindings} with the 'keystrokes' param.
+  keyBindingsForKeystroke: (keystroke) ->
+    @findKeyBindings({keystrokes: keystroke})
