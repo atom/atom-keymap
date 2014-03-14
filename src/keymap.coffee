@@ -35,6 +35,12 @@ class Keymap
     for filePath, subscription of @watchSubscriptions
       subscription.off()
 
+  # Public: Get all current key bindings.
+  #
+  # Returns an {Array} of {KeyBinding}s.
+  getKeyBindings: ->
+    @keyBindings.slice()
+
   # Public: Add sets of key bindings grouped by CSS selector.
   #
   # source - A {String} (usually a path) uniquely identifying the given bindings
