@@ -1,7 +1,12 @@
+season = require 'season'
+fs = require 'fs-plus'
+path = require 'path'
 KeyBinding = require './key-binding'
 {keystrokeForKeyboardEvent} = require './helpers'
 
 Modifiers = ['Control', 'Alt', 'Shift', 'Meta']
+Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
+OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 
 module.exports =
 class Keymap
@@ -18,9 +23,36 @@ class Keymap
   #   so they can be removed later.
   # bindings - An {Object} whose top-level keys point at sub-objects mapping
   #   keystroke patterns to commands.
+
   addKeyBindings: (source, keyBindingsBySelector) ->
     for selector, keyBindings of keyBindingsBySelector
       @addKeyBindingsForSelector(source, selector, keyBindings)
+
+  # Public: Load the key bindings from the given path.
+  #
+  # path - A {String} containing a path to a file or a directory. If the path is
+  #   a directory, all files inside it will be loaded.
+  loadKeyBindings: (bindingsPath, options) ->
+    checkIfDirectory = options?.checkIfDirectory ? true
+    if checkIfDirectory and fs.isDirectorySync(bindingsPath)
+      for filePath in fs.listSync(bindingsPath, ['.cson', '.json'])
+        if @filePathMatchesPlatform(filePath)
+          @loadKeyBindings(filePath, checkIfDirectory: false)
+    else
+      @addKeyBindings(bindingsPath, season.readFileSync(bindingsPath))
+
+  # Determine if the given path should be loaded on this platform. If the
+  # filename has the pattern '<platform>.cson' or 'foo.<platform>.cson' and
+  # <platform> does not match the current platform, returns false. Otherwise
+  # returns true.
+  filePathMatchesPlatform: (filePath) ->
+    otherPlatforms = @getOtherPlatforms()
+    for component in path.basename(filePath).split('.')[0...-1]
+      return false if component in otherPlatforms
+    true
+
+  # For testing purposes
+  getOtherPlatforms: -> OtherPlatforms
 
   removeKeyBindings: (source) ->
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
@@ -97,9 +129,6 @@ class Keymap
         bindings.push(matchingBindings...)
         element = element.parentElement
     bindings
-
-  keyBindingsForKeystrokes: (keystrokes) ->
-    @keyBindings.filter (binding) -> binding.keystrokes.indexOf(keystrokes) is 0
 
   # Public: Translate a keydown event to a keystroke string.
   #

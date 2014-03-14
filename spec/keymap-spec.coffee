@@ -1,6 +1,7 @@
+{join} = require 'path'
 {$$} = require 'space-pencil'
-Keymap = require '../src/keymap'
 {keydownEvent, appendContent} = require './spec-helper'
+Keymap = require '../src/keymap'
 
 describe "Keymap", ->
   keymap = null
@@ -225,3 +226,19 @@ describe "Keymap", ->
       it "returns all bindings that would invoke the given command from the given target element, ordered by specificity", ->
         keystrokes = keymap.findKeyBindings(command: 'x', target: elementB).map((b) -> b.keystrokes)
         expect(keystrokes).toEqual ['ctrl-d', 'ctrl-c', 'ctrl-a']
+
+  describe "::loadKeyBindings(path, options)", ->
+    describe "if called with a file path", ->
+      it "loads the keybindings from the file at the given path", ->
+        keymap.loadKeyBindings(join(__dirname, 'fixtures', 'a.cson'))
+        expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+
+    describe "if called with a directory path", ->
+      it "loads all platform compatible keybindings files in the directory", ->
+        spyOn(keymap, 'getOtherPlatforms').andReturn ['os2']
+        keymap.loadKeyBindings(join(__dirname, 'fixtures'))
+        expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+        expect(keymap.findKeyBindings(command: 'y').length).toBe 1
+        expect(keymap.findKeyBindings(command: 'z').length).toBe 1
+        expect(keymap.findKeyBindings(command: 'X').length).toBe 0
+        expect(keymap.findKeyBindings(command: 'Y').length).toBe 0
