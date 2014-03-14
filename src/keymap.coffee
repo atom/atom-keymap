@@ -6,7 +6,6 @@ path = require 'path'
 KeyBinding = require './key-binding'
 {keystrokeForKeyboardEvent, isAtomModifier} = require './helpers'
 
-Modifiers = ['Control', 'Alt', 'Shift', 'Meta']
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 
