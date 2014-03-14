@@ -77,6 +77,11 @@ class Keymap
   # For testing purposes
   getOtherPlatforms: -> OtherPlatforms
 
+  # Public: Remove the key bindings added with {::addKeyBindings} or
+  # {::loadKeyBindings}.
+  #
+  # source - A {String} representing the `source` in a previous call to
+  #   {::addKeyBindings} or the path in {::loadKeyBindings}.
   removeKeyBindings: (source) ->
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
 
