@@ -39,7 +39,16 @@ class Keymap
   #   keystroke patterns to commands.
   addKeyBindings: (source, keyBindingsBySelector) ->
     for selector, keyBindings of keyBindingsBySelector
-      @addKeyBindingsForSelector(source, selector, keyBindings)
+      # Verify selector is valid before registering any bindings
+      try
+        document.body.webkitMatchesSelector(selector.replace(/!important/g, ''))
+      catch e
+        console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
+        return
+
+      for keystroke, command of keyBindings
+        keyBinding = new KeyBinding(source, command, keystroke, selector)
+        @keyBindings.push(keyBinding)
 
   # Public: Load the key bindings from the given path.
   #
@@ -88,18 +97,6 @@ class Keymap
         @keystrokes = []
         return if @dispatchCommandEvent(event, target, candidateBindings[0].command)
       target = target.parentElement
-
-  addKeyBindingsForSelector: (source, selector, keyBindings) ->
-    # Verify selector is valid before registering any bindings
-    try
-      document.body.webkitMatchesSelector(selector.replace(/!important/g, ''))
-    catch e
-      console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
-      return
-
-    for keystroke, command of keyBindings
-      keyBinding = new KeyBinding(source, command, keystroke, selector)
-      @keyBindings.push(keyBinding)
 
   # Public: Get the key bindings for a given command and optional target.
   #
@@ -208,7 +205,9 @@ class Keymap
   # Deprecated: Use {::addKeyBindings} with a map from selectors to key
   # bindings.
   bindKeys: (source, selector, keyBindings) ->
-    @addKeyBindingsForSelector(source, selector, keyBindings)
+    keyBindingsBySelector = {}
+    keyBindingsBySelector[selector] = keyBindings
+    @addKeyBindings(source, keyBindingsBySelector)
 
   # Deprecated: Use {::findKeyBindings} with the 'command' param.
   keyBindingsForCommand: (command) ->
