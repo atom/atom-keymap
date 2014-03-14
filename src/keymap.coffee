@@ -14,7 +14,9 @@ module.exports =
 class Keymap
   Emitter.includeInto(this)
 
+  partialMatchTimeout: 200
   pendingPartialMatches: null
+  pendingStateTimeoutHandle: null
 
   # Public:
   #
@@ -114,14 +116,14 @@ class Keymap
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
     if partialMatches.length > 0
-      @pendingPartialMatches = partialMatches
+      @enterPendingState(partialMatches)
     else
       if exactMatchCandidates.length > 0
         while target? and target isnt document
           if exactMatch = @findExactMatch(exactMatchCandidates, target)
             foundMatch = true
             @clearQueuedKeystrokes()
-            @abortPendingState()
+            @cancelPendingState()
             return if @dispatchCommandEvent(exactMatch.command, target, event)
           target = target.parentElement
       unless foundMatch
@@ -221,7 +223,12 @@ class Keymap
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
 
-  abortPendingState: ->
+  enterPendingState: (@pendingPartialMatches) ->
+    @pendingStateTimeoutHandle = setTimeout(@terminatePendingState.bind(this), @partialMatchTimeout)
+
+  cancelPendingState: ->
+    clearTimeout(@pendingStateTimeoutHandle)
+    @pendingStateTimeout = null
     @pendingPartialMatches = null
 
   # This is called by {::handleKeyboardEvent} when no matching bindings are
@@ -234,9 +241,9 @@ class Keymap
 
     maxKeystrokeCount = @pendingPartialMatches[0].keystrokeCount
     bindingsToDisable = @pendingPartialMatches.filter (binding) ->binding.keystrokeCount is maxKeystrokeCount
-    @pendingPartialMatches = null
-
     eventsToReplay = @queuedKeyboardEvents
+
+    @cancelPendingState()
     @clearQueuedKeystrokes()
 
     binding.enabled = false for binding in bindingsToDisable

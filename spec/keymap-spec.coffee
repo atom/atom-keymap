@@ -167,6 +167,14 @@ fdescribe "Keymap", ->
           keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
           keymap.handleKeyboardEvent(keydownEvent('k', target: editor))
           expect(events).toEqual ['enter-visual-mode']
+          expect(clearTimeout).toHaveBeenCalled()
+
+      describe "when there are no subsequent keystrokes for ::partialMatchTimeout", ->
+        it "disables the bindings with the longest keystroke sequences and replays the queued keystrokes", ->
+          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          expect(events).toEqual []
+          advanceClock(keymap.partialMatchTimeout)
+          expect(events).toEqual ['enter-visual-mode']
 
   describe "::addKeyBindings(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->
