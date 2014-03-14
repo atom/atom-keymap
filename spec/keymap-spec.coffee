@@ -198,9 +198,7 @@ fdescribe "Keymap", ->
 
     it "does not enqueue keydown events consisting only of modifier keys", ->
       element = $$ -> @div class: 'a'
-      keymap.addKeyBindings 'test',
-        '.a':
-          'ctrl-a ctrl-b': 'command'
+      keymap.addKeyBindings 'test', '.a': 'ctrl-a ctrl-b': 'command'
       events = []
       element.addEventListener 'command', -> events.push('command')
 
@@ -211,6 +209,15 @@ fdescribe "Keymap", ->
       keymap.handleKeyboardEvent(keydownEvent('ctrl', target: element))
       keymap.handleKeyboardEvent(keydownEvent('b', ctrl: true, target: element))
 
+      expect(events).toEqual ['command']
+
+    it "allows solo modifier-keys to be bound", ->
+      element = $$ -> @div class: 'a'
+      keymap.addKeyBindings 'test', '.a': 'ctrl': 'command'
+      events = []
+      element.addEventListener 'command', -> events.push('command')
+
+      keymap.handleKeyboardEvent(keydownEvent('ctrl', target: element))
       expect(events).toEqual ['command']
 
   describe "::addKeyBindings(source, bindings)", ->
