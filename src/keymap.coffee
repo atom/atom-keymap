@@ -140,6 +140,8 @@ class Keymap
         element = element.parentElement
     bindings
 
+  # Called by the path watcher callback to reload a file at the given path. If
+  # we can't read the file cleanly, we don't proceed with the reload.
   reloadKeyBindings: (filePath) ->
     try
       bindings = season.readFileSync(filePath)
@@ -169,6 +171,8 @@ class Keymap
           and target.webkitMatchesSelector(binding.selector)
       .sort (a, b) -> a.compare(b)
 
+  # After we match a binding, we call this method to dispatch a custom event
+  # based on the binding's command.
   dispatchCommandEvent: (command, target, keyboardEvent) ->
     return true if command is 'native!'
     keyboardEvent.preventDefault()
