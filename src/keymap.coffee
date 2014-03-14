@@ -4,6 +4,7 @@ path = require 'path'
 {Emitter} = require 'emissary'
 {File} = require 'pathwatcher'
 KeyBinding = require './key-binding'
+CommandEvent = require './command-event'
 {keystrokeForKeyboardEvent, isAtomModifier} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
@@ -287,15 +288,31 @@ class Keymap
   dispatchCommandEvent: (command, target, keyboardEvent) ->
     return true if command is 'native!'
     keyboardEvent.preventDefault()
-    commandEvent = document.createEvent("CustomEvent")
-    commandEvent.initCustomEvent(command, bubbles = true, cancelable = true)
+
+    # Here we use prototype chain injection to add CommandEvent methods to this
+    # custom event to support aborting key bindings and simulated bubbling for
+    # detached targets.
+    commandEvent = new CustomEvent(command, bubbles: true, cancelable: true)
+    commandEvent.__proto__ = CommandEvent::
     commandEvent.originalEvent = keyboardEvent
-    commandEvent.keyBindingAborted = false
-    commandEvent.abortKeyBinding = ->
-      @stopImmediatePropagation()
-      @keyBindingAborted = true
-    target.dispatchEvent(commandEvent)
+
+    if document.contains(target)
+      target.dispatchEvent(commandEvent)
+    else
+      @simulateBubblingOnDetachedTarget(target, commandEvent)
+
     not commandEvent.keyBindingAborted
+
+  # Chromium does not bubble events dispatched on detached targets, which makes
+  # testing a pain in the ass. This method simulates bubbling manually.
+  simulateBubblingOnDetachedTarget: (target, commandEvent) ->
+    Object.defineProperty(commandEvent, 'target', get: -> target)
+    Object.defineProperty(commandEvent, 'currentTarget', get: -> currentTarget)
+    currentTarget = target
+    while currentTarget?
+      currentTarget.dispatchEvent(commandEvent)
+      break if commandEvent.propagationStopped
+      currentTarget = currentTarget.parentElement
 
   # Public: Translate a keydown event to a keystroke string.
   #

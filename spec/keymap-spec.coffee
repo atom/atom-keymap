@@ -223,6 +223,34 @@ describe "Keymap", ->
       keymap.handleKeyboardEvent(keydownEvent('ctrl', target: element))
       expect(events).toEqual ['command']
 
+    it "simulates bubbling if the target is detached", ->
+      elementA = $$ ->
+        @div class: 'a', ->
+          @div class: 'b', ->
+            @div class: 'c'
+      elementB = elementA.firstChild
+      elementC = elementB.firstChild
+
+      keymap.addKeyBindings 'test', '.c': 'x': 'command'
+
+      events = []
+      elementA.addEventListener 'command', -> events.push('a')
+      elementB.addEventListener 'command', (e) ->
+        events.push('b1')
+        e.stopImmediatePropagation()
+      elementB.addEventListener 'command', (e) ->
+        events.push('b2')
+        expect(e.target).toBe elementC
+        expect(e.currentTarget).toBe elementB
+      elementC.addEventListener 'command', (e) ->
+        events.push('c')
+        expect(e.target).toBe elementC
+        expect(e.currentTarget).toBe elementC
+
+      keymap.handleKeyboardEvent(keydownEvent('x', target: elementC))
+
+      expect(events).toEqual ['c', 'b1']
+
   describe "::addKeyBindings(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->
       keymap.addKeyBindings 'test', '*': 'ctrl-shift-l': 'a'
