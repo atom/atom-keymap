@@ -78,7 +78,10 @@ class Keymap
   #   :target - The target element of the event.
   @keydownEvent: (key, options) -> keydownEvent(key, options)
 
+  # Public: The number of milliseconds allowed before pending states caused
+  # by partial matches of multi-keystroke bindings are terminated.
   partialMatchTimeout: 200
+
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
 
