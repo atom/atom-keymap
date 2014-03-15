@@ -162,7 +162,7 @@ class Keymap
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
 
   # Public: Dispatch a custom event associated with the matching key binding for
-  # the given {KeyboardEvent} if one can be found.
+  # the given `KeyboardEvent` if one can be found.
   #
   # If a matching binding is found on the event's target or one of its
   # ancestors, `.preventDefault()` is called on the keyboard event and the
@@ -380,7 +380,7 @@ class Keymap
 
   # Public: Translate a keydown event to a keystroke string.
   #
-  # event - A {KeyboardEvent} of type 'keydown'
+  # event - A `KeyboardEvent` of type 'keydown'
   #
   # Returns a {String} describing the keystroke.
   keystrokeForKeyboardEvent: (event) ->
