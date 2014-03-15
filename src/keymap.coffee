@@ -10,6 +10,56 @@ CommandEvent = require './command-event'
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 
+# Public: Allows commands to be associated with keystrokes in a
+# context-sensitive way. In Atom, you can access a global instance of this
+# object via `atom.keymap`.
+#
+# Key bindings are plain JavaScript objects containing **CSS selectors** as
+# their top level keys, then **keystroke patterns** mapped to commands.
+#
+# ```cson
+# '.workspace':
+#   'ctrl-l': 'package:do-something'
+#   'ctrl-z': 'package:do-something-else'
+# '.mini.editor':
+#   'enter': 'core:confirm'
+# ```
+#
+# When a keystroke sequence matches a binding in a given context, a custom DOM
+# event with a type based on the command is dispatched on the target of the
+# keyboard event.
+#
+# To match a keystroke sequence, the keymap starts at the target element for the
+# keyboard event. It looks for key bindings associated with selectors that match
+# the target element. If multiple match, the most specific is selected. If there
+# is a tie in specificity, the most recently added binding wins. If no bindings
+# are found for the events target, the search is repeated again for the target's
+# parent node and so on recursively until a binding is found or we traverse off
+# the top of the document.
+#
+# When a binding is found, its command event is always dispatched on the
+# original target of the keyboard event, even if the matching element is higher
+# up in the DOM. In addition, `.preventDefault()` is called on the keyboard
+# event to prevent the browser from taking action. `.preventDefault` is only
+# called if a matching binding is found.
+#
+# Command event objects have a non-standard method called `.abortKeyBinding()`.
+# If your command handler is invoked but you programmatically determine that no
+# action can be taken and you want to allow other bindings to be matched, call
+# `.abortKeyBinding()` on the event object. An example of where this is useful
+# is binding snippet expansion to `tab`. If `snippets:expand` is invoked when
+# the cursor does not follow a valid snippet prefix, we abort the binding and
+# allow `tab` to be handled by the default handler, which inserts whitespace.
+#
+# Multi-keystroke bindings are possible. If a sequence of one or more keystrokes
+# *partially* matches a multi-keystroke binding, the keymap enters a pending
+# state. The pending state is terminated on the next keystroke, or after
+# {::partialMatchTimeout} milliseconds has elapsed. When the pending state is
+# terminated via a timeout or a keystroke that leads to no matches, the longest
+# ambiguous bindings that caused the pending state are temporarily disabled and
+# the previous keystrokes are replayed. If there is ambiguity again during the
+# replay, the next longest bindings are disabled and the keystrokes are replayed
+# again.
 module.exports =
 class Keymap
   Emitter.includeInto(this)
