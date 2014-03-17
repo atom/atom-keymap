@@ -185,7 +185,7 @@ describe "Keymap", ->
           expect(events).toEqual ['enter-visual-mode']
           expect(clearTimeout).toHaveBeenCalled()
 
-      describe "when there are no subsequent keystrokes for ::partialMatchTimeout", ->
+      describe "when ::partialMatchTimeout milliseconds elapses before there are additional keystrokes", ->
         it "disables the bindings with the longest keystroke sequences and replays the queued keystrokes", ->
           keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
           expect(events).toEqual []
