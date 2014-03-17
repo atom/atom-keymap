@@ -148,12 +148,15 @@ describe "Keymap", ->
         editor = workspace.firstChild
 
         keymap.addKeyBindings 'test',
-          '.workspace': 'v i v a': 'viva!'
+          '.workspace':
+            'v i v a': 'viva!'
+            'v i v': 'viv'
           '.editor': 'v': 'enter-visual-mode'
           '.editor.visual-mode': 'i w': 'select-inside-word'
 
         events = []
         workspace.addEventListener 'viva!', -> events.push('viva!')
+        workspace.addEventListener 'viv', -> events.push('viv')
         workspace.addEventListener 'select-inside-word', -> events.push('select-inside-word')
         workspace.addEventListener 'enter-visual-mode', -> events.push('enter-visual-mode'); editor.classList.add('visual-mode')
 
@@ -191,6 +194,14 @@ describe "Keymap", ->
           expect(events).toEqual []
           advanceClock(keymap.partialMatchTimeout)
           expect(events).toEqual ['enter-visual-mode']
+
+          events = []
+          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
+          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          expect(events).toEqual []
+          advanceClock(keymap.partialMatchTimeout)
+          expect(events).toEqual ['viv']
 
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'

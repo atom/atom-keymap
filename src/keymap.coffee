@@ -342,8 +342,7 @@ class Keymap
       @clearQueuedKeystrokes()
       return
 
-    maxKeystrokeCount = @pendingPartialMatches[0].keystrokeCount
-    bindingsToDisable = @pendingPartialMatches.filter (binding) ->binding.keystrokeCount is maxKeystrokeCount
+    bindingsToDisable = @pendingPartialMatches
     eventsToReplay = @queuedKeyboardEvents
 
     @cancelPendingState()
