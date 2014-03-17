@@ -82,17 +82,20 @@ class Keymap
   # by partial matches of multi-keystroke bindings are terminated.
   partialMatchTimeout: 200
 
+  defaultTarget: null
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
 
   # Public:
   #
-  # options - An {Object} with the following optional keys:
+  # options - An {Object} containing properties to assign to the keymap: You can
+  #   pass custom properties to be used by extension methods. The following
+  #   properties are also supported:
   #   :defaultTarget - This will be used as the target of events whose target
   #     is `document.body` to allow for a catch-all element when nothing is
   #     focused
-  constructor: (options) ->
-    @defaultTarget = options?.defaultTarget
+  constructor: (options={}) ->
+    @[key] = value for key, value of options
     @keyBindings = []
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
