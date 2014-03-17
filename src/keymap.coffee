@@ -1,4 +1,4 @@
-season = require 'season'
+CSON = require 'season'
 fs = require 'fs-plus'
 path = require 'path'
 {Emitter} = require 'emissary'
@@ -261,12 +261,12 @@ class Keymap
   readKeyBindings: (filePath, suppressErrors) ->
     if suppressErrors
       try
-        season.readFileSync(filePath)
+        CSON.readFileSync(filePath)
       catch error
         console.warn("Failed to reload key bindings file: #{filePath}", error.stack ? error)
         undefined
     else
-      season.readFileSync(filePath)
+      CSON.readFileSync(filePath)
 
   # Determine if the given path should be loaded on this platform. If the
   # filename has the pattern '<platform>.cson' or 'foo.<platform>.cson' and
