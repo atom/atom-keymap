@@ -149,12 +149,14 @@ describe "Keymap", ->
 
         keymap.addKeyBindings 'test',
           '.workspace':
+            'd o g': 'dog'
             'v i v a': 'viva!'
             'v i v': 'viv'
           '.editor': 'v': 'enter-visual-mode'
           '.editor.visual-mode': 'i w': 'select-inside-word'
 
         events = []
+        workspace.addEventListener 'dog', -> events.push('dog')
         workspace.addEventListener 'viva!', -> events.push('viva!')
         workspace.addEventListener 'viv', -> events.push('viv')
         workspace.addEventListener 'select-inside-word', -> events.push('select-inside-word')
@@ -188,9 +190,18 @@ describe "Keymap", ->
           expect(events).toEqual ['enter-visual-mode']
           expect(clearTimeout).toHaveBeenCalled()
 
-      describe "when ::partialMatchTimeout milliseconds elapses before there are additional keystrokes", ->
-        it "disables the bindings with the longest keystroke sequences and replays the queued keystrokes", ->
+      describe "when the currently queued keystrokes exactly match at least one binding", ->
+        it "disables partially-matching bindings and replays the queued keystrokes if the ::partialMatchTimeout expires", ->
           keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          expect(events).toEqual []
+          advanceClock(keymap.partialMatchTimeout)
+          expect(events).toEqual ['enter-visual-mode']
+
+          events = []
+          console.log "v"
+          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          console.log "i"
+          keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
           expect(events).toEqual []
           advanceClock(keymap.partialMatchTimeout)
           expect(events).toEqual ['enter-visual-mode']
@@ -202,6 +213,18 @@ describe "Keymap", ->
           expect(events).toEqual []
           advanceClock(keymap.partialMatchTimeout)
           expect(events).toEqual ['viv']
+
+      describe "when the currently queued keystrokes don't exactly match any bindings", ->
+        it "never times out of the pending state", ->
+          keymap.handleKeyboardEvent(keydownEvent('d', target: editor))
+          keymap.handleKeyboardEvent(keydownEvent('o', target: editor))
+
+          advanceClock(keymap.partialMatchTimeout)
+          advanceClock(keymap.partialMatchTimeout)
+
+          expect(events).toEqual []
+          keymap.handleKeyboardEvent(keydownEvent('g', target: editor))
+          expect(events).toEqual ['dog']
 
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'

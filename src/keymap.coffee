@@ -191,27 +191,44 @@ class Keymap
     @queuedKeystrokes.push(keystroke)
     keystrokes = @queuedKeystrokes.join(' ')
 
+    # If the event's target is document.body, assign it to defaultTarget instead
+    # to provide a catch-all element when nothing is focused.
     target = event.target
     target = @defaultTarget if event.target is document.body and @defaultTarget?
 
+    # First screen for any bindings that match the current keystrokes,
+    # regardless of their current selector. Matching strings is cheaper than
+    # matching selectors.
     {partialMatchCandidates, exactMatchCandidates} = @findMatchCandidates(keystrokes)
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
+    # Determine if the current keystrokes match any bindings *exactly*. If we
+    # do find and exact match, the next step depends on whether we have any
+    # partial matches. If we have no partial matches, we dispatch the command
+    # immediately. Otherwise we break and allow ourselves to enter the pending
+    # state with a timeout.
+    if exactMatchCandidates.length > 0
+      currentTarget = target
+      while currentTarget? and currentTarget isnt document
+        for exactMatch in @findExactMatches(exactMatchCandidates, currentTarget)
+          foundMatch = true
+          break if partialMatches.length > 0
+          @clearQueuedKeystrokes()
+          @cancelPendingState()
+          return if @dispatchCommandEvent(exactMatch.command, target, event)
+        currentTarget = currentTarget.parentElement
+
+    # If we're at this point in the method, we either found no matches for the
+    # currently queued keystrokes or we found a match, but we need to enter a
+    # pending state due to partial matches. We only enable the timeout of the
+    # pending state if we found an exact match on this or a previously queued
+    # keystroke.
     if partialMatches.length > 0
       event.preventDefault()
-      @enterPendingState(partialMatches)
+      enableTimeout = foundMatch ? @pendingStateTimeoutHandle?
+      @enterPendingState(partialMatches, enableTimeout)
     else
-      if exactMatchCandidates.length > 0
-        currentTarget = target
-        while currentTarget? and currentTarget isnt document
-          for exactMatch in @findExactMatches(exactMatchCandidates, currentTarget)
-            foundMatch = true
-            @clearQueuedKeystrokes()
-            @cancelPendingState()
-            return if @dispatchCommandEvent(exactMatch.command, target, event)
-          currentTarget = currentTarget.parentElement
-      unless foundMatch
-        @terminatePendingState()
+      @terminatePendingState()
 
   # Public: Get the key bindings for a given command and optional target.
   #
@@ -324,12 +341,15 @@ class Keymap
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
 
-  enterPendingState: (@pendingPartialMatches) ->
-    @pendingStateTimeoutHandle = setTimeout(@terminatePendingState.bind(this), @partialMatchTimeout)
+  enterPendingState: (pendingPartialMatches, enableTimeout) ->
+    @cancelPendingState() if @pendingStateTimeoutHandle?
+    @pendingPartialMatches = pendingPartialMatches
+    if enableTimeout
+      @pendingStateTimeoutHandle = setTimeout(@terminatePendingState.bind(this), @partialMatchTimeout)
 
   cancelPendingState: ->
     clearTimeout(@pendingStateTimeoutHandle)
-    @pendingStateTimeout = null
+    @pendingStateTimeoutHandle = null
     @pendingPartialMatches = null
 
   # This is called by {::handleKeyboardEvent} when no matching bindings are
