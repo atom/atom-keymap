@@ -80,7 +80,7 @@ class Keymap
 
   # Public: The number of milliseconds allowed before pending states caused
   # by partial matches of multi-keystroke bindings are terminated.
-  partialMatchTimeout: 200
+  partialMatchTimeout: 1000
 
   defaultTarget: null
   pendingPartialMatches: null
