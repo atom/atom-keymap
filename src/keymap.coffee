@@ -211,6 +211,8 @@ class Keymap
       currentTarget = target
       while currentTarget? and currentTarget isnt document
         for exactMatch in @findExactMatches(exactMatchCandidates, currentTarget)
+          return if exactMatch.command is 'native!'
+
           foundMatch = true
           break if partialMatches.length > 0
           @clearQueuedKeystrokes()
@@ -375,7 +377,6 @@ class Keymap
   # After we match a binding, we call this method to dispatch a custom event
   # based on the binding's command.
   dispatchCommandEvent: (command, target, keyboardEvent) ->
-    return true if command is 'native!'
     keyboardEvent.preventDefault()
 
     # Here we use prototype chain injection to add CommandEvent methods to this

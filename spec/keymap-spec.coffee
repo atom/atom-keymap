@@ -212,6 +212,13 @@ describe "Keymap", ->
           advanceClock(keymap.partialMatchTimeout)
           expect(events).toEqual ['viv']
 
+        it "does not enter a pending state or prevent the default action if the matching binding's command is 'native!'", ->
+          keymap.addKeyBindings 'test', '.workspace': 'v': 'native!'
+          event = keydownEvent('v', target: editor)
+          keymap.handleKeyboardEvent(event)
+          expect(event.defaultPrevented).toBe false
+          expect(global.setTimeout).not.toHaveBeenCalled()
+
       describe "when the currently queued keystrokes don't exactly match any bindings", ->
         it "never times out of the pending state", ->
           keymap.handleKeyboardEvent(keydownEvent('d', target: editor))
