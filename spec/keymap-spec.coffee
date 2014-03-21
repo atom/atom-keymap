@@ -198,9 +198,7 @@ describe "Keymap", ->
           expect(events).toEqual ['enter-visual-mode']
 
           events = []
-          console.log "v"
           keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
-          console.log "i"
           keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
           expect(events).toEqual []
           advanceClock(keymap.partialMatchTimeout)
