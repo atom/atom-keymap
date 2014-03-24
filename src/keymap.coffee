@@ -211,7 +211,9 @@ class Keymap
       currentTarget = target
       while currentTarget? and currentTarget isnt document
         for exactMatch in @findExactMatches(exactMatchCandidates, currentTarget)
-          return if exactMatch.command is 'native!'
+          if exactMatch.command is 'native!'
+            @clearQueuedKeystrokes()
+            return
 
           foundMatch = true
           break if partialMatches.length > 0

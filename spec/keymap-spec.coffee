@@ -218,6 +218,7 @@ describe "Keymap", ->
           keymap.handleKeyboardEvent(event)
           expect(event.defaultPrevented).toBe false
           expect(global.setTimeout).not.toHaveBeenCalled()
+          expect(keymap.queuedKeyboardEvents.length).toBe 0
 
       describe "when the currently queued keystrokes don't exactly match any bindings", ->
         it "never times out of the pending state", ->
