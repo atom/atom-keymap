@@ -10,9 +10,13 @@ AtomModifiers.add(modifier) for modifier in ['Ctrl', 'Alt', 'Shift', 'Meta']
 SpecificityCache = {}
 
 exports.normalizeKeystrokes = (keystrokes) ->
-  keystrokes.split(/\s+/)
-    .map (keystroke) -> normalizeKeystroke(keystroke)
-    .join(' ')
+  normalizedKeystrokes = []
+  for keystroke in keystrokes.split(/\s+/)
+    if normalizedKeystroke = normalizeKeystroke(keystroke)
+      normalizedKeystrokes.push(normalizedKeystroke)
+    else
+      return false
+  normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event) ->
   unless BrowserModifiers.has(event.keyIdentifier)
@@ -66,11 +70,16 @@ normalizeKeystroke = (keystroke) ->
   primaryKey = null
   modifiers = new Set
 
-  for key in keys
+  for key, i in keys
+
     if AtomModifiers.has(key)
       modifiers.add(key)
     else
-      primaryKey = key
+      # only the last key can be a non-modifier
+      if i is keys.length - 1
+        primaryKey = key
+      else
+        return false
 
   modifiers.add('shift') if /^[A-Z]$/.test(primaryKey)
   primaryKey = primaryKey.toUpperCase() if modifiers.has('shift') and /^[a-z]$/.test(primaryKey)
