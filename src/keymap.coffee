@@ -237,7 +237,7 @@ class Keymap
   # Public: Get the key bindings for a given command and optional target.
   #
   # params - An {Object} whose keys constrain the binding search:
-  #   :command - A {String} representing one or more keystrokes, such as
+  #   :keystrokes - A {String} representing one or more keystrokes, such as
   #     'ctrl-x ctrl-s'
   #   :command - A {String} representing the name of a command, such as
   #     'editor:backspace'
