@@ -1,3 +1,4 @@
+_ = require "underscore-plus"
 CSON = require 'season'
 fs = require 'fs-plus'
 path = require 'path'
@@ -210,7 +211,8 @@ class Keymap
     if exactMatchCandidates.length > 0
       currentTarget = target
       while currentTarget? and currentTarget isnt document
-        for exactMatch in @findExactMatches(exactMatchCandidates, currentTarget)
+        exactMatches = @findExactMatches(exactMatchCandidates, currentTarget)
+        for exactMatch in exactMatches
           if exactMatch.command is 'native!'
             @clearQueuedKeystrokes()
             return
@@ -219,7 +221,9 @@ class Keymap
           break if partialMatches.length > 0
           @clearQueuedKeystrokes()
           @cancelPendingState()
-          return if @dispatchCommandEvent(exactMatch.command, target, event)
+          if @dispatchCommandEvent(exactMatch.command, target, event)
+            @emit 'key-binding-matched', exactMatch, _.without(exactMatches, exactMatch)
+            return
         currentTarget = currentTarget.parentElement
 
     # If we're at this point in the method, we either found no matches for the

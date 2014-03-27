@@ -509,3 +509,23 @@ describe "Keymap", ->
         expect(keymap.findKeyBindings(command: 'z').length).toBe 1
         expect(keymap.findKeyBindings(command: 'X').length).toBe 0
         expect(keymap.findKeyBindings(command: 'Y').length).toBe 0
+
+  describe "events", ->
+    it "emits `key-binding-matched` when a key binding matches an event", ->
+      handler = jasmine.createSpy('key-binding-matched handler')
+      keymap.on 'key-binding-matched handler', handler
+      keymap.addKeyBindings "test",
+        "body":
+          "ctrl-x": "used-command"
+        "*":
+          "ctrl-x": "unused-command"
+        ".not-in-the-dom":
+          "ctrl-x": "unmached-command"
+
+      keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
+      expect(handler).toHaveBeenCalled()
+
+      [usedKeybinding, unusedKeyBindings] = handler.argsForCall[0]
+      expect(usedKeybinding.command).toBe 'used-command'
+      expect(unusedKeyBindings).toHaveLength 1
+      expect(unusedKeyBindings[0].command).toBe 'unused-command'
