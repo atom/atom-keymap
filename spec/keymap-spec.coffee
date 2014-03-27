@@ -529,3 +529,19 @@ describe "Keymap", ->
       expect(usedKeybinding.command).toBe 'used-command'
       expect(unusedKeyBindings).toHaveLength 1
       expect(unusedKeyBindings[0].command).toBe 'unused-command'
+
+    it "emits `parital-key-bindings-matched` when a key binding partially matches an event", ->
+      handler = jasmine.createSpy('parital-key-bindings-matched handler')
+      keymap.on 'parital-key-bindings-matched', handler
+      keymap.addKeyBindings "test",
+        "body":
+          "ctrl-x 1": "command-1"
+          "ctrl-x 2": "command-2"
+
+      keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
+      expect(handler).toHaveBeenCalled()
+
+      [keystroke, keyBindings] = handler.argsForCall[0]
+      expect(keystroke).toBe 'ctrl-x'
+      expect(keyBindings).toHaveLength 2
+      expect(keyBindings.map ({command}) -> command).toEqual ['command-1', 'command-2']

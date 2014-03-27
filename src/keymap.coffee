@@ -235,6 +235,7 @@ class Keymap
       event.preventDefault()
       enableTimeout = foundMatch ? @pendingStateTimeoutHandle?
       @enterPendingState(partialMatches, enableTimeout)
+      @emit 'parital-key-bindings-matched', keystrokes, partialMatches
     else
       @terminatePendingState()
 
