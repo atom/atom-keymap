@@ -39,6 +39,9 @@ exports.keystrokeForKeyboardEvent = (event) ->
   else
     key = key.toLowerCase() if /^[A-Z]$/.test(key)
 
+  # If only a modifier was pressed, null out the key
+  key = null if key in ["meta", "shift", "control", "alt"]
+
   keystroke.push 'cmd' if event.metaKey
   keystroke.push(key) if key?
   keystroke.join('-')
