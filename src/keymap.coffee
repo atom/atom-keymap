@@ -237,6 +237,7 @@ class Keymap
       @enterPendingState(partialMatches, enableTimeout)
       @emit 'parital-key-bindings-matched', keystrokes, partialMatches
     else
+      @emit 'no-key-bindings-matched', keystrokes
       @terminatePendingState()
 
   # Public: Get the key bindings for a given command and optional target.

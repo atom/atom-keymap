@@ -545,3 +545,16 @@ describe "Keymap", ->
       expect(keystroke).toBe 'ctrl-x'
       expect(keyBindings).toHaveLength 2
       expect(keyBindings.map ({command}) -> command).toEqual ['command-1', 'command-2']
+
+    it "emits `no-key-bindings-matched` when no key bindings match the event", ->
+      handler = jasmine.createSpy('no-key-bindings-matched handler')
+      keymap.on 'no-key-bindings-matched', handler
+      keymap.addKeyBindings "test",
+        "body":
+          "ctrl-x": "command"
+
+      keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: document.body))
+      expect(handler).toHaveBeenCalled()
+
+      [keystroke] = handler.argsForCall[0]
+      expect(keystroke).toBe 'ctrl-y'
