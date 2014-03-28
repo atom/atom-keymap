@@ -511,9 +511,9 @@ describe "Keymap", ->
         expect(keymap.findKeyBindings(command: 'Y').length).toBe 0
 
   describe "events", ->
-    it "emits `key-binding-matched` when a key binding matches an event", ->
-      handler = jasmine.createSpy('key-binding-matched')
-      keymap.on 'key-binding-matched', handler
+    it "emits `matched` when a key binding matches an event", ->
+      handler = jasmine.createSpy('matched')
+      keymap.on 'matched', handler
       keymap.addKeyBindings "test",
         "body":
           "ctrl-x": "used-command"
@@ -530,9 +530,9 @@ describe "Keymap", ->
       expect(unusedKeyBindings).toHaveLength 1
       expect(unusedKeyBindings[0].command).toBe 'unused-command'
 
-    it "emits `parital-key-bindings-matched` when a key binding partially matches an event", ->
-      handler = jasmine.createSpy('parital-key-bindings-matched handler')
-      keymap.on 'parital-key-bindings-matched', handler
+    it "emits `matched-partially` when a key binding partially matches an event", ->
+      handler = jasmine.createSpy('matched-partially handler')
+      keymap.on 'matched-partially', handler
       keymap.addKeyBindings "test",
         "body":
           "ctrl-x 1": "command-1"
@@ -546,9 +546,9 @@ describe "Keymap", ->
       expect(keyBindings).toHaveLength 2
       expect(keyBindings.map ({command}) -> command).toEqual ['command-1', 'command-2']
 
-    it "emits `no-key-binding-matched` when no key bindings match the event", ->
-      handler = jasmine.createSpy('no-key-binding-matched handler')
-      keymap.on 'no-key-binding-matched', handler
+    it "emits `match-failed` when no key bindings match the event", ->
+      handler = jasmine.createSpy('match-failed handler')
+      keymap.on 'match-failed', handler
       keymap.addKeyBindings "test",
         "body":
           "ctrl-x": "command"

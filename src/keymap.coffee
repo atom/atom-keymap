@@ -222,7 +222,7 @@ class Keymap
           @clearQueuedKeystrokes()
           @cancelPendingState()
           if @dispatchCommandEvent(exactMatch.command, target, event)
-            @emit 'key-binding-matched', exactMatch, _.without(exactMatches, exactMatch)
+            @emit 'matched', exactMatch, _.without(exactMatches, exactMatch)
             return
         currentTarget = currentTarget.parentElement
 
@@ -235,9 +235,9 @@ class Keymap
       event.preventDefault()
       enableTimeout = foundMatch ? @pendingStateTimeoutHandle?
       @enterPendingState(partialMatches, enableTimeout)
-      @emit 'parital-key-bindings-matched', keystrokes, partialMatches
+      @emit 'matched-partially', keystrokes, partialMatches
     else
-      @emit 'no-key-binding-matched', keystrokes
+      @emit 'match-failed', keystrokes
       @terminatePendingState()
 
   # Public: Get the key bindings for a given command and optional target.
