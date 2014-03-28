@@ -512,8 +512,8 @@ describe "Keymap", ->
 
   describe "events", ->
     it "emits `key-binding-matched` when a key binding matches an event", ->
-      handler = jasmine.createSpy('key-binding-matched handler')
-      keymap.on 'key-binding-matched handler', handler
+      handler = jasmine.createSpy('key-binding-matched')
+      keymap.on 'key-binding-matched', handler
       keymap.addKeyBindings "test",
         "body":
           "ctrl-x": "used-command"
