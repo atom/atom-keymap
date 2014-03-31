@@ -139,7 +139,7 @@ class KeymapManager
   #   so they can be removed later.
   # bindings - An {Object} whose top-level keys point at sub-objects mapping
   #   keystroke patterns to commands.
-  addKeyBindings: (source, keyBindingsBySelector) ->
+  addKeymap: (source, keyBindingsBySelector) ->
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
       try
@@ -162,33 +162,33 @@ class KeymapManager
   # options - An {Object} containing the following optional keys:
   #   :watch - If `true`, the keymap will also reload the file at the given path
   #     whenever it changes. This option cannot be used with directory paths.
-  loadKeyBindings: (bindingsPath, options) ->
+  loadKeymap: (bindingsPath, options) ->
     checkIfDirectory = options?.checkIfDirectory ? true
     if checkIfDirectory and fs.isDirectorySync(bindingsPath)
       for filePath in fs.listSync(bindingsPath, ['.cson', '.json'])
         if @filePathMatchesPlatform(filePath)
-          @loadKeyBindings(filePath, checkIfDirectory: false)
+          @loadKeymap(filePath, checkIfDirectory: false)
     else
-      @addKeyBindings(bindingsPath, @readKeyBindings(bindingsPath, options?.suppressErrors))
-      @watchKeyBindings(bindingsPath) if options?.watch
+      @addKeymap(bindingsPath, @readKeymap(bindingsPath, options?.suppressErrors))
+      @watchKeymap(bindingsPath) if options?.watch
 
   # Public: Cause the keymap to reload the key bindings file at the given path
   # whenever it changes.
   #
   # This method doesn't perform the initial load of the key bindings file. If
-  # that's what you're looking for, call {::loadKeyBindings} with `watch: true`.
-  watchKeyBindings: (filePath) ->
+  # that's what you're looking for, call {::loadKeymap} with `watch: true`.
+  watchKeymap: (filePath) ->
     unless @watchSubscriptions[filePath]?.cancelled is false
       @watchSubscriptions[filePath] =
         new File(filePath).on 'contents-changed moved removed', =>
-          @reloadKeyBindings(filePath)
+          @reloadKeymap(filePath)
 
-  # Public: Remove the key bindings added with {::addKeyBindings} or
-  # {::loadKeyBindings}.
+  # Public: Remove the key bindings added with {::addKeymap} or
+  # {::loadKeymap}.
   #
   # source - A {String} representing the `source` in a previous call to
-  #   {::addKeyBindings} or the path in {::loadKeyBindings}.
-  removeKeyBindings: (source) ->
+  #   {::addKeymap} or the path in {::loadKeymap}.
+  removeKeymap: (source) ->
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
 
   # Public: Dispatch a custom event associated with the matching key binding for
@@ -298,17 +298,17 @@ class KeymapManager
 
   # Called by the path watcher callback to reload a file at the given path. If
   # we can't read the file cleanly, we don't proceed with the reload.
-  reloadKeyBindings: (filePath) ->
+  reloadKeymap: (filePath) ->
     if fs.isFileSync(filePath)
-      if bindings = @readKeyBindings(filePath, true)
-        @removeKeyBindings(filePath)
-        @addKeyBindings(filePath, bindings)
+      if bindings = @readKeymap(filePath, true)
+        @removeKeymap(filePath)
+        @addKeymap(filePath, bindings)
         @emit 'reloaded-key-bindings', filePath
     else
-      @removeKeyBindings(filePath)
+      @removeKeymap(filePath)
       @emit 'unloaded-key-bindings', filePath
 
-  readKeyBindings: (filePath, suppressErrors) ->
+  readKeymap: (filePath, suppressErrors) ->
     if suppressErrors
       try
         CSON.readFileSync(filePath)
@@ -443,13 +443,13 @@ class KeymapManager
   keystrokeForKeyboardEvent: (event) ->
     keystrokeForKeyboardEvent(event)
 
-  # Deprecated: Use {::addKeyBindings} instead.
+  # Deprecated: Use {::addKeymap} instead.
   add: (source, bindings) ->
-    @addKeyBindings(source, bindings)
+    @addKeymap(source, bindings)
 
-  # Deprecated: Use {::removeKeyBindings} instead.
+  # Deprecated: Use {::removeKeymap} instead.
   remove: (source) ->
-    @removeKeyBindings(source)
+    @removeKeymap(source)
 
   # Deprecated: Handle a jQuery keyboard event. Use {::handleKeyboardEvent} with
   # a raw keyboard event instead.
@@ -464,12 +464,12 @@ class KeymapManager
   keystrokeStringForEvent: (event) ->
     @keystrokeForKeyboardEvent(event.originalEvent ? event)
 
-  # Deprecated: Use {::addKeyBindings} with a map from selectors to key
+  # Deprecated: Use {::addKeymap} with a map from selectors to key
   # bindings.
   bindKeys: (source, selector, keyBindings) ->
     keyBindingsBySelector = {}
     keyBindingsBySelector[selector] = keyBindings
-    @addKeyBindings(source, keyBindingsBySelector)
+    @addKeymap(source, keyBindingsBySelector)
 
   # Deprecated: Use {::findKeyBindings} with the 'command' param.
   keyBindingsForCommand: (command) ->
