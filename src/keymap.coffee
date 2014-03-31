@@ -66,18 +66,20 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 #
 # * `matched` -
 #      Emitted when keystrokes match a binding.
-#      * usedBinding - The {KeyBinding} that was used
-#      * unusedBindings - Other {KeyBinding}s that matched, but weren't used
+#      * keystrokes - The keystroke {String} that matched the binding
+#      * binding - The {KeyBinding} that was used
+#      * keyboardEventTarget - The target element of the keyboard event
 #
 # * `matched-partially` -
 #      Emitted when keystrokes partially match one or more bindings.
-#      * keystrokes - The keystroke {String} that triggered the partial
-#        binding match
-#      * keyBindings - The {KeyBinding}s that partially matched
+#      * keystrokes - The keystroke {String} that partially match some bindings
+#      * partiallyMatchedBindings - The {KeyBinding}s that partially matched
+#      * keyboardEventTarget - The target element of the keyboard event
 #
 # * `match-failed` -
 #      Emitted when keystrokes don't match any bindings.
 #      * keystrokes - The keystroke {String} that matched no bindings
+#      * keyboardEventTarget - The target element of the keyboard event
 
 module.exports =
 class Keymap
@@ -243,7 +245,7 @@ class Keymap
           @clearQueuedKeystrokes()
           @cancelPendingState()
           if @dispatchCommandEvent(exactMatch.command, target, event)
-            @emit 'matched', exactMatch, _.without(exactMatches, exactMatch)
+            @emit 'matched', {keystrokes, binding:exactMatch , keyboardEventTarget: target}
             return
         currentTarget = currentTarget.parentElement
 
@@ -256,9 +258,9 @@ class Keymap
       event.preventDefault()
       enableTimeout = foundMatch ? @pendingStateTimeoutHandle?
       @enterPendingState(partialMatches, enableTimeout)
-      @emit 'matched-partially', keystrokes, partialMatches
+      @emit 'matched-partially', {keystrokes, partiallyMatchedBindings: partialMatches, keyboardEventTarget: target}
     else
-      @emit 'match-failed', keystrokes
+      @emit 'match-failed', {keystrokes, keyboardEventTarget: target}
       @terminatePendingState()
 
   # Public: Get the key bindings for a given command and optional target.
