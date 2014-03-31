@@ -518,3 +518,54 @@ describe "Keymap", ->
         expect(keymap.findKeyBindings(command: 'z').length).toBe 1
         expect(keymap.findKeyBindings(command: 'X').length).toBe 0
         expect(keymap.findKeyBindings(command: 'Y').length).toBe 0
+
+  describe "events", ->
+    it "emits `matched` when a key binding matches an event", ->
+      handler = jasmine.createSpy('matched')
+      keymap.on 'matched', handler
+      keymap.addKeyBindings "test",
+        "body":
+          "ctrl-x": "used-command"
+        "*":
+          "ctrl-x": "unused-command"
+        ".not-in-the-dom":
+          "ctrl-x": "unmached-command"
+
+      keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
+      expect(handler).toHaveBeenCalled()
+
+      {keystrokes, binding, keyboardEventTarget} = handler.argsForCall[0][0]
+      expect(keystrokes).toBe 'ctrl-x'
+      expect(binding.command).toBe 'used-command'
+      expect(keyboardEventTarget).toBe document.body
+
+    it "emits `matched-partially` when a key binding partially matches an event", ->
+      handler = jasmine.createSpy('matched-partially handler')
+      keymap.on 'matched-partially', handler
+      keymap.addKeyBindings "test",
+        "body":
+          "ctrl-x 1": "command-1"
+          "ctrl-x 2": "command-2"
+
+      keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
+      expect(handler).toHaveBeenCalled()
+
+      {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.argsForCall[0][0]
+      expect(keystrokes).toBe 'ctrl-x'
+      expect(partiallyMatchedBindings).toHaveLength 2
+      expect(partiallyMatchedBindings.map ({command}) -> command).toEqual ['command-1', 'command-2']
+      expect(keyboardEventTarget).toBe document.body
+
+    it "emits `match-failed` when no key bindings match the event", ->
+      handler = jasmine.createSpy('match-failed handler')
+      keymap.on 'match-failed', handler
+      keymap.addKeyBindings "test",
+        "body":
+          "ctrl-x": "command"
+
+      keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: document.body))
+      expect(handler).toHaveBeenCalled()
+
+      {keystrokes, keyboardEventTarget} = handler.argsForCall[0][0]
+      expect(keystrokes).toBe 'ctrl-y'
+      expect(keyboardEventTarget).toBe document.body

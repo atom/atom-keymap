@@ -1,3 +1,4 @@
+_ = require "underscore-plus"
 CSON = require 'season'
 fs = require 'fs-plus'
 path = require 'path'
@@ -60,6 +61,26 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 # the previous keystrokes are replayed. If there is ambiguity again during the
 # replay, the next longest bindings are disabled and the keystrokes are replayed
 # again.
+#
+# ## Events
+#
+# * `matched` -
+#      Emitted when keystrokes match a binding.
+#      * keystrokes - The keystroke {String} that matched the binding
+#      * binding - The {KeyBinding} that was used
+#      * keyboardEventTarget - The target element of the keyboard event
+#
+# * `matched-partially` -
+#      Emitted when keystrokes partially match one or more bindings.
+#      * keystrokes - The keystroke {String} that partially match some bindings
+#      * partiallyMatchedBindings - The {KeyBinding}s that partially matched
+#      * keyboardEventTarget - The target element of the keyboard event
+#
+# * `match-failed` -
+#      Emitted when keystrokes don't match any bindings.
+#      * keystrokes - The keystroke {String} that matched no bindings
+#      * keyboardEventTarget - The target element of the keyboard event
+
 module.exports =
 class Keymap
   Emitter.includeInto(this)
@@ -213,7 +234,8 @@ class Keymap
     if exactMatchCandidates.length > 0
       currentTarget = target
       while currentTarget? and currentTarget isnt document
-        for exactMatch in @findExactMatches(exactMatchCandidates, currentTarget)
+        exactMatches = @findExactMatches(exactMatchCandidates, currentTarget)
+        for exactMatch in exactMatches
           if exactMatch.command is 'native!'
             @clearQueuedKeystrokes()
             return
@@ -222,7 +244,9 @@ class Keymap
           break if partialMatches.length > 0
           @clearQueuedKeystrokes()
           @cancelPendingState()
-          return if @dispatchCommandEvent(exactMatch.command, target, event)
+          if @dispatchCommandEvent(exactMatch.command, target, event)
+            @emit 'matched', {keystrokes, binding:exactMatch , keyboardEventTarget: target}
+            return
         currentTarget = currentTarget.parentElement
 
     # If we're at this point in the method, we either found no matches for the
@@ -234,13 +258,15 @@ class Keymap
       event.preventDefault()
       enableTimeout = foundMatch ? @pendingStateTimeoutHandle?
       @enterPendingState(partialMatches, enableTimeout)
+      @emit 'matched-partially', {keystrokes, partiallyMatchedBindings: partialMatches, keyboardEventTarget: target}
     else
+      @emit 'match-failed', {keystrokes, keyboardEventTarget: target}
       @terminatePendingState()
 
   # Public: Get the key bindings for a given command and optional target.
   #
   # params - An {Object} whose keys constrain the binding search:
-  #   :command - A {String} representing one or more keystrokes, such as
+  #   :keystrokes - A {String} representing one or more keystrokes, such as
   #     'ctrl-x ctrl-s'
   #   :command - A {String} representing the name of a command, such as
   #     'editor:backspace'
