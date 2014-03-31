@@ -61,6 +61,24 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 # the previous keystrokes are replayed. If there is ambiguity again during the
 # replay, the next longest bindings are disabled and the keystrokes are replayed
 # again.
+#
+# ## Events
+#
+# * `matched` -
+#      Emitted when keystrokes match a binding.
+#      * usedBinding - The {KeyBinding} that was used
+#      * unusedBindings - Other {KeyBinding}s that matched, but weren't used
+#
+# * `matched-partially` -
+#      Emitted when keystrokes partially match one or more bindings.
+#      * keystrokes - The keystroke {String} that triggered the partial
+#        binding match
+#      * keyBindings - The {KeyBinding}s that partially matched
+#
+# * `match-failed` -
+#      Emitted when keystrokes don't match any bindings.
+#      * keystrokes - The keystroke {String} that matched no bindings
+
 module.exports =
 class Keymap
   Emitter.includeInto(this)
