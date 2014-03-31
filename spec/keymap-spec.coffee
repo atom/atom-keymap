@@ -534,10 +534,10 @@ describe "Keymap", ->
       keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
 
-      [usedKeybinding, unusedKeyBindings] = handler.argsForCall[0]
-      expect(usedKeybinding.command).toBe 'used-command'
-      expect(unusedKeyBindings).toHaveLength 1
-      expect(unusedKeyBindings[0].command).toBe 'unused-command'
+      {keystrokes, binding, keyboardEventTarget} = handler.argsForCall[0][0]
+      expect(keystrokes).toBe 'ctrl-x'
+      expect(binding.command).toBe 'used-command'
+      expect(keyboardEventTarget).toBe document.body
 
     it "emits `matched-partially` when a key binding partially matches an event", ->
       handler = jasmine.createSpy('matched-partially handler')
@@ -550,10 +550,11 @@ describe "Keymap", ->
       keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
 
-      [keystroke, keyBindings] = handler.argsForCall[0]
-      expect(keystroke).toBe 'ctrl-x'
-      expect(keyBindings).toHaveLength 2
-      expect(keyBindings.map ({command}) -> command).toEqual ['command-1', 'command-2']
+      {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.argsForCall[0][0]
+      expect(keystrokes).toBe 'ctrl-x'
+      expect(partiallyMatchedBindings).toHaveLength 2
+      expect(partiallyMatchedBindings.map ({command}) -> command).toEqual ['command-1', 'command-2']
+      expect(keyboardEventTarget).toBe document.body
 
     it "emits `match-failed` when no key bindings match the event", ->
       handler = jasmine.createSpy('match-failed handler')
@@ -565,5 +566,6 @@ describe "Keymap", ->
       keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
 
-      [keystroke] = handler.argsForCall[0]
-      expect(keystroke).toBe 'ctrl-y'
+      {keystrokes, keyboardEventTarget} = handler.argsForCall[0][0]
+      expect(keystrokes).toBe 'ctrl-y'
+      expect(keyboardEventTarget).toBe document.body
