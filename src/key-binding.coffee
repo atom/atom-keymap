@@ -1,4 +1,4 @@
-{normalizeKeystrokes, calculateSpecificity} = require './helpers'
+{calculateSpecificity} = require './helpers'
 
 module.exports =
 class KeyBinding
@@ -6,8 +6,7 @@ class KeyBinding
 
   enabled: true
 
-  constructor: (@source, @command, keystrokes, selector) ->
-    @keystrokes = normalizeKeystrokes(keystrokes)
+  constructor: (@source, @command, @keystrokes, selector) ->
     @keystroke = @keystrokes # deprecated property
     @keystrokeCount = @keystrokes.split(' ').length
     @selector = selector.replace(/!important/g, '')

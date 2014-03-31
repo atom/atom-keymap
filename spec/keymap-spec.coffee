@@ -318,6 +318,15 @@ describe "Keymap", ->
       expect(keymap.findKeyBindings(command: 'c')[0].keystrokes).toBe 'ctrl-alt-l'
       expect(keymap.findKeyBindings(command: 'd')[0].keystrokes).toBe 'ctrl-alt--'
 
+    it "rejects bindings with unknown modifier keys and logs a warning to the console", ->
+      spyOn(console, 'warn')
+      keymap.addKeyBindings 'test', '*': 'meta-shift-A': 'a'
+      expect(console.warn).toHaveBeenCalled()
+
+      event = keydownEvent('A', shift: true, target: document.body)
+      keymap.handleKeyboardEvent(event)
+      expect(event.defaultPrevented).toBe false
+
   describe "::removeKeyBindings(source)", ->
     it "removes all bindings originating from the given source", ->
       keymap.addKeyBindings 'foo',

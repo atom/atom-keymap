@@ -6,7 +6,7 @@ path = require 'path'
 {File} = require 'pathwatcher'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
-{keystrokeForKeyboardEvent, isAtomModifier, keydownEvent} = require './helpers'
+{normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -146,9 +146,12 @@ class Keymap
         console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
         return
 
-      for keystroke, command of keyBindings
-        keyBinding = new KeyBinding(source, command, keystroke, selector)
-        @keyBindings.push(keyBinding)
+      for keystrokes, command of keyBindings
+        if normalizedKeystrokes = normalizeKeystrokes(keystrokes)
+          keyBinding = new KeyBinding(source, command, normalizedKeystrokes, selector)
+          @keyBindings.push(keyBinding)
+        else
+          console.warn "Invalid keystroke sequence for binding: `#{keystrokes}: #{command}` in #{source}"
 
   # Public: Load the key bindings from the given path.
   #
