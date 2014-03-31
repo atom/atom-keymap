@@ -3,23 +3,23 @@ fs = require 'fs-plus'
 temp = require 'temp'
 {$$} = require 'space-pencil'
 {appendContent} = require './spec-helper'
-Keymap = require '../src/keymap'
-{keydownEvent} = Keymap
+KeymapManager = require '../src/keymap-manager'
+{keydownEvent} = KeymapManager
 
-describe "Keymap", ->
-  keymap = null
+describe "KeymapManager", ->
+  keymapManager = null
 
   beforeEach ->
-    keymap = new Keymap
+    keymapManager = new KeymapManager
 
   afterEach ->
-    keymap.destroy()
+    keymapManager.destroy()
 
   describe "::handleKeyboardEvent(event)", ->
     describe "when the keystroke matches no bindings", ->
       it "does not prevent the event's default action", ->
         event = keydownEvent('q')
-        keymap.handleKeyboardEvent(event)
+        keymapManager.handleKeyboardEvent(event)
         expect(event.defaultPrevented).toBe false
 
     describe "when the keystroke matches one binding on any particular element", ->
@@ -35,7 +35,7 @@ describe "Keymap", ->
         elementA.addEventListener 'x-command', (e) -> events.push(e)
         elementA.addEventListener 'y-command', (e) -> events.push(e)
 
-        keymap.addKeyBindings "test",
+        keymapManager.addKeyBindings "test",
           ".a":
             "ctrl-x": "x-command"
             "ctrl-y": "y-command"
@@ -45,20 +45,20 @@ describe "Keymap", ->
             "ctrl-y": "y-command"
 
       it "dispatches the matching binding's command event on the keyboard event's target", ->
-        keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
+        keymapManager.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
         expect(events.length).toBe 1
         expect(events[0].type).toBe 'y-command'
         expect(events[0].target).toBe elementB
 
         events = []
-        keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+        keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
         expect(events.length).toBe 1
         expect(events[0].type).toBe 'x-command'
         expect(events[0].target).toBe elementB
 
       it "prevents the default action", ->
         event = keydownEvent('y', ctrl: true, target: elementB)
-        keymap.handleKeyboardEvent(event)
+        keymapManager.handleKeyboardEvent(event)
         expect(event.defaultPrevented).toBe true
 
       describe "if .abortKeyBinding() is called on the command event", ->
@@ -67,7 +67,7 @@ describe "Keymap", ->
           elementB.addEventListener 'y-command', (e) -> events.push(e) # should never be called
           elementB.addEventListener 'z-command', (e) -> events.push(e); e.abortKeyBinding()
 
-          keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
+          keymapManager.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
 
           expect(events.length).toBe 3
           expect(events[0].type).toBe 'y-command'
@@ -79,21 +79,21 @@ describe "Keymap", ->
 
       describe "if the keyboard event's target is document.body", ->
         it "starts matching keybindings at the .defaultTarget", ->
-          keymap.defaultTarget = elementA
-          keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: document.body))
+          keymapManager.defaultTarget = elementA
+          keymapManager.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: document.body))
           expect(events.length).toBe 1
           expect(events[0].type).toBe 'y-command'
           expect(events[0].target).toBe elementA
 
       describe "if matching binding's command is 'native!'", ->
         it "terminates without preventing the browser's default action", ->
-          keymap.addKeyBindings "test",
+          keymapManager.addKeyBindings "test",
             ".b":
               "ctrl-y": "native!"
           elementA.addEventListener 'native!', (e) -> events.push(e)
 
           event = keydownEvent('y', ctrl: true, target: elementB)
-          keymap.handleKeyboardEvent(event)
+          keymapManager.handleKeyboardEvent(event)
           expect(events).toEqual []
           expect(event.defaultPrevented).toBe false
 
@@ -112,28 +112,28 @@ describe "Keymap", ->
 
       describe "when the bindings have selectors with different specificity", ->
         beforeEach ->
-          keymap.addKeyBindings "test",
+          keymapManager.addKeyBindings "test",
             ".b.c":
               "ctrl-x": "command-1"
             ".b":
               "ctrl-x": "command-2"
 
         it "dispatches the command associated with the most specific binding", ->
-          keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+          keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
           expect(events.length).toBe 1
           expect(events[0].type).toBe 'command-1'
           expect(events[0].target).toBe elementB
 
       describe "when the bindings have selectors with the same specificity", ->
         beforeEach ->
-          keymap.addKeyBindings "test",
+          keymapManager.addKeyBindings "test",
             ".b.c":
               "ctrl-x": "command-1"
             ".c.d":
               "ctrl-x": "command-2"
 
         it "dispatches the command associated with the most recently added binding", ->
-          keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+          keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
           expect(events.length).toBe 1
           expect(events[0].type).toBe 'command-2'
           expect(events[0].target).toBe elementB
@@ -147,7 +147,7 @@ describe "Keymap", ->
             @div class: 'editor'
         editor = workspace.firstChild
 
-        keymap.addKeyBindings 'test',
+        keymapManager.addKeyBindings 'test',
           '.workspace':
             'd o g': 'dog'
             'v i v a': 'viva!'
@@ -164,26 +164,26 @@ describe "Keymap", ->
 
       describe "when subsequent keystrokes yield an exact match", ->
         it "dispatches the command associated with the matched multi-keystroke binding", ->
-          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('a', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('a', target: editor))
           expect(events).toEqual ['viva!']
 
       describe "when subsequent keystrokes yield no matches", ->
         it "disables the bindings with the longest keystroke sequences and replays the queued keystrokes", ->
-          keymap.handleKeyboardEvent(vEvent = keydownEvent('v', target: editor))
-          keymap.handleKeyboardEvent(iEvent = keydownEvent('i', target: editor))
-          keymap.handleKeyboardEvent(wEvent = keydownEvent('w', target: editor))
+          keymapManager.handleKeyboardEvent(vEvent = keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(iEvent = keydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(wEvent = keydownEvent('w', target: editor))
           expect(vEvent.defaultPrevented).toBe true
           expect(iEvent.defaultPrevented).toBe true
           expect(wEvent.defaultPrevented).toBe true
           expect(events).toEqual ['enter-visual-mode', 'select-inside-word']
 
           events = []
-          keymap.handleKeyboardEvent(vEvent = keydownEvent('v', target: editor))
-          keymap.handleKeyboardEvent(iEvent = keydownEvent('i', target: editor))
-          keymap.handleKeyboardEvent(kEvent = keydownEvent('k', target: editor))
+          keymapManager.handleKeyboardEvent(vEvent = keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(iEvent = keydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(kEvent = keydownEvent('k', target: editor))
           expect(vEvent.defaultPrevented).toBe true
           expect(iEvent.defaultPrevented).toBe true
           expect(kEvent.defaultPrevented).toBe false
@@ -192,49 +192,49 @@ describe "Keymap", ->
 
       describe "when the currently queued keystrokes exactly match at least one binding", ->
         it "disables partially-matching bindings and replays the queued keystrokes if the ::partialMatchTimeout expires", ->
-          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
           expect(events).toEqual []
-          advanceClock(keymap.partialMatchTimeout)
+          advanceClock(keymapManager.partialMatchTimeout)
           expect(events).toEqual ['enter-visual-mode']
 
           events = []
-          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('i', target: editor))
           expect(events).toEqual []
-          advanceClock(keymap.partialMatchTimeout)
+          advanceClock(keymapManager.partialMatchTimeout)
           expect(events).toEqual ['enter-visual-mode']
 
           events = []
-          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('i', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
           expect(events).toEqual []
-          advanceClock(keymap.partialMatchTimeout)
+          advanceClock(keymapManager.partialMatchTimeout)
           expect(events).toEqual ['viv']
 
         it "does not enter a pending state or prevent the default action if the matching binding's command is 'native!'", ->
-          keymap.addKeyBindings 'test', '.workspace': 'v': 'native!'
+          keymapManager.addKeyBindings 'test', '.workspace': 'v': 'native!'
           event = keydownEvent('v', target: editor)
-          keymap.handleKeyboardEvent(event)
+          keymapManager.handleKeyboardEvent(event)
           expect(event.defaultPrevented).toBe false
           expect(global.setTimeout).not.toHaveBeenCalled()
-          expect(keymap.queuedKeyboardEvents.length).toBe 0
+          expect(keymapManager.queuedKeyboardEvents.length).toBe 0
 
       describe "when the currently queued keystrokes don't exactly match any bindings", ->
         it "never times out of the pending state", ->
-          keymap.handleKeyboardEvent(keydownEvent('d', target: editor))
-          keymap.handleKeyboardEvent(keydownEvent('o', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('d', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('o', target: editor))
 
-          advanceClock(keymap.partialMatchTimeout)
-          advanceClock(keymap.partialMatchTimeout)
+          advanceClock(keymapManager.partialMatchTimeout)
+          advanceClock(keymapManager.partialMatchTimeout)
 
           expect(events).toEqual []
-          keymap.handleKeyboardEvent(keydownEvent('g', target: editor))
+          keymapManager.handleKeyboardEvent(keydownEvent('g', target: editor))
           expect(events).toEqual ['dog']
 
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
-      keymap.addKeyBindings 'test',
+      keymapManager.addKeyBindings 'test',
         '.a':
           'ctrl-alt-a': 'command-a'
           'ctrl-a': 'command-b'
@@ -243,31 +243,31 @@ describe "Keymap", ->
       element.addEventListener 'command-b', -> events.push('command-b')
 
       # Should *only* match ctrl-a, not ctrl-alt-a (can't just use a textual prefix match)
-      keymap.handleKeyboardEvent(keydownEvent('a', ctrl: true, target: element))
+      keymapManager.handleKeyboardEvent(keydownEvent('a', ctrl: true, target: element))
       expect(events).toEqual ['command-b']
 
     it "does not enqueue keydown events consisting only of modifier keys", ->
       element = $$ -> @div class: 'a'
-      keymap.addKeyBindings 'test', '.a': 'ctrl-a ctrl-b': 'command'
+      keymapManager.addKeyBindings 'test', '.a': 'ctrl-a ctrl-b': 'command'
       events = []
       element.addEventListener 'command', -> events.push('command')
 
       # Simulate keydown events for the modifier key being pressed on its own
       # prior to the key it is modifying.
-      keymap.handleKeyboardEvent(keydownEvent('ctrl', target: element))
-      keymap.handleKeyboardEvent(keydownEvent('a', ctrl: true, target: element))
-      keymap.handleKeyboardEvent(keydownEvent('ctrl', target: element))
-      keymap.handleKeyboardEvent(keydownEvent('b', ctrl: true, target: element))
+      keymapManager.handleKeyboardEvent(keydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(keydownEvent('a', ctrl: true, target: element))
+      keymapManager.handleKeyboardEvent(keydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(keydownEvent('b', ctrl: true, target: element))
 
       expect(events).toEqual ['command']
 
     it "allows solo modifier-keys to be bound", ->
       element = $$ -> @div class: 'a'
-      keymap.addKeyBindings 'test', '.a': 'ctrl': 'command'
+      keymapManager.addKeyBindings 'test', '.a': 'ctrl': 'command'
       events = []
       element.addEventListener 'command', -> events.push('command')
 
-      keymap.handleKeyboardEvent(keydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(keydownEvent('ctrl', target: element))
       expect(events).toEqual ['command']
 
     it "simulates bubbling if the target is detached", ->
@@ -278,7 +278,7 @@ describe "Keymap", ->
       elementB = elementA.firstChild
       elementC = elementB.firstChild
 
-      keymap.addKeyBindings 'test', '.c': 'x': 'command'
+      keymapManager.addKeyBindings 'test', '.c': 'x': 'command'
 
       events = []
       elementA.addEventListener 'command', -> events.push('a')
@@ -294,84 +294,84 @@ describe "Keymap", ->
         expect(e.target).toBe elementC
         expect(e.currentTarget).toBe elementC
 
-      keymap.handleKeyboardEvent(keydownEvent('x', target: elementC))
+      keymapManager.handleKeyboardEvent(keydownEvent('x', target: elementC))
 
       expect(events).toEqual ['c', 'b1']
 
   describe "::addKeyBindings(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->
-      keymap.addKeyBindings 'test', '*': 'ctrl-shift-l': 'a'
-      keymap.addKeyBindings 'test', '*': 'ctrl-shift-L': 'b'
-      keymap.addKeyBindings 'test', '*': 'ctrl-L': 'c'
-      expect(keymap.findKeyBindings(command: 'a')[0].keystrokes).toBe 'ctrl-shift-L'
-      expect(keymap.findKeyBindings(command: 'b')[0].keystrokes).toBe 'ctrl-shift-L'
-      expect(keymap.findKeyBindings(command: 'c')[0].keystrokes).toBe 'ctrl-shift-L'
+      keymapManager.addKeyBindings 'test', '*': 'ctrl-shift-l': 'a'
+      keymapManager.addKeyBindings 'test', '*': 'ctrl-shift-L': 'b'
+      keymapManager.addKeyBindings 'test', '*': 'ctrl-L': 'c'
+      expect(keymapManager.findKeyBindings(command: 'a')[0].keystrokes).toBe 'ctrl-shift-L'
+      expect(keymapManager.findKeyBindings(command: 'b')[0].keystrokes).toBe 'ctrl-shift-L'
+      expect(keymapManager.findKeyBindings(command: 'c')[0].keystrokes).toBe 'ctrl-shift-L'
 
     it "normalizes the order of modifier keys based on the Apple interface guidelines", ->
-      keymap.addKeyBindings 'test', '*': 'alt-cmd-ctrl-shift-l': 'a'
-      keymap.addKeyBindings 'test', '*': 'shift-ctrl-l': 'b'
-      keymap.addKeyBindings 'test', '*': 'alt-ctrl-l': 'c'
-      keymap.addKeyBindings 'test', '*': 'ctrl-alt--': 'd'
+      keymapManager.addKeyBindings 'test', '*': 'alt-cmd-ctrl-shift-l': 'a'
+      keymapManager.addKeyBindings 'test', '*': 'shift-ctrl-l': 'b'
+      keymapManager.addKeyBindings 'test', '*': 'alt-ctrl-l': 'c'
+      keymapManager.addKeyBindings 'test', '*': 'ctrl-alt--': 'd'
 
-      expect(keymap.findKeyBindings(command: 'a')[0].keystrokes).toBe 'ctrl-alt-shift-cmd-L'
-      expect(keymap.findKeyBindings(command: 'b')[0].keystrokes).toBe 'ctrl-shift-L'
-      expect(keymap.findKeyBindings(command: 'c')[0].keystrokes).toBe 'ctrl-alt-l'
-      expect(keymap.findKeyBindings(command: 'd')[0].keystrokes).toBe 'ctrl-alt--'
+      expect(keymapManager.findKeyBindings(command: 'a')[0].keystrokes).toBe 'ctrl-alt-shift-cmd-L'
+      expect(keymapManager.findKeyBindings(command: 'b')[0].keystrokes).toBe 'ctrl-shift-L'
+      expect(keymapManager.findKeyBindings(command: 'c')[0].keystrokes).toBe 'ctrl-alt-l'
+      expect(keymapManager.findKeyBindings(command: 'd')[0].keystrokes).toBe 'ctrl-alt--'
 
     it "rejects bindings with unknown modifier keys and logs a warning to the console", ->
       spyOn(console, 'warn')
-      keymap.addKeyBindings 'test', '*': 'meta-shift-A': 'a'
+      keymapManager.addKeyBindings 'test', '*': 'meta-shift-A': 'a'
       expect(console.warn).toHaveBeenCalled()
 
       event = keydownEvent('A', shift: true, target: document.body)
-      keymap.handleKeyboardEvent(event)
+      keymapManager.handleKeyboardEvent(event)
       expect(event.defaultPrevented).toBe false
 
   describe "::removeKeyBindings(source)", ->
     it "removes all bindings originating from the given source", ->
-      keymap.addKeyBindings 'foo',
+      keymapManager.addKeyBindings 'foo',
         '.a':
           'ctrl-a': 'x'
         '.b':
           'ctrl-b': 'y'
 
-      keymap.addKeyBindings 'bar',
+      keymapManager.addKeyBindings 'bar',
         '.c':
           'ctrl-c': 'z'
 
-      expect(keymap.findKeyBindings(command: 'x').length).toBe 1
-      expect(keymap.findKeyBindings(command: 'y').length).toBe 1
-      expect(keymap.findKeyBindings(command: 'z').length).toBe 1
+      expect(keymapManager.findKeyBindings(command: 'x').length).toBe 1
+      expect(keymapManager.findKeyBindings(command: 'y').length).toBe 1
+      expect(keymapManager.findKeyBindings(command: 'z').length).toBe 1
 
-      keymap.removeKeyBindings('bar')
+      keymapManager.removeKeyBindings('bar')
 
-      expect(keymap.findKeyBindings(command: 'x').length).toBe 1
-      expect(keymap.findKeyBindings(command: 'y').length).toBe 1
-      expect(keymap.findKeyBindings(command: 'z').length).toBe 0
+      expect(keymapManager.findKeyBindings(command: 'x').length).toBe 1
+      expect(keymapManager.findKeyBindings(command: 'y').length).toBe 1
+      expect(keymapManager.findKeyBindings(command: 'z').length).toBe 0
 
   describe "::keystrokeForKeyboardEvent(event)", ->
     describe "when no modifiers are pressed", ->
       it "returns a string that identifies the unmodified keystroke", ->
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('a'))).toBe 'a'
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('['))).toBe '['
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('*'))).toBe '*'
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('left'))).toBe 'left'
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('\b'))).toBe 'backspace'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a'))).toBe 'a'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('['))).toBe '['
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('*'))).toBe '*'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left'))).toBe 'left'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('\b'))).toBe 'backspace'
 
     describe "when a modifier key is combined with a non-modifier key", ->
       it "returns a string that identifies the modified keystroke", ->
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('a', alt: true))).toBe 'alt-a'
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('[', cmd: true))).toBe 'cmd-['
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('*', ctrl: true))).toBe 'ctrl-*'
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('left', ctrl: true, alt: true, cmd: true))).toBe 'ctrl-alt-cmd-left'
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('A', shift: true))).toBe 'shift-A'
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('{', shift: true))).toBe '{'
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('left', shift: true))).toBe 'shift-left'
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('Left', shift: true))).toBe 'shift-left'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a', alt: true))).toBe 'alt-a'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('[', cmd: true))).toBe 'cmd-['
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('*', ctrl: true))).toBe 'ctrl-*'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left', ctrl: true, alt: true, cmd: true))).toBe 'ctrl-alt-cmd-left'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('A', shift: true))).toBe 'shift-A'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('{', shift: true))).toBe '{'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left', shift: true))).toBe 'shift-left'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('Left', shift: true))).toBe 'shift-left'
 
     describe "when a non-English keyboard language is used", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
-        expect(keymap.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
 
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
@@ -382,7 +382,7 @@ describe "Keymap", ->
           @div class: 'd'
       elementB = elementA.querySelector('.b.c')
 
-      keymap.addKeyBindings 'test',
+      keymapManager.addKeyBindings 'test',
         '.a':
           'ctrl-a': 'x'
           'ctrl-b': 'y'
@@ -395,40 +395,40 @@ describe "Keymap", ->
 
     describe "when only passed a command", ->
       it "returns all bindings that dispatch the given command", ->
-        keystrokes = keymap.findKeyBindings(command: 'x').map((b) -> b.keystrokes).sort()
+        keystrokes = keymapManager.findKeyBindings(command: 'x').map((b) -> b.keystrokes).sort()
         expect(keystrokes).toEqual ['ctrl-a', 'ctrl-c', 'ctrl-d', 'ctrl-e']
 
     describe "when only passed a target", ->
       it "returns all bindings that can be invoked from the given target", ->
-        keystrokes = keymap.findKeyBindings(target: elementB).map((b) -> b.keystrokes)
+        keystrokes = keymapManager.findKeyBindings(target: elementB).map((b) -> b.keystrokes)
         expect(keystrokes).toEqual ['ctrl-d', 'ctrl-c', 'ctrl-b', 'ctrl-a']
 
     describe "when passed keystrokes", ->
       it "returns all bindings that can be invoked with the given keystrokes", ->
-        keystrokes = keymap.findKeyBindings(keystrokes: 'ctrl-a').map((b) -> b.keystrokes)
+        keystrokes = keymapManager.findKeyBindings(keystrokes: 'ctrl-a').map((b) -> b.keystrokes)
         expect(keystrokes).toEqual ['ctrl-a']
 
     describe "when passed a command and a target", ->
       it "returns all bindings that would invoke the given command from the given target element, ordered by specificity", ->
-        keystrokes = keymap.findKeyBindings(command: 'x', target: elementB).map((b) -> b.keystrokes)
+        keystrokes = keymapManager.findKeyBindings(command: 'x', target: elementB).map((b) -> b.keystrokes)
         expect(keystrokes).toEqual ['ctrl-d', 'ctrl-c', 'ctrl-a']
 
   describe "::loadKeyBindings(path, options)", ->
     describe "if called with a file path", ->
       it "loads the keybindings from the file at the given path", ->
-        keymap.loadKeyBindings(path.join(__dirname, 'fixtures', 'a.cson'))
-        expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+        keymapManager.loadKeyBindings(path.join(__dirname, 'fixtures', 'a.cson'))
+        expect(keymapManager.findKeyBindings(command: 'x').length).toBe 1
 
       describe "if called with watch: true", ->
         [keymapFilePath, subscription] = []
 
         beforeEach ->
-          keymapFilePath = path.join(temp.mkdirSync('keymap-spec'), "keymap.cson")
+          keymapFilePath = path.join(temp.mkdirSync('keymapManager-spec'), "keymapManager.cson")
           fs.writeFileSync keymapFilePath, """
             '.a': 'ctrl-a': 'x'
           """
-          subscription = keymap.loadKeyBindings(keymapFilePath, watch: true)
-          expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+          subscription = keymapManager.loadKeyBindings(keymapFilePath, watch: true)
+          expect(keymapManager.findKeyBindings(command: 'x').length).toBe 1
 
         describe "when the file is changed", ->
           it "reloads the file's key bindings and emits 'reloaded-key-bindings' with the path", ->
@@ -438,14 +438,14 @@ describe "Keymap", ->
             """
 
             waitsFor 300, (done) ->
-              keymap.once 'reloaded-key-bindings', (filePath) ->
+              keymapManager.once 'reloaded-key-bindings', (filePath) ->
                 expect(filePath).toBe keymapFilePath
                 done()
 
             runs ->
-              expect(keymap.findKeyBindings(command: 'x').length).toBe 0
-              expect(keymap.findKeyBindings(command: 'y').length).toBe 1
-              expect(keymap.findKeyBindings(command: 'z').length).toBe 1
+              expect(keymapManager.findKeyBindings(command: 'x').length).toBe 0
+              expect(keymapManager.findKeyBindings(command: 'y').length).toBe 1
+              expect(keymapManager.findKeyBindings(command: 'z').length).toBe 1
 
           it "logs a warning and does not reload if there is a problem reloading the file", ->
             spyOn(console, 'warn')
@@ -453,7 +453,7 @@ describe "Keymap", ->
             waitsFor 300, -> console.warn.callCount > 0
 
             runs ->
-              expect(keymap.findKeyBindings(command: 'x').length).toBe 1
+              expect(keymapManager.findKeyBindings(command: 'x').length).toBe 1
 
         describe "when the file is removed", ->
           it "removes the bindings and emits 'unloaded-key-bindings' with the path", ->
@@ -461,26 +461,26 @@ describe "Keymap", ->
             fs.removeSync(keymapFilePath)
 
             waitsFor 300, (done) ->
-              keymap.once 'unloaded-key-bindings', (filePath) ->
+              keymapManager.once 'unloaded-key-bindings', (filePath) ->
                 expect(filePath).toBe keymapFilePath
                 done()
 
             runs ->
-              expect(keymap.findKeyBindings(command: 'x').length).toBe 0
+              expect(keymapManager.findKeyBindings(command: 'x').length).toBe 0
 
         describe "when the file is moved", ->
           it "removes the bindings", ->
             jasmine.unspy(global, 'setTimeout')
-            newFilePath = path.join(temp.mkdirSync('keymap-spec'), "other-guy.cson")
+            newFilePath = path.join(temp.mkdirSync('keymap-manager-spec'), "other-guy.cson")
             fs.moveSync(keymapFilePath, newFilePath)
 
             waitsFor 300, (done) ->
-              keymap.once 'unloaded-key-bindings', (filePath) ->
+              keymapManager.once 'unloaded-key-bindings', (filePath) ->
                 expect(filePath).toBe keymapFilePath
                 done()
 
             runs ->
-              expect(keymap.findKeyBindings(command: 'x').length).toBe 0
+              expect(keymapManager.findKeyBindings(command: 'x').length).toBe 0
 
         it "allows the watch to be cancelled via the returned subscription", ->
           subscription.off()
@@ -490,7 +490,7 @@ describe "Keymap", ->
           """
 
           reloaded = false
-          keymap.on 'reloaded-key-bindings', -> reloaded = true
+          keymapManager.on 'reloaded-key-bindings', -> reloaded = true
 
           waits 300
           runs ->
@@ -498,32 +498,32 @@ describe "Keymap", ->
 
           # Can start watching again after cancelling
           runs ->
-            keymap.loadKeyBindings(keymapFilePath, watch: true)
+            keymapManager.loadKeyBindings(keymapFilePath, watch: true)
             fs.writeFileSync keymapFilePath, """
               '.a': 'ctrl-a': 'q'
             """
 
           waitsFor 300, (done) ->
-            keymap.once 'reloaded-key-bindings', done
+            keymapManager.once 'reloaded-key-bindings', done
 
           runs ->
-            expect(keymap.findKeyBindings(command: 'q').length).toBe 1
+            expect(keymapManager.findKeyBindings(command: 'q').length).toBe 1
 
     describe "if called with a directory path", ->
       it "loads all platform compatible keybindings files in the directory", ->
-        spyOn(keymap, 'getOtherPlatforms').andReturn ['os2']
-        keymap.loadKeyBindings(path.join(__dirname, 'fixtures'))
-        expect(keymap.findKeyBindings(command: 'x').length).toBe 1
-        expect(keymap.findKeyBindings(command: 'y').length).toBe 1
-        expect(keymap.findKeyBindings(command: 'z').length).toBe 1
-        expect(keymap.findKeyBindings(command: 'X').length).toBe 0
-        expect(keymap.findKeyBindings(command: 'Y').length).toBe 0
+        spyOn(keymapManager, 'getOtherPlatforms').andReturn ['os2']
+        keymapManager.loadKeyBindings(path.join(__dirname, 'fixtures'))
+        expect(keymapManager.findKeyBindings(command: 'x').length).toBe 1
+        expect(keymapManager.findKeyBindings(command: 'y').length).toBe 1
+        expect(keymapManager.findKeyBindings(command: 'z').length).toBe 1
+        expect(keymapManager.findKeyBindings(command: 'X').length).toBe 0
+        expect(keymapManager.findKeyBindings(command: 'Y').length).toBe 0
 
   describe "events", ->
     it "emits `matched` when a key binding matches an event", ->
       handler = jasmine.createSpy('matched')
-      keymap.on 'matched', handler
-      keymap.addKeyBindings "test",
+      keymapManager.on 'matched', handler
+      keymapManager.addKeyBindings "test",
         "body":
           "ctrl-x": "used-command"
         "*":
@@ -531,7 +531,7 @@ describe "Keymap", ->
         ".not-in-the-dom":
           "ctrl-x": "unmached-command"
 
-      keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
+      keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
 
       {keystrokes, binding, keyboardEventTarget} = handler.argsForCall[0][0]
@@ -541,13 +541,13 @@ describe "Keymap", ->
 
     it "emits `matched-partially` when a key binding partially matches an event", ->
       handler = jasmine.createSpy('matched-partially handler')
-      keymap.on 'matched-partially', handler
-      keymap.addKeyBindings "test",
+      keymapManager.on 'matched-partially', handler
+      keymapManager.addKeyBindings "test",
         "body":
           "ctrl-x 1": "command-1"
           "ctrl-x 2": "command-2"
 
-      keymap.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
+      keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
 
       {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.argsForCall[0][0]
@@ -558,12 +558,12 @@ describe "Keymap", ->
 
     it "emits `match-failed` when no key bindings match the event", ->
       handler = jasmine.createSpy('match-failed handler')
-      keymap.on 'match-failed', handler
-      keymap.addKeyBindings "test",
+      keymapManager.on 'match-failed', handler
+      keymapManager.addKeyBindings "test",
         "body":
           "ctrl-x": "command"
 
-      keymap.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: document.body))
+      keymapManager.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
 
       {keystrokes, keyboardEventTarget} = handler.argsForCall[0][0]

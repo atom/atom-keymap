@@ -82,7 +82,7 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 #      * keyboardEventTarget - The target element of the keyboard event
 
 module.exports =
-class Keymap
+class KeymapManager
   Emitter.includeInto(this)
 
   # Public: Create a keydown DOM event for testing purposes.
