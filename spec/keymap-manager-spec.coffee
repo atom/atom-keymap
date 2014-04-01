@@ -85,7 +85,7 @@ describe "KeymapManager", ->
           expect(events[0].type).toBe 'y-command'
           expect(events[0].target).toBe elementA
 
-      describe "if matching binding's command is 'native!'", ->
+      describe "if the matching binding's command is 'native!'", ->
         it "terminates without preventing the browser's default action", ->
           keymapManager.addKeymap "test",
             ".b":
