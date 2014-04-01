@@ -53,11 +53,27 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, target}={}) ->
   bubbles = true
   cancelable = true
   view = null
+
   key = key.toUpperCase() if /^[a-z]$/.test(key)
   if key.length is 1
     keyIdentifier = "U+#{key.charCodeAt(0).toString(16)}"
   else
-    keyIdentifier = key[0].toUpperCase() + key[1..]
+    switch key
+      when 'ctrl'
+        keyIdentifier = 'Control'
+        ctrl = true
+      when 'alt'
+        keyIdentifier = 'Alt'
+        alt = true
+      when 'shift'
+        keyIdentifier = 'Shift'
+        shift = true
+      when 'cmd'
+        keyIdentifier = 'Meta'
+        cmd = true
+      else
+        keyIdentifier = key[0].toUpperCase() + key[1..]
+
   location = KeyboardEvent.DOM_KEY_LOCATION_STANDARD
   event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
   Object.defineProperty(event, 'target', get: -> target) if target?
