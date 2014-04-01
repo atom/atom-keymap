@@ -245,7 +245,7 @@ class KeymapManager
           @clearQueuedKeystrokes()
           @cancelPendingState()
           if @dispatchCommandEvent(exactMatch.command, target, event)
-            @emit 'matched', {keystrokes, binding:exactMatch , keyboardEventTarget: target}
+            @emit 'matched', {keystrokes, binding: exactMatch, keyboardEventTarget: target}
             return
         currentTarget = currentTarget.parentElement
 
