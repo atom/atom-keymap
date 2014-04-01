@@ -240,6 +240,9 @@ class KeymapManager
             @clearQueuedKeystrokes()
             return
 
+          if exactMatch.command is 'unset!'
+            break
+
           foundMatch = true
           break if partialMatches.length > 0
           @clearQueuedKeystrokes()

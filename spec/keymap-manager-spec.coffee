@@ -97,6 +97,20 @@ describe "KeymapManager", ->
           expect(events).toEqual []
           expect(event.defaultPrevented).toBe false
 
+      describe "if the matching binding's command is 'unset!'", ->
+        it "continues searching for a matching binding on the parent element", ->
+          keymapManager.addKeymap "test",
+            ".a":
+              "ctrl-y": "x-command"
+            ".b":
+              "ctrl-y": "unset!"
+
+          event = keydownEvent('y', ctrl: true, target: elementB)
+          keymapManager.handleKeyboardEvent(event)
+          expect(events.length).toBe 1
+          expect(events[0].type).toBe 'x-command'
+          expect(event.defaultPrevented).toBe true
+
     describe "when the keystroke matches multiple bindings on the same element", ->
       [elementA, elementB, events] = []
 
