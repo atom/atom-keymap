@@ -202,6 +202,9 @@ class KeymapManager
   # without calling `.preventDefault()` on the keyboard event, allowing the
   # browser to handle it as normal.
   #
+  # If the matching binding's command is 'unset!', the search will continue from
+  # the current element's parent.
+  #
   # If the event's target is `document.body`, it will be treated as if its
   # target is `.defaultTarget` if that property is assigned on the keymap.
   handleKeyboardEvent: (event, replaying) ->
