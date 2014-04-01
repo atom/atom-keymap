@@ -4,8 +4,8 @@
 AtomModifiers = new Set
 AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
 
-BrowserModifiers = new Set
-AtomModifiers.add(modifier) for modifier in ['Ctrl', 'Alt', 'Shift', 'Meta']
+KeyboardEventModifiers = new Set
+KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
 
 SpecificityCache = {}
 
@@ -19,7 +19,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event) ->
-  unless BrowserModifiers.has(event.keyIdentifier)
+  unless KeyboardEventModifiers.has(event.keyIdentifier)
     if event.keyIdentifier.indexOf('U+') is 0
       hexCharCode = event.keyIdentifier[2..]
       charCode = parseInt(hexCharCode, 16)
@@ -38,10 +38,6 @@ exports.keystrokeForKeyboardEvent = (event) ->
     key = key.toUpperCase() if /^[a-z]$/.test(key)
   else
     key = key.toLowerCase() if /^[A-Z]$/.test(key)
-
-  # If only a modifier was pressed, null out the key
-  key = null if key in ["meta", "shift", "control", "alt"]
-
   keystroke.push 'cmd' if event.metaKey
   keystroke.push(key) if key?
   keystroke.join('-')
