@@ -22,7 +22,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     if event.keyIdentifier.indexOf('U+') is 0
       hexCharCode = event.keyIdentifier[2..]
-      charCode = parseInt(hexCharCode, 16)
+      charCode = charCodeFromHexCharCode(hexCharCode)
       charCode = event.which if not isAscii(charCode) and isAscii(event.which)
       key = keyFromCharCode(charCode)
     else
@@ -33,7 +33,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   keystroke.push 'alt' if event.altKey
   if event.shiftKey
     # Don't push 'shift' when modifying symbolic characters like '{'
-    keystroke.push 'shift' unless /^[^A-Za-z]$/.test(key)
+    keystroke.push 'shift' unless /^[^A-Za-z]$/.test(key) and process.platform isnt 'linux'
     # Only upper case alphabetic characters like 'a'
     key = key.toUpperCase() if /^[a-z]$/.test(key)
   else
@@ -119,6 +119,29 @@ parseKeystroke = (keystroke) ->
       loophole.allowUnsafeEval => parser = pegjs.buildParser(keystrokeGrammar)
 
   parser.parse(keystroke)
+
+charCodeFromHexCharCode = (hexCharCode) ->
+  charCode = parseInt(hexCharCode, 16)
+
+  # Chromium includes incorrect keyIdentifier values on keypress events for
+  # certain symbols keys on Linux.
+  #
+  # See https://code.google.com/p/chromium/issues/detail?id=51024
+  # See https://bugs.webkit.org/show_bug.cgi?id=19906
+  if process.platform is 'linux'
+    switch charCode
+      when 186 then charCode = 59 # ";"
+      when 187 then charCode = 61 # "="
+      when 188 then charCode = 44 # ","
+      when 189 then charCode = 45 # "-"
+      when 190 then charCode = 46 # "."
+      when 191 then charCode = 47 # "/"
+      when 219 then charCode = 91 # "["
+      when 220 then charCode = 92 # "\"
+      when 221 then charCode = 93 # "]"
+      when 222 then charCode = 39 # "'"
+
+  charCode
 
 keyFromCharCode = (charCode) ->
   switch charCode
