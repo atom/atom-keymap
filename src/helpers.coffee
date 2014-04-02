@@ -128,7 +128,6 @@ charCodeFromHexCharCode = (hexCharCode) ->
   #
   # See https://code.google.com/p/chromium/issues/detail?id=51024
   # See https://bugs.webkit.org/show_bug.cgi?id=19906
-  console.log process.platform
   if process.platform is 'linux'
     switch charCode
       when 186 then charCode = 59 # ";"
