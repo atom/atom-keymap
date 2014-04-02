@@ -124,7 +124,7 @@ charCodeFromHexCharCode = (hexCharCode) ->
   charCode = parseInt(hexCharCode, 16)
 
   # Chromium includes incorrect keyIdentifier values on keypress events for
-  # certain symbols keys on linux.
+  # certain symbols keys on Linux.
   #
   # See https://code.google.com/p/chromium/issues/detail?id=51024
   # See https://bugs.webkit.org/show_bug.cgi?id=19906
