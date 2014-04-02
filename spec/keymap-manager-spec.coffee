@@ -387,6 +387,28 @@ describe "KeymapManager", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
 
+    describe "on Linux", ->
+      originalPlatform = null
+
+      beforeEach ->
+        originalPlatform = process.platform
+        Object.defineProperty process, 'platform', value: 'linux'
+
+      afterEach ->
+        Object.defineProperty process, 'platform', value: originalPlatform
+
+      it "corrects a Chromium bug where the keyIdentifier is incorrect for certain keypress events", ->
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true))).toBe 'ctrl-;'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true))).toBe 'ctrl-='
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true))).toBe 'ctrl-,'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bd', ctrl: true))).toBe 'ctrl--'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00be', ctrl: true))).toBe 'ctrl-.'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true))).toBe 'ctrl-/'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00db', ctrl: true))).toBe 'ctrl-['
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dc', ctrl: true))).toBe 'ctrl-\\'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true))).toBe 'ctrl-]'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true))).toBe 'ctrl-\''
+
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
     beforeEach ->
