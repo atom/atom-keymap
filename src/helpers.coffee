@@ -33,7 +33,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   keystroke.push 'alt' if event.altKey
   if event.shiftKey
     # Don't push 'shift' when modifying symbolic characters like '{'
-    keystroke.push 'shift' unless /^[^A-Za-z]$/.test(key)
+    keystroke.push 'shift' unless /^[^A-Za-z]$/.test(key) and process.platform isnt 'linux'
     # Only upper case alphabetic characters like 'a'
     key = key.toUpperCase() if /^[a-z]$/.test(key)
   else
