@@ -414,8 +414,6 @@ class KeymapManager
   # After we match a binding, we call this method to dispatch a custom event
   # based on the binding's command.
   dispatchCommandEvent: (command, target, keyboardEvent) ->
-    keyboardEvent.preventDefault()
-
     # Here we use prototype chain injection to add CommandEvent methods to this
     # custom event to support aborting key bindings and simulated bubbling for
     # detached targets.
@@ -428,7 +426,9 @@ class KeymapManager
     else
       @simulateBubblingOnDetachedTarget(target, commandEvent)
 
-    not commandEvent.keyBindingAborted
+    {keyBindingAborted} = commandEvent
+    keyboardEvent.preventDefault() unless keyBindingAborted
+    not keyBindingAborted
 
   # Chromium does not bubble events dispatched on detached targets, which makes
   # testing a pain in the ass. This method simulates bubbling manually.

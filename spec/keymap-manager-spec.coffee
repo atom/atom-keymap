@@ -62,12 +62,14 @@ describe "KeymapManager", ->
         expect(event.defaultPrevented).toBe true
 
       describe "if .abortKeyBinding() is called on the command event", ->
-        it "proceeds directly to the next matching binding", ->
+        it "proceeds directly to the next matching binding and does not prevent the keyboard event's default action", ->
           elementB.addEventListener 'y-command', (e) -> events.push(e); e.abortKeyBinding()
           elementB.addEventListener 'y-command', (e) -> events.push(e) # should never be called
           elementB.addEventListener 'z-command', (e) -> events.push(e); e.abortKeyBinding()
 
-          keymapManager.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
+          event = keydownEvent('y', ctrl: true, target: elementB)
+          keymapManager.handleKeyboardEvent(event)
+          expect(event.defaultPrevented).toBe false
 
           expect(events.length).toBe 3
           expect(events[0].type).toBe 'y-command'
