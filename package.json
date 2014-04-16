@@ -23,6 +23,7 @@
   "dependencies": {
     "pegjs": "^0.8.0",
     "clear-cut": "^0.3.0",
+    "grim": "0.7.0",
     "loophole": "^1.0.0",
     "fs-plus": "^2.0.4",
     "season": "^1.0.2",
