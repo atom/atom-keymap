@@ -1,3 +1,4 @@
+Grim = require 'grim'
 {calculateSpecificity} = require './helpers'
 
 module.exports =
@@ -7,7 +8,14 @@ class KeyBinding
   enabled: true
 
   constructor: (@source, @command, @keystrokes, selector) ->
-    @keystroke = @keystrokes # deprecated property
+    @__defineGetter__ 'keystroke', =>
+      Grim.deprecate("Use KeyBinding.keystrokes instead")
+      @keystrokes
+
+    @__defineSetter__ 'keystroke', (value) =>
+      Grim.deprecate("Use KeyBinding.keystrokes instead")
+      @keystrokes = value
+
     @keystrokeCount = @keystrokes.split(' ').length
     @selector = selector.replace(/!important/g, '')
     @specificity = calculateSpecificity(selector)
