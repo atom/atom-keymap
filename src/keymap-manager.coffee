@@ -140,7 +140,7 @@ class KeymapManager
   #   so they can be removed later.
   # bindings - An {Object} whose top-level keys point at sub-objects mapping
   #   keystroke patterns to commands.
-  addKeymap: (source, keyBindingsBySelector) ->
+  add: (source, keyBindingsBySelector) ->
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
       try
@@ -189,7 +189,7 @@ class KeymapManager
   #
   # source - A {String} representing the `source` in a previous call to
   #   {::addKeymap} or the path in {::loadKeymap}.
-  removeKeymap: (source) ->
+  remove: (source) ->
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
 
   # Public: Dispatch a custom event associated with the matching key binding for
@@ -451,13 +451,13 @@ class KeymapManager
     keystrokeForKeyboardEvent(event)
 
   # Deprecated: Use {::addKeymap} instead.
-  add: (source, bindings) ->
-    Grim.deprecate("Use KeymapManager::addKeymap instead.")
-    @addKeymap(source, bindings)
+  addKeymap: (source, bindings) ->
+    # Grim.deprecate("Use KeymapManager::add instead.")
+    @add(source, bindings)
 
   # Deprecated: Use {::removeKeymap} instead.
-  remove: (source) ->
-    Grim.deprecate("Use KeymapManager::removeKeymap instead.")
+  removeKeymap: (source) ->
+    # Grim.deprecate("Use KeymapManager::remove instead.")
     @removeKeymap(source)
 
   # Deprecated: Handle a jQuery keyboard event. Use {::handleKeyboardEvent} with
