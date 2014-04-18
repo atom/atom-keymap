@@ -1,5 +1,6 @@
 _ = require "underscore-plus"
 CSON = require 'season'
+Grim = require 'grim'
 fs = require 'fs-plus'
 path = require 'path'
 {Emitter} = require 'emissary'
@@ -451,15 +452,18 @@ class KeymapManager
 
   # Deprecated: Use {::addKeymap} instead.
   add: (source, bindings) ->
+    Grim.deprecate("Use KeymapManager::addKeymap instead.")
     @addKeymap(source, bindings)
 
   # Deprecated: Use {::removeKeymap} instead.
   remove: (source) ->
+    Grim.deprecate("Use KeymapManager::removeKeymap instead.")
     @removeKeymap(source)
 
   # Deprecated: Handle a jQuery keyboard event. Use {::handleKeyboardEvent} with
   # a raw keyboard event instead.
   handleKeyEvent: (event) ->
+    Grim.deprecate("Use KeymapManager::handleKeyboardEvent instead.")
     originalEvent = event.originalEvent ? event
     Object.defineProperty(originalEvent, 'target', get: -> event.target) unless originalEvent.target?
     @handleKeyboardEvent(originalEvent)
@@ -468,33 +472,40 @@ class KeymapManager
   # Deprecated: Translate a jQuery keyboard event to a keystroke string. Use
   # {::keystrokeForKeyboardEvent} with a raw KeyboardEvent instead.
   keystrokeStringForEvent: (event) ->
+    Grim.deprecate("Use KeymapManager::keystrokeForKeyboardEvent instead.")
     @keystrokeForKeyboardEvent(event.originalEvent ? event)
 
   # Deprecated: Use {::addKeymap} with a map from selectors to key
   # bindings.
   bindKeys: (source, selector, keyBindings) ->
+    Grim.deprecate("Use KeymapManager::addKeymap instead.")
     keyBindingsBySelector = {}
     keyBindingsBySelector[selector] = keyBindings
     @addKeymap(source, keyBindingsBySelector)
 
   # Deprecated: Use {::findKeyBindings} with the 'command' param.
   keyBindingsForCommand: (command) ->
+    Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({command})
 
   # Deprecated: Use {::findKeyBindings} with the 'keystrokes' param.
   keyBindingsForKeystroke: (keystroke) ->
+    Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({keystrokes: keystroke})
 
   # Deprecated: Use {::findKeyBindings} with the 'target' param.
   keyBindingsMatchingElement: (target, keyBindings) ->
+    Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({target: target[0] ? target, keyBindings})
 
   # Deprecated: Use {::findKeyBindings} with the 'command' and 'target'
   # params
   keyBindingsForCommandMatchingElement: (command, target) ->
+    Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({command, target: target[0] ? target})
 
   # Deprecated: Use {::findKeyBindings} with the 'keystrokes' and 'target'
   # params
   keyBindingsForKeystrokeMatchingElement: (keystrokes, target) ->
+    Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({keystrokes, target: target[0] ? target})
