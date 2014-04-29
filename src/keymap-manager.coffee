@@ -308,11 +308,11 @@ class KeymapManager
   reloadKeymap: (filePath) ->
     if fs.isFileSync(filePath)
       if bindings = @readKeymap(filePath, true)
-        @removeKeymap(filePath)
+        @remove(filePath)
         @addKeymap(filePath, bindings)
         @emit 'reloaded-key-bindings', filePath
     else
-      @removeKeymap(filePath)
+      @remove(filePath)
       @emit 'unloaded-key-bindings', filePath
 
   readKeymap: (filePath, suppressErrors) ->
@@ -458,7 +458,7 @@ class KeymapManager
   # Deprecated: Use {::removeKeymap} instead.
   removeKeymap: (source) ->
     # Grim.deprecate("Use KeymapManager::remove instead.")
-    @removeKeymap(source)
+    @remove(source)
 
   # Deprecated: Handle a jQuery keyboard event. Use {::handleKeyboardEvent} with
   # a raw keyboard event instead.
