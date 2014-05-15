@@ -424,7 +424,7 @@ describe "KeymapManager", ->
 
       it "always includes the shift modifier in the keystroke", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('9', ctrl: true, shift: true))).toBe 'ctrl-('
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('/', ctrl: true, shift: true))).toBe 'ctrl-?'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a', ctrl: true, shift: true))).toBe 'ctrl-shift-A'
 
   describe "::findKeyBindings({command, target, keystrokes})", ->
