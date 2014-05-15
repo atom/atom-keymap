@@ -128,7 +128,7 @@ charCodeFromHexCharCode = (hexCharCode, shifted) ->
   #
   # See https://code.google.com/p/chromium/issues/detail?id=51024
   # See https://bugs.webkit.org/show_bug.cgi?id=19906
-  if process.platform is 'linux' or process.platform is 'win32'
+  if process.platform in ['linux', 'win32']
     switch charCode
       when 186
         charCode = if shifted then 58 else 59 # ":" or ";"
