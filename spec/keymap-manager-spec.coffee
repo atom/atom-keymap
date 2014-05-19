@@ -411,9 +411,20 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true))).toBe 'ctrl-]'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true))).toBe 'ctrl-\''
 
-      it "always includes the shift modifier in the keystroke", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('9', ctrl: true, shift: true))).toBe 'ctrl-shift-9'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('/', ctrl: true, shift: true))).toBe 'ctrl-shift-/'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true, shift: true))).toBe 'ctrl-:'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true, shift: true))).toBe 'ctrl-+'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true, shift: true))).toBe 'ctrl-<'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bd', ctrl: true, shift: true))).toBe 'ctrl-_'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00be', ctrl: true, shift: true))).toBe 'ctrl->'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00db', ctrl: true, shift: true))).toBe 'ctrl-{'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dc', ctrl: true, shift: true))).toBe 'ctrl-|'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true, shift: true))).toBe 'ctrl-}'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true, shift: true))).toBe 'ctrl-"'
+
+      it "always includes the shift modifier in the keystroke only for alphabetic characters", ->
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('9', ctrl: true, shift: true))).toBe 'ctrl-('
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a', ctrl: true, shift: true))).toBe 'ctrl-shift-A'
 
   describe "::findKeyBindings({command, target, keystrokes})", ->
