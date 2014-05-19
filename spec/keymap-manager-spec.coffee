@@ -422,7 +422,7 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true, shift: true))).toBe 'ctrl-}'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true, shift: true))).toBe 'ctrl-"'
 
-      it "always includes the shift modifier in the keystroke", ->
+      it "always includes the shift modifier in the keystroke only for alphabetic characters", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('9', ctrl: true, shift: true))).toBe 'ctrl-('
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a', ctrl: true, shift: true))).toBe 'ctrl-shift-A'

@@ -9,6 +9,71 @@ KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift',
 
 SpecificityCache = {}
 
+KeyCodeToASCII =
+  186:
+    shifted: 58    # ":"
+    unshifted: 59  # ";"
+  187:
+    shifted: 43    # "+"
+    unshifted: 61  # "="
+  188:
+    shifted: 60    # "<"
+    unshifted: 44  # ","
+  189:
+    shifted: 95    # "_"
+    unshifted: 45  # "-"
+  190:
+    shifted: 62    # ">"
+    unshifted: 46  # "."
+  191:
+    shifted: 63    # "?"
+    unshifted: 47  # "/"
+  219:
+    shifted: 123   # "{"
+    unshifted: 91  # "["
+  220:
+    shifted: 124   # "|"
+    unshifted: 92  # "\"
+  221:
+    shifted: 125   # "}"
+    unshifted: 93  # "]"
+  222:
+    shifted: 34    # '"'
+    unshifted: 39  # "'"
+  192:
+    shifted: 126   # "~"
+    unshifted: 96  # "`"
+  49:
+    shifted: 33    # "!"
+    unshifted: 49  # "1"
+  50:
+    shifted: 64    # "@"
+    unshifted: 50  # "2"
+  51:
+    shifted: 35    # "#"
+    unshifted: 51  # "3"
+  52:
+    shifted: 36    # "$"
+    unshifted: 52  # "4"
+  53:
+    shifted: 37    # "%"
+    unshifted: 53  # "5"
+  54:
+    shifted: 94    # "^"
+    unshifted: 54  # "6"
+  55:
+    shifted: 38    # "&"
+    unshifted: 55  # "7"
+  56:
+    shifted: 42    # "*"
+    unshifted: 56  # "8"
+  57:
+    shifted: 40    # "("
+    unshifted: 57  # "9"
+  48:
+    shifted: 41    # ")"
+    unshifted: 48  # "0"
+
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
   for keystroke in keystrokes.split(/\s+/)
@@ -128,50 +193,15 @@ charCodeFromHexCharCode = (hexCharCode, shifted) ->
   #
   # See https://code.google.com/p/chromium/issues/detail?id=51024
   # See https://bugs.webkit.org/show_bug.cgi?id=19906
+  # See http://unixpapa.com/js/key.html (sec. 3.3)
   if process.platform in ['linux', 'win32']
-    switch charCode
-      when 186
-        charCode = if shifted then 58 else 59 # ":" or ";"
-      when 187
-        charCode = if shifted then 43 else 61 # "+" or "="
-      when 188
-        charCode = if shifted then 60 else 44 # "<" or ","
-      when 189
-        charCode = if shifted then 95 else 45 # "_" or "-"
-      when 190
-        charCode = if shifted then 62 else 46 # ">" or "."
-      when 191
-        charCode = if shifted then 63 else 47 # "?" or "/"
-      when 219
-        charCode = if shifted then 123 else 91 # "{" or "["
-      when 220
-        charCode = if shifted then 124 else 92 # "|" or "\"
-      when 221
-        charCode = if shifted then 125 else 93 # "}" "]"
-      when 222
-        charCode = if shifted then 34 else 39 # '"' or "'"
-      when 192
-        charCode = if shifted then 126 else 96 # '~' or '`'
-      when 49
-        charCode = if shifted then 33 else 49 # '!' or '1'
-      when 50
-        charCode = if shifted then 64 else 50 # '@' or '2'
-      when 51
-        charCode = if shifted then 35 else 51 # '#' or '3'
-      when 52
-        charCode = if shifted then 36 else 52 # '$' or '4'
-      when 53
-        charCode = if shifted then 37 else 53 # '%' or '5'
-      when 54
-        charCode = if shifted then 94 else 54 # '^' or '6'
-      when 55
-        charCode = if shifted then 38 else 55 # '&' or '7'
-      when 56
-        charCode = if shifted then 42 else 56 # '*' or '8'
-      when 57
-        charCode = if shifted then 40 else 57 # '(' or '9'
-      when 48
-        charCode = if shifted then 41 else 48 # ')' or '0'
+    trans = KeyCodeToASCII[charCode]
+
+    if trans
+      if shifted
+        charCode = trans.shifted
+      else
+        charCode = trans.unshifted
 
   charCode
 
