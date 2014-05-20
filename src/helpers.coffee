@@ -20,10 +20,12 @@ exports.normalizeKeystrokes = (keystrokes) ->
 
 exports.keystrokeForKeyboardEvent = (event) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
-    if event.keyIdentifier.indexOf('U+') is 0
+    keyIdentifierIsHexCharCode = event.keyIdentifier.indexOf('U+') is 0
+    if isAscii(event.keyCode) and keyIdentifierIsHexCharCode
+      key = keyFromCharCode(event.keyCode)
+    else if keyIdentifierIsHexCharCode
       hexCharCode = event.keyIdentifier[2..]
       charCode = charCodeFromHexCharCode(hexCharCode)
-      charCode = event.which if not isAscii(charCode) and isAscii(event.which)
       key = keyFromCharCode(charCode)
     else
       key = event.keyIdentifier.toLowerCase()
@@ -77,7 +79,10 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, target}={}) ->
   location = KeyboardEvent.DOM_KEY_LOCATION_STANDARD
   event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
   Object.defineProperty(event, 'target', get: -> target) if target?
-  Object.defineProperty(event, 'which', get: -> which) if which?
+  if which? or event.which is 0
+    # 0 is the default, and it's valid Ascii, but it's wrong.
+    Object.defineProperty(event, 'which', get: -> which)
+    Object.defineProperty(event, 'keyCode', get: -> which)
   event
 
 normalizeKeystroke = (keystroke) ->
