@@ -248,6 +248,17 @@ describe "KeymapManager", ->
           keymapManager.handleKeyboardEvent(keydownEvent('g', target: editor))
           expect(events).toEqual ['dog']
 
+      describe "when the partially matching bindings all map to the 'unset!' directive", ->
+        it "ignores the 'unset!' bindings and invokes the command associated with the matching binding as normal", ->
+          keymapManager.addKeymap 'test-2',
+            '.workspace':
+              'v i v a': 'unset!'
+              'v i v': 'unset!'
+
+          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
+
+          expect(events).toEqual ['enter-visual-mode']
+
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
       keymapManager.addKeymap 'test',
