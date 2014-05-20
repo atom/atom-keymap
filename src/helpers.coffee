@@ -86,9 +86,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
 exports.keystrokeForKeyboardEvent = (event) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     keyIdentifierIsHexCharCode = event.keyIdentifier.indexOf('U+') is 0
-    if isASCII(event.keyCode) and keyIdentifierIsHexCharCode
-      key = keyFromCharCode(event.keyCode)
-    else if keyIdentifierIsHexCharCode
+    if keyIdentifierIsHexCharCode
       hexCharCode = event.keyIdentifier[2..]
       charCode = charCodeFromHexCharCode(hexCharCode, event.shiftKey)
       key = keyFromCharCode(charCode)
