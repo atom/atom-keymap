@@ -84,10 +84,18 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event) ->
+  console.log event
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     keyIdentifierIsHexCharCode = event.keyIdentifier.indexOf('U+') is 0
-    if isASCII(event.keyCode) and keyIdentifierIsHexCharCode
-      key = keyFromCharCode(event.keyCode, event.shiftKey)
+
+    if event.location is 3
+      # This is a numpad number
+      keyCode = numpadToASCII(event.keyCode, event.shiftKey)
+    else
+      keyCode = event.keyCode
+
+    if isASCII(keyCode) and keyIdentifierIsHexCharCode
+      key = keyFromCharCode(keyCode, event.shiftKey)
     else if keyIdentifierIsHexCharCode
       hexCharCode = event.keyIdentifier[2..]
       charCode = charCodeFromHexCharCode(hexCharCode)
@@ -106,6 +114,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   else
     key = key.toLowerCase() if /^[A-Z]$/.test(key)
   keystroke.push 'cmd' if event.metaKey
+  keystroke.push 'num' if event.location is 3
   keystroke.push(key) if key?
   keystroke.join('-')
 
@@ -224,3 +233,6 @@ keyFromCharCode = (charCode, shifted) ->
 
 isASCII = (charCode) ->
   0 <= charCode <= 127
+
+numpadToASCII = (charCode, shifted) ->
+  charCode
