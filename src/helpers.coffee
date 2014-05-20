@@ -86,7 +86,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
 exports.keystrokeForKeyboardEvent = (event) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     keyIdentifierIsHexCharCode = event.keyIdentifier.indexOf('U+') is 0
-    if isAscii(event.keyCode) and keyIdentifierIsHexCharCode
+    if isASCII(event.keyCode) and keyIdentifierIsHexCharCode
       key = keyFromCharCode(event.keyCode)
     else if keyIdentifierIsHexCharCode
       hexCharCode = event.keyIdentifier[2..]
@@ -148,7 +148,7 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, keyCode, target}={})
   which ?= keyCode
   keyCode ?= which
   if keyCode? or event.keyCode is 0
-    # 0 is the default, and it's valid Ascii, but it's wrong.
+    # 0 is the default, and it's valid ASCII, but it's wrong.
     Object.defineProperty(event, 'which', get: -> which)
     Object.defineProperty(event, 'keyCode', get: -> keyCode)
   event
@@ -223,5 +223,5 @@ keyFromCharCode = (charCode) ->
     when 127 then 'delete'
     else String.fromCharCode(charCode)
 
-isAscii = (charCode) ->
+isASCII = (charCode) ->
   0 <= charCode <= 127
