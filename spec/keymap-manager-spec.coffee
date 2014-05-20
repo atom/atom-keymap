@@ -387,10 +387,10 @@ describe "KeymapManager", ->
 
     describe "when a non-English keyboard language is used", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, keyCode: 122))).toBe 'cmd-z'
 
       it "corrects a Chromium bug where keyIdentifier does not match which in Dvorak-Qwerty layouts.", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004A', cmd: true, which: 67))).toBe 'cmd-c'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004A', cmd: true, keyCode: 67))).toBe 'cmd-c'
 
     describe "on Linux", ->
       originalPlatform = null

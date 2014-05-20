@@ -50,7 +50,7 @@ exports.calculateSpecificity = (selector) ->
 exports.isAtomModifier = (key) ->
   AtomModifiers.has(key)
 
-exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, target}={}) ->
+exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, keyCode, target}={}) ->
   event = document.createEvent('KeyboardEvent')
   bubbles = true
   cancelable = true
@@ -79,10 +79,13 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, target}={}) ->
   location = KeyboardEvent.DOM_KEY_LOCATION_STANDARD
   event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
   Object.defineProperty(event, 'target', get: -> target) if target?
-  if which? or event.which is 0
+
+  which ?= keyCode
+  keyCode ?= which
+  if keyCode? or event.keyCode is 0
     # 0 is the default, and it's valid Ascii, but it's wrong.
     Object.defineProperty(event, 'which', get: -> which)
-    Object.defineProperty(event, 'keyCode', get: -> which)
+    Object.defineProperty(event, 'keyCode', get: -> keyCode)
   event
 
 normalizeKeystroke = (keystroke) ->
