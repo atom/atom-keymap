@@ -86,10 +86,12 @@ exports.normalizeKeystrokes = (keystrokes) ->
 exports.keystrokeForKeyboardEvent = (event) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     keyIdentifierIsHexCharCode = event.keyIdentifier.indexOf('U+') is 0
-    if keyIdentifierIsHexCharCode
+    if isASCII(event.keyCode) and keyIdentifierIsHexCharCode
+      key = keyFromCharCode(event.keyCode, event.shiftKey)
+    else if keyIdentifierIsHexCharCode
       hexCharCode = event.keyIdentifier[2..]
-      charCode = charCodeFromHexCharCode(hexCharCode, event.shiftKey)
-      key = keyFromCharCode(charCode)
+      charCode = charCodeFromHexCharCode(hexCharCode)
+      key = keyFromCharCode(charCode, event.shiftKey)
     else
       key = event.keyIdentifier.toLowerCase()
 
@@ -191,8 +193,10 @@ parseKeystroke = (keystroke) ->
 
   parser.parse(keystroke)
 
-charCodeFromHexCharCode = (hexCharCode, shifted) ->
-  charCode = parseInt(hexCharCode, 16)
+charCodeFromHexCharCode = (hexCharCode) ->
+  parseInt(hexCharCode, 16)
+
+keyFromCharCode = (charCode, shifted) ->
 
   # Chromium includes incorrect keyIdentifier values on keypress events for
   # certain symbols keys on Linux and Windows.
@@ -209,9 +213,6 @@ charCodeFromHexCharCode = (hexCharCode, shifted) ->
       else
         charCode = trans.unshifted
 
-  charCode
-
-keyFromCharCode = (charCode) ->
   switch charCode
     when 8 then 'backspace'
     when 9 then 'tab'

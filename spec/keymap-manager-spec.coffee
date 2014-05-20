@@ -430,6 +430,18 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a', ctrl: true, shift: true))).toBe 'ctrl-shift-A'
 
+      it "pressing shift and a number responds with the appropriate symbol", ->
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('1', shift: true))).toBe '!'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('2', shift: true))).toBe '@'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('3', shift: true))).toBe '#'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('4', shift: true))).toBe '$'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('5', shift: true))).toBe '%'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('6', shift: true))).toBe '^'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('7', shift: true))).toBe '&'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('8', shift: true))).toBe '*'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('9', shift: true))).toBe '('
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('0', shift: true))).toBe ')'
+
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
     beforeEach ->
