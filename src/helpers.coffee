@@ -9,6 +9,71 @@ KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift',
 
 SpecificityCache = {}
 
+KeyCodeToASCII =
+  186:
+    shifted: 58    # ":"
+    unshifted: 59  # ";"
+  187:
+    shifted: 43    # "+"
+    unshifted: 61  # "="
+  188:
+    shifted: 60    # "<"
+    unshifted: 44  # ","
+  189:
+    shifted: 95    # "_"
+    unshifted: 45  # "-"
+  190:
+    shifted: 62    # ">"
+    unshifted: 46  # "."
+  191:
+    shifted: 63    # "?"
+    unshifted: 47  # "/"
+  219:
+    shifted: 123   # "{"
+    unshifted: 91  # "["
+  220:
+    shifted: 124   # "|"
+    unshifted: 92  # "\"
+  221:
+    shifted: 125   # "}"
+    unshifted: 93  # "]"
+  222:
+    shifted: 34    # '"'
+    unshifted: 39  # "'"
+  192:
+    shifted: 126   # "~"
+    unshifted: 96  # "`"
+  49:
+    shifted: 33    # "!"
+    unshifted: 49  # "1"
+  50:
+    shifted: 64    # "@"
+    unshifted: 50  # "2"
+  51:
+    shifted: 35    # "#"
+    unshifted: 51  # "3"
+  52:
+    shifted: 36    # "$"
+    unshifted: 52  # "4"
+  53:
+    shifted: 37    # "%"
+    unshifted: 53  # "5"
+  54:
+    shifted: 94    # "^"
+    unshifted: 54  # "6"
+  55:
+    shifted: 38    # "&"
+    unshifted: 55  # "7"
+  56:
+    shifted: 42    # "*"
+    unshifted: 56  # "8"
+  57:
+    shifted: 40    # "("
+    unshifted: 57  # "9"
+  48:
+    shifted: 41    # ")"
+    unshifted: 48  # "0"
+
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
   for keystroke in keystrokes.split(/\s+/)
@@ -25,7 +90,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
       key = keyFromCharCode(event.keyCode)
     else if keyIdentifierIsHexCharCode
       hexCharCode = event.keyIdentifier[2..]
-      charCode = charCodeFromHexCharCode(hexCharCode)
+      charCode = charCodeFromHexCharCode(hexCharCode, event.shiftKey)
       key = keyFromCharCode(charCode)
     else
       key = event.keyIdentifier.toLowerCase()
@@ -35,7 +100,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   keystroke.push 'alt' if event.altKey
   if event.shiftKey
     # Don't push 'shift' when modifying symbolic characters like '{'
-    keystroke.push 'shift' unless /^[^A-Za-z]$/.test(key) and process.platform isnt 'linux'
+    keystroke.push 'shift' unless /^[^A-Za-z]$/.test(key)
     # Only upper case alphabetic characters like 'a'
     key = key.toUpperCase() if /^[a-z]$/.test(key)
   else
@@ -128,26 +193,23 @@ parseKeystroke = (keystroke) ->
 
   parser.parse(keystroke)
 
-charCodeFromHexCharCode = (hexCharCode) ->
+charCodeFromHexCharCode = (hexCharCode, shifted) ->
   charCode = parseInt(hexCharCode, 16)
 
   # Chromium includes incorrect keyIdentifier values on keypress events for
-  # certain symbols keys on Linux.
+  # certain symbols keys on Linux and Windows.
   #
   # See https://code.google.com/p/chromium/issues/detail?id=51024
   # See https://bugs.webkit.org/show_bug.cgi?id=19906
-  if process.platform is 'linux'
-    switch charCode
-      when 186 then charCode = 59 # ";"
-      when 187 then charCode = 61 # "="
-      when 188 then charCode = 44 # ","
-      when 189 then charCode = 45 # "-"
-      when 190 then charCode = 46 # "."
-      when 191 then charCode = 47 # "/"
-      when 219 then charCode = 91 # "["
-      when 220 then charCode = 92 # "\"
-      when 221 then charCode = 93 # "]"
-      when 222 then charCode = 39 # "'"
+  # See http://unixpapa.com/js/key.html (sec. 3.3)
+  if process.platform in ['linux', 'win32']
+    trans = KeyCodeToASCII[charCode]
+
+    if trans
+      if shifted
+        charCode = trans.shifted
+      else
+        charCode = trans.unshifted
 
   charCode
 
