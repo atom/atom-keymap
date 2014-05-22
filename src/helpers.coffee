@@ -247,14 +247,12 @@ keyFromCharCode = (charCode, shifted) ->
     else String.fromCharCode(charCode)
 
 isASCII = (charCode) ->
-  return (
-    (charCode > 47 and charCode < 58)   or # number keys
-    (charCode is 32 or charCode is 13)  or # spacebar & return keys
-    (charCode > 64 and charCode < 91)   or # Uppercase letter keys
-    (charCode > 96 and charCode < 123)  or # Lowercase letter keys
-    (charCode > 185 and charCode < 193) or # ;=,-./`
-    (charCode > 218 and charCode < 223)    # [\]'
-  )
+  (charCode in [13, 32]) or # spacebar & return keys
+  (47  < charCode < 58)  or # number keys
+  (64  < charCode < 91)  or # Uppercase letter keys
+  (96  < charCode < 123) or # Lowercase letter keys
+  (185 < charCode < 193) or # ;=,-./`
+  (218 < charCode < 223)    # [\]'
 
 numpadToASCII = (charCode, shifted) ->
   trans = NumPadToASCII[charCode]
