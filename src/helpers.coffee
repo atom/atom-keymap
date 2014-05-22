@@ -74,6 +74,23 @@ KeyCodeToASCII =
     shifted: 41    # ")"
     unshifted: 48  # "0"
 
+NumPadToASCII =
+  111: 47 # "/"
+  106: 42 # "*"
+  109: 45 # "-"
+  107: 43 # "+"
+  110: 46 # "."
+  96: 48 # "0"
+  97: 49 # "1"
+  98: 50 # "2"
+  99: 51 # "3"
+  100: 52 # "4"
+  101: 53 # "5"
+  102: 54 # "6"
+  103: 55 # "7"
+  104: 56 # "8"
+  105: 57 # "9"
+
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
   for keystroke in keystrokes.split(/\s+/)
@@ -84,7 +101,6 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event) ->
-  console.log event
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     keyIdentifierIsHexCharCode = event.keyIdentifier.indexOf('U+') is 0
 
@@ -235,4 +251,8 @@ isASCII = (charCode) ->
   0 <= charCode <= 127
 
 numpadToASCII = (charCode, shifted) ->
+  trans = NumPadToASCII[charCode]
+
+  if trans
+    charCode = trans
   charCode
