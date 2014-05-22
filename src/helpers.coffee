@@ -104,7 +104,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     keyIdentifierIsHexCharCode = event.keyIdentifier.indexOf('U+') is 0
 
-    if event.location is 3
+    if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
       # This is a numpad number
       keyCode = numpadToASCII(event.keyCode, event.shiftKey)
     else
@@ -140,7 +140,7 @@ exports.calculateSpecificity = (selector) ->
 exports.isAtomModifier = (key) ->
   AtomModifiers.has(key)
 
-exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, keyCode, target}={}) ->
+exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, keyCode, target, location}={}) ->
   event = document.createEvent('KeyboardEvent')
   bubbles = true
   cancelable = true
@@ -166,7 +166,7 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, keyCode, target}={})
       else
         keyIdentifier = key[0].toUpperCase() + key[1..]
 
-  location = KeyboardEvent.DOM_KEY_LOCATION_STANDARD
+  location ?= KeyboardEvent.DOM_KEY_LOCATION_STANDARD
   event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
   Object.defineProperty(event, 'target', get: -> target) if target?
 
