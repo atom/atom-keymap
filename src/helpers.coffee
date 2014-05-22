@@ -112,7 +112,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
 
       if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
         # This is a numpad number
-        charCode = numpadToASCII(charCode, event.shiftKey)
+        charCode = numpadToASCII(charCode)
 
       key = keyFromCharCode(charCode, event.shiftKey)
     else
@@ -250,9 +250,5 @@ isASCII = (charCode) ->
   185 < charCode < 193 or # ;=,-./`
   218 < charCode < 223    # [\]'
 
-numpadToASCII = (charCode, shifted) ->
-  trans = NumPadToASCII[charCode]
-
-  if trans
-    charCode = trans
-  charCode
+numpadToASCII = (charCode) ->
+  NumPadToASCII[charCode] ? charCode
