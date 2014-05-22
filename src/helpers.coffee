@@ -167,7 +167,7 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, keyCode, target, loc
         keyIdentifier = key[0].toUpperCase() + key[1..]
 
   location ?= KeyboardEvent.DOM_KEY_LOCATION_STANDARD
-  event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
+  event.initKeyboardEvent('keydown', bubbles, cancelable, view, keyIdentifier, location, ctrl, alt, shift, cmd)
   Object.defineProperty(event, 'target', get: -> target) if target?
 
   which ?= keyCode
