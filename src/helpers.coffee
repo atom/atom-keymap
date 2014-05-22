@@ -129,7 +129,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   else
     key = key.toLowerCase() if /^[A-Z]$/.test(key)
   keystroke.push 'cmd' if event.metaKey
-  keystroke.push 'num' if event.location is 3
+  keystroke.push 'num' if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
   keystroke.push(key) if key?
   keystroke.join('-')
 
