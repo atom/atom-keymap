@@ -384,6 +384,7 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('*'))).toBe '*'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left'))).toBe 'left'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('\b'))).toBe 'backspace'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+007F', keyCode: 46))).toBe 'delete'
 
     describe "when a modifier key is combined with a non-modifier key", ->
       it "returns a string that identifies the modified keystroke", ->
@@ -404,6 +405,7 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageDown', keyCode: 34, location: 3))).toBe 'num-pagedown'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageUp', keyCode: 33, location: 3))).toBe 'num-pageup'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004B', keyCode: 107, location: 3))).toBe 'num-+'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+007F', keyCode: 46, location: 3))).toBe 'num-delete'
 
     describe "when a non-English keyboard language is used", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
