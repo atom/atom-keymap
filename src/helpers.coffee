@@ -248,12 +248,12 @@ keyFromCharCode = (charCode, shifted) ->
 
 isASCII = (charCode) ->
   return (
-    (charCode > 47 and charCode < 58)   || # number keys
-    (charCode is 32 or charCode is 13)  || # spacebar & return keys
-    (charCode > 64 and charCode < 91)   || # Uppercase letter keys
-    (charCode > 96 and charCode < 123)  || # Lowercase letter keys
-    (charCode > 185 and charCode < 193) || # ;=,-./`
-    (charCode > 218 and charCode < 223);   # [\]'
+    (charCode > 47 and charCode < 58)   or # number keys
+    (charCode is 32 or charCode is 13)  or # spacebar & return keys
+    (charCode > 64 and charCode < 91)   or # Uppercase letter keys
+    (charCode > 96 and charCode < 123)  or # Lowercase letter keys
+    (charCode > 185 and charCode < 193) or # ;=,-./`
+    (charCode > 218 and charCode < 223)    # [\]'
   )
 
 numpadToASCII = (charCode, shifted) ->
