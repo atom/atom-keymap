@@ -75,21 +75,21 @@ KeyCodeToASCII =
     unshifted: 48  # "0"
 
 NumPadToASCII =
-  111: 47 # "/"
-  106: 42 # "*"
-  109: 45 # "-"
-  107: 43 # "+"
-  110: 46 # "."
+  79: 47 # "/"
+  74: 42 # "*"
+  77: 45 # "-"
+  75: 43 # "+"
+  78: 46 # "."
   96: 48 # "0"
-  97: 49 # "1"
-  98: 50 # "2"
-  99: 51 # "3"
-  100: 52 # "4"
-  101: 53 # "5"
-  102: 54 # "6"
-  103: 55 # "7"
-  104: 56 # "8"
-  105: 57 # "9"
+  65: 49 # "1"
+  66: 50 # "2"
+  67: 51 # "3"
+  68: 52 # "4"
+  69: 53 # "5"
+  70: 54 # "6"
+  71: 55 # "7"
+  72: 56 # "8"
+  73: 57 # "9"
 
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
@@ -104,17 +104,16 @@ exports.keystrokeForKeyboardEvent = (event) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     keyIdentifierIsHexCharCode = event.keyIdentifier.indexOf('U+') is 0
 
-    if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
-      # This is a numpad number
-      keyCode = numpadToASCII(event.keyCode, event.shiftKey)
-    else
-      keyCode = event.keyCode
-
-    if isASCII(keyCode) and keyIdentifierIsHexCharCode
-      key = keyFromCharCode(keyCode, event.shiftKey)
+    if event.location isnt KeyboardEvent.DOM_KEY_LOCATION_NUMPAD and isASCII(event.keyCode) and keyIdentifierIsHexCharCode
+      key = keyFromCharCode(event.keyCode, event.shiftKey)
     else if keyIdentifierIsHexCharCode
       hexCharCode = event.keyIdentifier[2..]
       charCode = charCodeFromHexCharCode(hexCharCode)
+
+      if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
+        # This is a numpad number
+        charCode = numpadToASCII(charCode, event.shiftKey)
+
       key = keyFromCharCode(charCode, event.shiftKey)
     else
       key = event.keyIdentifier.toLowerCase()
@@ -248,7 +247,14 @@ keyFromCharCode = (charCode, shifted) ->
     else String.fromCharCode(charCode)
 
 isASCII = (charCode) ->
-  0 <= charCode <= 127
+  return (
+    (charCode > 47 and charCode < 58)   || # number keys
+    (charCode is 32 or charCode is 13)  || # spacebar & return keys
+    (charCode > 64 and charCode < 91)   || # Uppercase letter keys
+    (charCode > 96 and charCode < 123)  || # Lowercase letter keys
+    (charCode > 185 and charCode < 193) || # ;=,-./`
+    (charCode > 218 and charCode < 223);   # [\]'
+  )
 
 numpadToASCII = (charCode, shifted) ->
   trans = NumPadToASCII[charCode]
