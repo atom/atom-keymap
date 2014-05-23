@@ -112,7 +112,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
 
       if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
         # This is a numpad number
-        charCode = numpadToASCII(charCode, event.shiftKey)
+        charCode = numpadToASCII(charCode)
 
       key = keyFromCharCode(charCode, event.shiftKey)
     else
@@ -221,21 +221,17 @@ charCodeFromHexCharCode = (hexCharCode) ->
   parseInt(hexCharCode, 16)
 
 keyFromCharCode = (charCode, shifted) ->
-
   # Chromium includes incorrect keyIdentifier values on keypress events for
   # certain symbols keys on Linux and Windows.
   #
   # See https://code.google.com/p/chromium/issues/detail?id=51024
   # See https://bugs.webkit.org/show_bug.cgi?id=19906
   # See http://unixpapa.com/js/key.html (sec. 3.3)
-  if process.platform in ['linux', 'win32']
-    trans = KeyCodeToASCII[charCode]
-
-    if trans
-      if shifted
-        charCode = trans.shifted
-      else
-        charCode = trans.unshifted
+  if trans = KeyCodeToASCII[charCode]
+    if shifted
+      charCode = trans.shifted
+    else
+      charCode = trans.unshifted
 
   switch charCode
     when 8 then 'backspace'
@@ -254,9 +250,5 @@ isASCII = (charCode) ->
   185 < charCode < 193 or # ;=,-./`
   218 < charCode < 223    # [\]'
 
-numpadToASCII = (charCode, shifted) ->
-  trans = NumPadToASCII[charCode]
-
-  if trans
-    charCode = trans
-  charCode
+numpadToASCII = (charCode) ->
+  NumPadToASCII[charCode] ? charCode

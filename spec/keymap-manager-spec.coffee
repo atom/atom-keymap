@@ -385,6 +385,7 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left'))).toBe 'left'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('\b'))).toBe 'backspace'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+007F', keyCode: 46))).toBe 'delete'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0024', keyCode: 52, shift: true))).toBe '$'
 
     describe "when a modifier key is combined with a non-modifier key", ->
       it "returns a string that identifies the modified keystroke", ->
