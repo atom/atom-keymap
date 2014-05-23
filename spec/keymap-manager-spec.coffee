@@ -248,17 +248,6 @@ describe "KeymapManager", ->
           keymapManager.handleKeyboardEvent(keydownEvent('g', target: editor))
           expect(events).toEqual ['dog']
 
-      describe "when the partially matching bindings all map to the 'unset!' directive", ->
-        it "ignores the 'unset!' bindings and invokes the command associated with the matching binding as normal", ->
-          keymapManager.addKeymap 'test-2',
-            '.workspace':
-              'v i v a': 'unset!'
-              'v i v': 'unset!'
-
-          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
-
-          expect(events).toEqual ['enter-visual-mode']
-
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
       keymapManager.addKeymap 'test',
@@ -384,7 +373,6 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('*'))).toBe '*'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left'))).toBe 'left'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('\b'))).toBe 'backspace'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+007F', keyCode: 46))).toBe 'delete'
 
     describe "when a modifier key is combined with a non-modifier key", ->
       it "returns a string that identifies the modified keystroke", ->
@@ -397,22 +385,9 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left', shift: true))).toBe 'shift-left'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('Left', shift: true))).toBe 'shift-left'
 
-    describe "when a numpad key is pressed", ->
-      it "returns a string that identifies the key as the appropriate num-key", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0041', keyCode: 97, location: 3))).toBe 'num-1'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0045', keyCode: 101, location: 3))).toBe 'num-5'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0049', keyCode: 105, location: 3))).toBe 'num-9'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageDown', keyCode: 34, location: 3))).toBe 'num-pagedown'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageUp', keyCode: 33, location: 3))).toBe 'num-pageup'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004B', keyCode: 107, location: 3))).toBe 'num-+'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+007F', keyCode: 46, location: 3))).toBe 'num-delete'
-
     describe "when a non-English keyboard language is used", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, keyCode: 122))).toBe 'cmd-z'
-
-      it "corrects a Chromium bug where keyIdentifier does not match which in Dvorak-Qwerty layouts.", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004A', cmd: true, keyCode: 67))).toBe 'cmd-c'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
 
     describe "on Linux", ->
       originalPlatform = null
@@ -436,33 +411,10 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true))).toBe 'ctrl-]'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true))).toBe 'ctrl-\''
 
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true, shift: true))).toBe 'ctrl-:'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true, shift: true))).toBe 'ctrl-+'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true, shift: true))).toBe 'ctrl-<'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bd', ctrl: true, shift: true))).toBe 'ctrl-_'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00be', ctrl: true, shift: true))).toBe 'ctrl->'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00db', ctrl: true, shift: true))).toBe 'ctrl-{'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dc', ctrl: true, shift: true))).toBe 'ctrl-|'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true, shift: true))).toBe 'ctrl-}'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true, shift: true))).toBe 'ctrl-"'
-
-      it "always includes the shift modifier in the keystroke only for alphabetic characters", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('9', ctrl: true, shift: true))).toBe 'ctrl-('
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
+      it "always includes the shift modifier in the keystroke", ->
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('9', ctrl: true, shift: true))).toBe 'ctrl-shift-9'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('/', ctrl: true, shift: true))).toBe 'ctrl-shift-/'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a', ctrl: true, shift: true))).toBe 'ctrl-shift-A'
-
-      it "pressing shift and a number responds with the appropriate symbol", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('1', shift: true))).toBe '!'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('2', shift: true))).toBe '@'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('3', shift: true))).toBe '#'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('4', shift: true))).toBe '$'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('5', shift: true))).toBe '%'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('6', shift: true))).toBe '^'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('7', shift: true))).toBe '&'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('8', shift: true))).toBe '*'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('9', shift: true))).toBe '('
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('0', shift: true))).toBe ')'
 
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
