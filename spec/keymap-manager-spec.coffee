@@ -381,6 +381,7 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('*', ctrl: true))).toBe 'ctrl-*'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left', ctrl: true, alt: true, cmd: true))).toBe 'ctrl-alt-cmd-left'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('A', shift: true))).toBe 'shift-A'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a', ctrl: true, shift: true))).toBe 'ctrl-shift-A'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('{', shift: true))).toBe '{'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left', shift: true))).toBe 'shift-left'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('Left', shift: true))).toBe 'shift-left'
@@ -400,6 +401,31 @@ describe "KeymapManager", ->
         Object.defineProperty process, 'platform', value: originalPlatform
 
       it "corrects a Chromium bug where the keyIdentifier is incorrect for certain keypress events", ->
+        # Number row
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0030', ctrl: true))).toBe 'ctrl-0'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0031', ctrl: true))).toBe 'ctrl-1'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0032', ctrl: true))).toBe 'ctrl-2'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0033', ctrl: true))).toBe 'ctrl-3'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0034', ctrl: true))).toBe 'ctrl-4'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0035', ctrl: true))).toBe 'ctrl-5'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0036', ctrl: true))).toBe 'ctrl-6'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0037', ctrl: true))).toBe 'ctrl-7'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0038', ctrl: true))).toBe 'ctrl-8'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0039', ctrl: true))).toBe 'ctrl-9'
+
+        # Number row shifted
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0030', ctrl: true, shift: true))).toBe 'ctrl-)'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0031', ctrl: true, shift: true))).toBe 'ctrl-!'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0032', ctrl: true, shift: true))).toBe 'ctrl-@'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0033', ctrl: true, shift: true))).toBe 'ctrl-#'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0034', ctrl: true, shift: true))).toBe 'ctrl-$'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0035', ctrl: true, shift: true))).toBe 'ctrl-%'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0036', ctrl: true, shift: true))).toBe 'ctrl-^'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0037', ctrl: true, shift: true))).toBe 'ctrl-&'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0038', ctrl: true, shift: true))).toBe 'ctrl-*'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0039', ctrl: true, shift: true))).toBe 'ctrl-('
+
+        # Other symbols
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true))).toBe 'ctrl-;'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true))).toBe 'ctrl-='
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true))).toBe 'ctrl-,'
@@ -411,10 +437,17 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true))).toBe 'ctrl-]'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true))).toBe 'ctrl-\''
 
-      it "always includes the shift modifier in the keystroke", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('9', ctrl: true, shift: true))).toBe 'ctrl-shift-9'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('/', ctrl: true, shift: true))).toBe 'ctrl-shift-/'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a', ctrl: true, shift: true))).toBe 'ctrl-shift-A'
+        # Other symbols shifted
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true, shift: true))).toBe 'ctrl-:'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true, shift: true))).toBe 'ctrl-+'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true, shift: true))).toBe 'ctrl-<'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bd', ctrl: true, shift: true))).toBe 'ctrl-_'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00be', ctrl: true, shift: true))).toBe 'ctrl->'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00db', ctrl: true, shift: true))).toBe 'ctrl-{'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dc', ctrl: true, shift: true))).toBe 'ctrl-|'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true, shift: true))).toBe 'ctrl-}'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true, shift: true))).toBe 'ctrl-"'
 
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
