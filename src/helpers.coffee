@@ -20,9 +20,9 @@ exports.normalizeKeystrokes = (keystrokes) ->
 
 exports.keystrokeForKeyboardEvent = (event) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
-    if event.keyIdentifier.indexOf('U+') is 0
-      hexCharCode = event.keyIdentifier[2..]
-      charCode = charCodeFromHexCharCode(hexCharCode)
+    charCode = charCodeFromKeyIdentifier(event.keyIdentifier)
+    if charCode?
+      charCode = translateCharCodeForLinuxChromiumBug(charCode) if process.platform is 'linux'
       charCode = event.which if not isAscii(charCode) and isAscii(event.which)
       key = keyFromCharCode(charCode)
     else
@@ -120,28 +120,27 @@ parseKeystroke = (keystroke) ->
 
   parser.parse(keystroke)
 
-charCodeFromHexCharCode = (hexCharCode) ->
-  charCode = parseInt(hexCharCode, 16)
+charCodeFromKeyIdentifier = (keyIdentifier) ->
+  parseInt(keyIdentifier[2..], 16) if keyIdentifier.indexOf('U+') is 0
 
-  # Chromium includes incorrect keyIdentifier values on keypress events for
-  # certain symbols keys on Linux.
-  #
-  # See https://code.google.com/p/chromium/issues/detail?id=51024
-  # See https://bugs.webkit.org/show_bug.cgi?id=19906
-  if process.platform is 'linux'
-    switch charCode
-      when 186 then charCode = 59 # ";"
-      when 187 then charCode = 61 # "="
-      when 188 then charCode = 44 # ","
-      when 189 then charCode = 45 # "-"
-      when 190 then charCode = 46 # "."
-      when 191 then charCode = 47 # "/"
-      when 219 then charCode = 91 # "["
-      when 220 then charCode = 92 # "\"
-      when 221 then charCode = 93 # "]"
-      when 222 then charCode = 39 # "'"
-
-  charCode
+# Chromium includes incorrect keyIdentifier values on keypress events for
+# certain symbols keys on Linux.
+#
+# See https://code.google.com/p/chromium/issues/detail?id=51024
+# See https://bugs.webkit.org/show_bug.cgi?id=19906
+translateCharCodeForLinuxChromiumBug = (charCode) ->
+  switch charCode
+    when 186 then charCode = 59 # ";"
+    when 187 then charCode = 61 # "="
+    when 188 then charCode = 44 # ","
+    when 189 then charCode = 45 # "-"
+    when 190 then charCode = 46 # "."
+    when 191 then charCode = 47 # "/"
+    when 219 then charCode = 91 # "["
+    when 220 then charCode = 92 # "\"
+    when 221 then charCode = 93 # "]"
+    when 222 then charCode = 39 # "'"
+    else charCode
 
 keyFromCharCode = (charCode) ->
   switch charCode
