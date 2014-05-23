@@ -390,64 +390,69 @@ describe "KeymapManager", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
 
-    describe "on Linux", ->
+    describe "on Windows and Linux", ->
       originalPlatform = null
 
       beforeEach ->
         originalPlatform = process.platform
-        Object.defineProperty process, 'platform', value: 'linux'
 
       afterEach ->
         Object.defineProperty process, 'platform', value: originalPlatform
 
       it "corrects a Chromium bug where the keyIdentifier is incorrect for certain keypress events", ->
-        # Number row
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0030', ctrl: true))).toBe 'ctrl-0'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0031', ctrl: true))).toBe 'ctrl-1'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0032', ctrl: true))).toBe 'ctrl-2'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0033', ctrl: true))).toBe 'ctrl-3'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0034', ctrl: true))).toBe 'ctrl-4'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0035', ctrl: true))).toBe 'ctrl-5'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0036', ctrl: true))).toBe 'ctrl-6'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0037', ctrl: true))).toBe 'ctrl-7'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0038', ctrl: true))).toBe 'ctrl-8'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0039', ctrl: true))).toBe 'ctrl-9'
+        testTranslations = ->
+          # Number row
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0030', ctrl: true))).toBe 'ctrl-0'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0031', ctrl: true))).toBe 'ctrl-1'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0032', ctrl: true))).toBe 'ctrl-2'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0033', ctrl: true))).toBe 'ctrl-3'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0034', ctrl: true))).toBe 'ctrl-4'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0035', ctrl: true))).toBe 'ctrl-5'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0036', ctrl: true))).toBe 'ctrl-6'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0037', ctrl: true))).toBe 'ctrl-7'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0038', ctrl: true))).toBe 'ctrl-8'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0039', ctrl: true))).toBe 'ctrl-9'
 
-        # Number row shifted
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0030', ctrl: true, shift: true))).toBe 'ctrl-)'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0031', ctrl: true, shift: true))).toBe 'ctrl-!'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0032', ctrl: true, shift: true))).toBe 'ctrl-@'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0033', ctrl: true, shift: true))).toBe 'ctrl-#'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0034', ctrl: true, shift: true))).toBe 'ctrl-$'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0035', ctrl: true, shift: true))).toBe 'ctrl-%'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0036', ctrl: true, shift: true))).toBe 'ctrl-^'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0037', ctrl: true, shift: true))).toBe 'ctrl-&'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0038', ctrl: true, shift: true))).toBe 'ctrl-*'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0039', ctrl: true, shift: true))).toBe 'ctrl-('
+          # Number row shifted
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0030', ctrl: true, shift: true))).toBe 'ctrl-)'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0031', ctrl: true, shift: true))).toBe 'ctrl-!'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0032', ctrl: true, shift: true))).toBe 'ctrl-@'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0033', ctrl: true, shift: true))).toBe 'ctrl-#'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0034', ctrl: true, shift: true))).toBe 'ctrl-$'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0035', ctrl: true, shift: true))).toBe 'ctrl-%'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0036', ctrl: true, shift: true))).toBe 'ctrl-^'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0037', ctrl: true, shift: true))).toBe 'ctrl-&'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0038', ctrl: true, shift: true))).toBe 'ctrl-*'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0039', ctrl: true, shift: true))).toBe 'ctrl-('
 
-        # Other symbols
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true))).toBe 'ctrl-;'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true))).toBe 'ctrl-='
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true))).toBe 'ctrl-,'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bd', ctrl: true))).toBe 'ctrl--'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00be', ctrl: true))).toBe 'ctrl-.'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true))).toBe 'ctrl-/'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00db', ctrl: true))).toBe 'ctrl-['
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dc', ctrl: true))).toBe 'ctrl-\\'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true))).toBe 'ctrl-]'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true))).toBe 'ctrl-\''
+          # Other symbols
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true))).toBe 'ctrl-;'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true))).toBe 'ctrl-='
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true))).toBe 'ctrl-,'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bd', ctrl: true))).toBe 'ctrl--'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00be', ctrl: true))).toBe 'ctrl-.'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true))).toBe 'ctrl-/'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00db', ctrl: true))).toBe 'ctrl-['
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dc', ctrl: true))).toBe 'ctrl-\\'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true))).toBe 'ctrl-]'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true))).toBe 'ctrl-\''
 
-        # Other symbols shifted
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true, shift: true))).toBe 'ctrl-:'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true, shift: true))).toBe 'ctrl-+'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true, shift: true))).toBe 'ctrl-<'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bd', ctrl: true, shift: true))).toBe 'ctrl-_'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00be', ctrl: true, shift: true))).toBe 'ctrl->'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00db', ctrl: true, shift: true))).toBe 'ctrl-{'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dc', ctrl: true, shift: true))).toBe 'ctrl-|'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true, shift: true))).toBe 'ctrl-}'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true, shift: true))).toBe 'ctrl-"'
+          # Other symbols shifted
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true, shift: true))).toBe 'ctrl-:'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true, shift: true))).toBe 'ctrl-+'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true, shift: true))).toBe 'ctrl-<'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bd', ctrl: true, shift: true))).toBe 'ctrl-_'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00be', ctrl: true, shift: true))).toBe 'ctrl->'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00db', ctrl: true, shift: true))).toBe 'ctrl-{'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dc', ctrl: true, shift: true))).toBe 'ctrl-|'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true, shift: true))).toBe 'ctrl-}'
+          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true, shift: true))).toBe 'ctrl-"'
+
+        Object.defineProperty process, 'platform', value: 'win32'
+        testTranslations()
+        Object.defineProperty process, 'platform', value: 'linux'
+        testTranslations()
 
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []

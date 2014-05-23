@@ -9,7 +9,7 @@ KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift',
 
 SpecificityCache = {}
 
-LinuxCharCodeTranslations =
+WindowsAndLinuxCharCodeTranslations =
   48:
     shifted: 41    # ")"
     unshifted: 48  # "0"
@@ -87,8 +87,8 @@ exports.keystrokeForKeyboardEvent = (event) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     charCode = charCodeFromKeyIdentifier(event.keyIdentifier)
     if charCode?
-      if process.platform is 'linux'
-        charCode = translateCharCodeForLinuxChromiumBug(charCode, event.shiftKey)
+      if process.platform in ['linux', 'win32']
+        charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
       charCode = event.which if not isAscii(charCode) and isAscii(event.which)
       key = keyFromCharCode(charCode)
     else
@@ -190,12 +190,12 @@ charCodeFromKeyIdentifier = (keyIdentifier) ->
   parseInt(keyIdentifier[2..], 16) if keyIdentifier.indexOf('U+') is 0
 
 # Chromium includes incorrect keyIdentifier values on keypress events for
-# certain symbols keys on Linux.
+# certain symbols keys on Window and Linux.
 #
 # See https://code.google.com/p/chromium/issues/detail?id=51024
 # See https://bugs.webkit.org/show_bug.cgi?id=19906
-translateCharCodeForLinuxChromiumBug = (charCode, shift) ->
-  if translation = LinuxCharCodeTranslations[charCode]
+translateCharCodeForWindowsAndLinuxChromiumBug = (charCode, shift) ->
+  if translation = WindowsAndLinuxCharCodeTranslations[charCode]
     if shift then translation.shifted else translation.unshifted
   else
     charCode
