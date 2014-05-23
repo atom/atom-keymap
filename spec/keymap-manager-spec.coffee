@@ -399,7 +399,7 @@ describe "KeymapManager", ->
 
     describe "when a non-English keyboard language is used", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, which: 122))).toBe 'cmd-z'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, keyCode: 122))).toBe 'cmd-z'
 
     describe "on Windows and Linux", ->
       originalPlatform = null

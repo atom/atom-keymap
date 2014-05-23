@@ -89,7 +89,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
     if charCode?
       if process.platform in ['linux', 'win32']
         charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
-      charCode = event.which if not isAscii(charCode) and isAscii(event.which)
+      charCode = event.which if not isAscii(charCode) and isAscii(event.keyCode)
       key = keyFromCharCode(charCode)
     else
       key = event.keyIdentifier.toLowerCase()
@@ -114,7 +114,7 @@ exports.calculateSpecificity = (selector) ->
 exports.isAtomModifier = (key) ->
   AtomModifiers.has(key)
 
-exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, target}={}) ->
+exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target}={}) ->
   event = document.createEvent('KeyboardEvent')
   bubbles = true
   cancelable = true
@@ -143,7 +143,8 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, which, target}={}) ->
   location = KeyboardEvent.DOM_KEY_LOCATION_STANDARD
   event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
   Object.defineProperty(event, 'target', get: -> target) if target?
-  Object.defineProperty(event, 'which', get: -> which) if which?
+  Object.defineProperty(event, 'keyCode', get: -> keyCode)
+  Object.defineProperty(event, 'which', get: -> keyCode)
   event
 
 normalizeKeystroke = (keystroke) ->
