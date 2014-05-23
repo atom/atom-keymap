@@ -90,7 +90,7 @@ NumPadToASCII =
   71: 55 # "7"
   72: 56 # "8"
   73: 57 # "9"
-  
+
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
   for keystroke in keystrokes.split(/\s+/)
@@ -110,7 +110,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
       if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
         # This is a numpad number
         charCode = numpadToASCII(charCode)
-	
+
       charCode = event.which if not isASCII(charCode) and isASCII(event.keyCode)
       key = keyFromCharCode(charCode)
     else
@@ -236,6 +236,6 @@ keyFromCharCode = (charCode) ->
 
 isASCII = (charCode) ->
   0 <= charCode <= 127
-  
+
 numpadToASCII = (charCode) ->
   NumPadToASCII[charCode] ? charCode
