@@ -74,6 +74,23 @@ WindowsAndLinuxCharCodeTranslations =
     shifted: 34    # '"'
     unshifted: 39  # "'"
 
+NumPadToASCII =
+  79: 47 # "/"
+  74: 42 # "*"
+  77: 45 # "-"
+  75: 43 # "+"
+  78: 46 # "."
+  96: 48 # "0"
+  65: 49 # "1"
+  66: 50 # "2"
+  67: 51 # "3"
+  68: 52 # "4"
+  69: 53 # "5"
+  70: 54 # "6"
+  71: 55 # "7"
+  72: 56 # "8"
+  73: 57 # "9"
+  
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
   for keystroke in keystrokes.split(/\s+/)
@@ -89,7 +106,12 @@ exports.keystrokeForKeyboardEvent = (event) ->
     if charCode?
       if process.platform in ['linux', 'win32']
         charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
-      charCode = event.which if not isAscii(charCode) and isAscii(event.keyCode)
+
+      if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
+        # This is a numpad number
+        charCode = numpadToASCII(charCode)
+	
+      charCode = event.which if not isASCII(charCode) and isASCII(event.keyCode)
       key = keyFromCharCode(charCode)
     else
       key = event.keyIdentifier.toLowerCase()
@@ -105,6 +127,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   else
     key = key.toLowerCase() if /^[A-Z]$/.test(key)
   keystroke.push 'cmd' if event.metaKey
+  keystroke.push 'num' if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
   keystroke.push(key) if key?
   keystroke.join('-')
 
@@ -114,7 +137,7 @@ exports.calculateSpecificity = (selector) ->
 exports.isAtomModifier = (key) ->
   AtomModifiers.has(key)
 
-exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target}={}) ->
+exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
   event = document.createEvent('KeyboardEvent')
   bubbles = true
   cancelable = true
@@ -140,7 +163,7 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target}={}) ->
       else
         keyIdentifier = key[0].toUpperCase() + key[1..]
 
-  location = KeyboardEvent.DOM_KEY_LOCATION_STANDARD
+  location ?= KeyboardEvent.DOM_KEY_LOCATION_STANDARD
   event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
   Object.defineProperty(event, 'target', get: -> target) if target?
   Object.defineProperty(event, 'keyCode', get: -> keyCode)
@@ -211,5 +234,8 @@ keyFromCharCode = (charCode) ->
     when 127 then 'delete'
     else String.fromCharCode(charCode)
 
-isAscii = (charCode) ->
+isASCII = (charCode) ->
   0 <= charCode <= 127
+  
+numpadToASCII = (charCode) ->
+  NumPadToASCII[charCode] ? charCode

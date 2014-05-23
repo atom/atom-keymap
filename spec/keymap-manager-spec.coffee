@@ -397,6 +397,16 @@ describe "KeymapManager", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left', shift: true))).toBe 'shift-left'
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('Left', shift: true))).toBe 'shift-left'
 
+    describe "when a numpad key is pressed", ->
+      it "returns a string that identifies the key as the appropriate num-key", ->
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0041', keyCode: 97, location: 3))).toBe 'num-1'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0045', keyCode: 101, location: 3))).toBe 'num-5'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0049', keyCode: 105, location: 3))).toBe 'num-9'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageDown', keyCode: 34, location: 3))).toBe 'num-pagedown'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageUp', keyCode: 33, location: 3))).toBe 'num-pageup'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004B', keyCode: 107, location: 3))).toBe 'num-+'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+007F', keyCode: 46, location: 3))).toBe 'num-delete'
+
     describe "when a non-English keyboard language is used", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, keyCode: 122))).toBe 'cmd-z'
