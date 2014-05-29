@@ -354,6 +354,10 @@ describe "KeymapManager", ->
       keymapManager.handleKeyboardEvent(event)
       expect(event.defaultPrevented).toBe false
 
+    it "allows a num- modifier prefix for number pad keybindings", ->
+      keymapManager.addKeymap 'test', '*': 'num-enter': 'c'
+      expect(keymapManager.findKeyBindings(command: 'c')[0].keystrokes).toBe 'num-enter'
+
   describe "::removeKeymap(source)", ->
     it "removes all bindings originating from the given source", ->
       keymapManager.addKeymap 'foo',
