@@ -27,7 +27,7 @@
     "loophole": "^1.0.0",
     "fs-plus": "^2.0.4",
     "season": "^1.0.2",
-    "pathwatcher": "^1.0.0",
+    "pathwatcher": "^2.0.2",
     "emissary": "^1.1.0",
     "underscore-plus": "^1.0.0"
   },
