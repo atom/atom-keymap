@@ -89,10 +89,10 @@ describe "KeymapManager", ->
 
       describe "if the matching binding's command is 'native!'", ->
         it "terminates without preventing the browser's default action", ->
+          elementA.addEventListener 'native!', (e) -> events.push(e)
           keymapManager.addKeymap "test",
             ".b":
               "ctrl-y": "native!"
-          elementA.addEventListener 'native!', (e) -> events.push(e)
 
           event = keydownEvent('y', ctrl: true, target: elementB)
           keymapManager.handleKeyboardEvent(event)
@@ -101,6 +101,7 @@ describe "KeymapManager", ->
 
       describe "if the matching binding's command is 'unset!'", ->
         it "continues searching for a matching binding on the parent element", ->
+          elementA.addEventListener 'unset!', (e) -> events.push(e)
           keymapManager.addKeymap "test",
             ".a":
               "ctrl-y": "x-command"
@@ -112,6 +113,24 @@ describe "KeymapManager", ->
           expect(events.length).toBe 1
           expect(events[0].type).toBe 'x-command'
           expect(event.defaultPrevented).toBe true
+
+      describe "if the matching binding's command is 'abort!'", ->
+        it "stops searching for a matching binding immediately and emits no command event", ->
+          elementA.addEventListener 'abort!', (e) -> events.push(e)
+          keymapManager.addKeymap "test",
+            ".a":
+              "ctrl-y": "y-command"
+              "ctrl-x": "x-command"
+            ".b":
+              "ctrl-y": "abort!"
+
+          event = keydownEvent('y', ctrl: true, target: elementB)
+          keymapManager.handleKeyboardEvent(event)
+          expect(events.length).toBe 0
+          expect(event.defaultPrevented).toBe true
+
+          keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+          expect(events.length).toBe 1
 
     describe "when the keystroke matches multiple bindings on the same element", ->
       [elementA, elementB, events] = []

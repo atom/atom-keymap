@@ -206,6 +206,9 @@ class KeymapManager
   # If the matching binding's command is 'unset!', the search will continue from
   # the current element's parent.
   #
+  # If the matching binding's command is 'abort!', the search will terminate
+  # without dispatching a command event.
+  #
   # If the event's target is `document.body`, it will be treated as if its
   # target is `.defaultTarget` if that property is assigned on the keymap.
   handleKeyboardEvent: (event, replaying) ->
@@ -242,6 +245,11 @@ class KeymapManager
         for exactMatch in exactMatches
           if exactMatch.command is 'native!'
             @clearQueuedKeystrokes()
+            return
+
+          if exactMatch.command is 'abort!'
+            @clearQueuedKeystrokes()
+            event.preventDefault()
             return
 
           if exactMatch.command is 'unset!'
