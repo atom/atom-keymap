@@ -81,7 +81,6 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 #      Emitted when keystrokes don't match any bindings.
 #      * keystrokes - The keystroke {String} that matched no bindings
 #      * keyboardEventTarget - The target element of the keyboard event
-
 module.exports =
 class KeymapManager
   Emitter.includeInto(this)
