@@ -104,7 +104,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     charCode = charCodeFromKeyIdentifier(event.keyIdentifier)
     if charCode?
-      if process.platform in ['linux', 'win32']
+      if process.platform is 'linux' or process.platform is 'win32'
         charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
 
       if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
@@ -116,20 +116,32 @@ exports.keystrokeForKeyboardEvent = (event) ->
     else
       key = event.keyIdentifier.toLowerCase()
 
-  keystroke = []
-  keystroke.push 'ctrl' if event.ctrlKey
-  keystroke.push 'alt' if event.altKey
+  keystroke = ''
+  if event.ctrlKey
+    keystroke += 'ctrl'
+  if event.altKey
+    keystroke += '-' if keystroke
+    keystroke += 'alt'
   if event.shiftKey
     # Don't push 'shift' when modifying symbolic characters like '{'
-    keystroke.push 'shift' unless /^[^A-Za-z]$/.test(key)
+    unless /^[^A-Za-z]$/.test(key)
+      keystroke += '-' if keystroke
+      keystroke += 'shift'
     # Only upper case alphabetic characters like 'a'
     key = key.toUpperCase() if /^[a-z]$/.test(key)
   else
     key = key.toLowerCase() if /^[A-Z]$/.test(key)
-  keystroke.push 'cmd' if event.metaKey
-  keystroke.push 'num' if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
-  keystroke.push(key) if key?
-  keystroke.join('-')
+  if event.metaKey
+    keystroke += '-' if keystroke
+    keystroke += 'cmd'
+  if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
+    keystroke += '-' if keystroke
+    keystroke += 'num'
+  if key?
+    keystroke += '-' if keystroke
+    keystroke += key
+
+  keystroke
 
 exports.calculateSpecificity = (selector) ->
   SpecificityCache[selector] ?= specificity(selector)
