@@ -289,6 +289,7 @@ class KeymapManager
   #     invoked by a KeyboardEvent originating from the target element.
   findKeyBindings: (params={}) ->
     {keystrokes, command, target, keyBindings} = params
+    [command] = command if Array.isArray(command)
 
     bindings = keyBindings ? @keyBindings
 
@@ -426,10 +427,11 @@ class KeymapManager
   # After we match a binding, we call this method to dispatch a custom event
   # based on the binding's command.
   dispatchCommandEvent: (command, target, keyboardEvent) ->
+    [command, data] = command if Array.isArray(command)
     # Here we use prototype chain injection to add CommandEvent methods to this
     # custom event to support aborting key bindings and simulated bubbling for
     # detached targets.
-    commandEvent = new CustomEvent(command, bubbles: true, cancelable: true)
+    commandEvent = new CustomEvent(command, detail: data, bubbles: true, cancelable: true)
     commandEvent.__proto__ = CommandEvent::
     commandEvent.originalEvent = keyboardEvent
 
@@ -497,6 +499,7 @@ class KeymapManager
   # Deprecated: Use {::findKeyBindings} with the 'command' param.
   keyBindingsForCommand: (command) ->
     Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
+    [command] = command if Array.isArray(command)
     @findKeyBindings({command})
 
   # Deprecated: Use {::findKeyBindings} with the 'keystrokes' param.
@@ -513,6 +516,7 @@ class KeymapManager
   # params
   keyBindingsForCommandMatchingElement: (command, target) ->
     Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
+    [command] = command if Array.isArray(command)
     @findKeyBindings({command, target: target[0] ? target})
 
   # Deprecated: Use {::findKeyBindings} with the 'keystrokes' and 'target'
