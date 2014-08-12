@@ -373,10 +373,6 @@ describe "KeymapManager", ->
       keymapManager.handleKeyboardEvent(event)
       expect(event.defaultPrevented).toBe false
 
-    it "allows a num- modifier prefix for number pad keybindings", ->
-      keymapManager.addKeymap 'test', '*': 'num-enter': 'c'
-      expect(keymapManager.findKeyBindings(command: 'c')[0].keystrokes).toBe 'num-enter'
-
   describe "::removeKeymap(source)", ->
     it "removes all bindings originating from the given source", ->
       keymapManager.addKeymap 'foo',
@@ -422,13 +418,13 @@ describe "KeymapManager", ->
 
     describe "when a numpad key is pressed", ->
       it "returns a string that identifies the key as the appropriate num-key", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0041', keyCode: 97, location: 3))).toBe 'num-1'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0045', keyCode: 101, location: 3))).toBe 'num-5'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0049', keyCode: 105, location: 3))).toBe 'num-9'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageDown', keyCode: 34, location: 3))).toBe 'num-pagedown'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageUp', keyCode: 33, location: 3))).toBe 'num-pageup'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004B', keyCode: 107, location: 3))).toBe 'num-+'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+007F', keyCode: 46, location: 3))).toBe 'num-delete'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0041', keyCode: 97, location: 3))).toBe '1'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0045', keyCode: 101, location: 3))).toBe '5'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0049', keyCode: 105, location: 3))).toBe '9'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageDown', keyCode: 34, location: 3))).toBe 'pagedown'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageUp', keyCode: 33, location: 3))).toBe 'pageup'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004B', keyCode: 107, location: 3))).toBe '+'
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+007F', keyCode: 46, location: 3))).toBe 'delete'
 
     describe "when a non-English keyboard language is used", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
