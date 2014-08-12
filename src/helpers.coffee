@@ -2,7 +2,7 @@
 [parser, fs, loophole, pegjs] = []
 
 AtomModifiers = new Set
-AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd', 'num']
+AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
 
 KeyboardEventModifiers = new Set
 KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
@@ -134,9 +134,6 @@ exports.keystrokeForKeyboardEvent = (event) ->
   if event.metaKey
     keystroke += '-' if keystroke
     keystroke += 'cmd'
-  if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
-    keystroke += '-' if keystroke
-    keystroke += 'num'
   if key?
     keystroke += '-' if keystroke
     keystroke += key
@@ -206,7 +203,6 @@ normalizeKeystroke = (keystroke) ->
   keystroke.push('alt') if modifiers.has('alt')
   keystroke.push('shift') if modifiers.has('shift')
   keystroke.push('cmd') if modifiers.has('cmd')
-  keystroke.push('num') if modifiers.has('num')
   keystroke.push(primaryKey) if primaryKey?
   keystroke.join('-')
 
