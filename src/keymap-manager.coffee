@@ -183,11 +183,10 @@ class KeymapManager
         new File(filePath).on 'contents-changed moved removed', =>
           @reloadKeymap(filePath)
 
-  # Public: Remove the key bindings added with {::addKeymap} or
-  # {::loadKeymap}.
+  # Public: Remove the key bindings added with {::add} or {::loadKeymap}.
   #
   # source - A {String} representing the `source` in a previous call to
-  #   {::addKeymap} or the path in {::loadKeymap}.
+  #          {::add} or the path in {::loadKeymap}.
   remove: (source) ->
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
 
