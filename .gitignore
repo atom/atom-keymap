@@ -4,3 +4,4 @@ lib/
 .idea
 atom
 .coffee/
+api.json
