@@ -65,38 +65,45 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 #
 # ## Events
 #
-# * `matched` -
-#      Emitted when keystrokes match a binding.
-#      * keystrokes - The keystroke {String} that matched the binding
-#      * binding - The {KeyBinding} that was used
-#      * keyboardEventTarget - The target element of the keyboard event
+# ### matched
 #
-# * `matched-partially` -
-#      Emitted when keystrokes partially match one or more bindings.
-#      * keystrokes - The keystroke {String} that partially match some bindings
-#      * partiallyMatchedBindings - The {KeyBinding}s that partially matched
-#      * keyboardEventTarget - The target element of the keyboard event
+# Emitted when keystrokes match a binding.
 #
-# * `match-failed` -
-#      Emitted when keystrokes don't match any bindings.
-#      * keystrokes - The keystroke {String} that matched no bindings
-#      * keyboardEventTarget - The target element of the keyboard event
+# * `keystrokes` The keystroke {String} that matched the binding
+# * `binding` The {KeyBinding} that was used
+# * `keyboardEventTarget` The target element of the keyboard event
+#
+# ### matched-partially
+#
+# Emitted when keystrokes partially match one or more bindings.
+#
+# * `keystrokes` The keystroke {String} that partially match some bindings
+# * `partiallyMatchedBindings` The {KeyBinding}s that partially matched
+# * `keyboardEventTarget` The target element of the keyboard event
+#
+# ### match-failed
+#
+# Emitted when keystrokes don't match any bindings.
+#
+# * `keystrokes` The keystroke {String} that matched no bindings
+# * `keyboardEventTarget` The target element of the keyboard event
+#
 module.exports =
 class KeymapManager
   Emitter.includeInto(this)
 
   # Public: Create a keydown DOM event for testing purposes.
   #
-  # key - The key or keyIdentifier of the event. For example, 'a', '1',
-  #   'escape', 'backspace', etc.
-  # options - An {Object} containing any of the following:
-  #   :ctrl - A {Boolean} indicating the ctrl modifier key
-  #   :alt - A {Boolean} indicating the alt modifier key
-  #   :shift - A {Boolean} indicating the shift modifier key
-  #   :cmd - A {Boolean} indicating the cmd modifier key
-  #   :which - A {Number} indicating `which` value of the event. See
-  #      the docs for KeyboardEvent for more information.
-  #   :target - The target element of the event.
+  # * `key` The key or keyIdentifier of the event. For example, 'a', '1',
+  #         'escape', 'backspace', etc.
+  # * options An {Object} containing any of the following:
+  #   * `ctrl`   A {Boolean} indicating the ctrl modifier key
+  #   * `alt`    A {Boolean} indicating the alt modifier key
+  #   * `shift`  A {Boolean} indicating the shift modifier key
+  #   * `cmd`    A {Boolean} indicating the cmd modifier key
+  #   * `which`  A {Number} indicating `which` value of the event. See
+  #              the docs for KeyboardEvent for more information.
+  #   * `target` The target element of the event.
   @keydownEvent: (key, options) -> keydownEvent(key, options)
 
   # Public: The number of milliseconds allowed before pending states caused
@@ -107,14 +114,14 @@ class KeymapManager
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
 
-  # Public:
+  # Public: Create a new KeymapManager.
   #
-  # options - An {Object} containing properties to assign to the keymap: You can
-  #   pass custom properties to be used by extension methods. The following
-  #   properties are also supported:
-  #   :defaultTarget - This will be used as the target of events whose target
-  #     is `document.body` to allow for a catch-all element when nothing is
-  #     focused
+  # * `options` An {Object} containing properties to assign to the keymap.  You
+  #             can pass custom properties to be used by extension methods. The
+  #             following properties are also supported:
+  #   * `defaultTarget` This will be used as the target of events whose target
+  #                     is `document.body` to allow for a catch-all element when
+  #                     nothing is focused.
   constructor: (options={}) ->
     @[key] = value for key, value of options
     @keyBindings = []
@@ -126,6 +133,7 @@ class KeymapManager
   destroy: ->
     for filePath, subscription of @watchSubscriptions
       subscription.off()
+    undefined
 
   # Public: Get all current key bindings.
   #
@@ -135,10 +143,10 @@ class KeymapManager
 
   # Public: Add sets of key bindings grouped by CSS selector.
   #
-  # source - A {String} (usually a path) uniquely identifying the given bindings
-  #   so they can be removed later.
-  # bindings - An {Object} whose top-level keys point at sub-objects mapping
-  #   keystroke patterns to commands.
+  # * `source` A {String} (usually a path) uniquely identifying the given bindings
+  #            so they can be removed later.
+  # * `bindings` An {Object} whose top-level keys point at sub-objects mapping
+  #              keystroke patterns to commands.
   add: (source, keyBindingsBySelector) ->
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
@@ -154,14 +162,16 @@ class KeymapManager
           @keyBindings.push(keyBinding)
         else
           console.warn "Invalid keystroke sequence for binding: `#{keystrokes}: #{command}` in #{source}"
+    undefined
 
   # Public: Load the key bindings from the given path.
   #
-  # path - A {String} containing a path to a file or a directory. If the path is
-  #   a directory, all files inside it will be loaded.
-  # options - An {Object} containing the following optional keys:
-  #   :watch - If `true`, the keymap will also reload the file at the given path
-  #     whenever it changes. This option cannot be used with directory paths.
+  # * `path` A {String} containing a path to a file or a directory. If the path is
+  #          a directory, all files inside it will be loaded.
+  # * `options` An {Object} containing the following optional keys:
+  #   * `watch` If `true`, the keymap will also reload the file at the given
+  #             path whenever it changes. This option cannot be used with
+  #             directory paths.
   loadKeymap: (bindingsPath, options) ->
     checkIfDirectory = options?.checkIfDirectory ? true
     if checkIfDirectory and fs.isDirectorySync(bindingsPath)
@@ -171,6 +181,8 @@ class KeymapManager
     else
       @addKeymap(bindingsPath, @readKeymap(bindingsPath, options?.suppressErrors))
       @watchKeymap(bindingsPath) if options?.watch
+
+    undefined
 
   # Public: Cause the keymap to reload the key bindings file at the given path
   # whenever it changes.
@@ -183,12 +195,15 @@ class KeymapManager
         new File(filePath).on 'contents-changed moved removed', =>
           @reloadKeymap(filePath)
 
+    undefined
+
   # Public: Remove the key bindings added with {::add} or {::loadKeymap}.
   #
-  # source - A {String} representing the `source` in a previous call to
-  #          {::add} or the path in {::loadKeymap}.
+  # * `source` A {String} representing the `source` in a previous call to
+  #            {::add} or the path in {::loadKeymap}.
   remove: (source) ->
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
+    undefined
 
   # Public: Dispatch a custom event associated with the matching key binding for
   # the given `KeyboardEvent` if one can be found.
@@ -278,14 +293,17 @@ class KeymapManager
 
   # Public: Get the key bindings for a given command and optional target.
   #
-  # params - An {Object} whose keys constrain the binding search:
-  #   :keystrokes - A {String} representing one or more keystrokes, such as
-  #     'ctrl-x ctrl-s'
-  #   :command - A {String} representing the name of a command, such as
-  #     'editor:backspace'
-  #   :target - An optional DOM element constraining the search. If this
-  #     parameter is supplied, the call will only return bindings that can be
-  #     invoked by a KeyboardEvent originating from the target element.
+  # * `params` An {Object} whose keys constrain the binding search:
+  #   * `keystrokes` A {String} representing one or more keystrokes, such as
+  #                  'ctrl-x ctrl-s'
+  #   * `command` A {String} representing the name of a command, such as
+  #               'editor:backspace'
+  #   * `target` An optional DOM element constraining the search. If this
+  #              parameter is supplied, the call will only return bindings that
+  #              can be invoked by a KeyboardEvent originating from the target
+  #              element.
+  #
+  # Returns an {Array} of key bindings.
   findKeyBindings: (params={}) ->
     {keystrokes, command, target, keyBindings} = params
 
@@ -454,7 +472,7 @@ class KeymapManager
 
   # Public: Translate a keydown event to a keystroke string.
   #
-  # event - A `KeyboardEvent` of type 'keydown'
+  # * `event` A `KeyboardEvent` of type 'keydown'
   #
   # Returns a {String} describing the keystroke.
   keystrokeForKeyboardEvent: (event) ->

@@ -548,7 +548,8 @@ describe "KeymapManager", ->
           fs.writeFileSync keymapFilePath, """
             '.a': 'ctrl-a': 'x'
           """
-          subscription = keymapManager.loadKeymap(keymapFilePath, watch: true)
+          keymapManager.loadKeymap(keymapFilePath, watch: true)
+          subscription = keymapManager.watchSubscriptions[keymapFilePath]
           expect(keymapManager.findKeyBindings(command: 'x').length).toBe 1
 
         describe "when the file is changed", ->
