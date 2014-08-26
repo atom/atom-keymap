@@ -94,15 +94,15 @@ class KeymapManager
 
   # Public: Create a keydown DOM event for testing purposes.
   #
-  # * `key` The key or keyIdentifier of the event. For example, 'a', '1',
-  #         'escape', 'backspace', etc.
-  # * options An {Object} containing any of the following:
+  # * `key` The key or keyIdentifier of the event. For example, `'a'`, `'1'`,
+  #   `'escape'`, `'backspace'`, etc.
+  # * `options` (optional) An {Object} containing any of the following:
   #   * `ctrl`   A {Boolean} indicating the ctrl modifier key
   #   * `alt`    A {Boolean} indicating the alt modifier key
   #   * `shift`  A {Boolean} indicating the shift modifier key
   #   * `cmd`    A {Boolean} indicating the cmd modifier key
   #   * `which`  A {Number} indicating `which` value of the event. See
-  #              the docs for KeyboardEvent for more information.
+  #     the docs for KeyboardEvent for more information.
   #   * `target` The target element of the event.
   @keydownEvent: (key, options) -> keydownEvent(key, options)
 
@@ -117,11 +117,10 @@ class KeymapManager
   # Public: Create a new KeymapManager.
   #
   # * `options` An {Object} containing properties to assign to the keymap.  You
-  #             can pass custom properties to be used by extension methods. The
-  #             following properties are also supported:
+  #   can pass custom properties to be used by extension methods. The
+  #   following properties are also supported:
   #   * `defaultTarget` This will be used as the target of events whose target
-  #                     is `document.body` to allow for a catch-all element when
-  #                     nothing is focused.
+  #     is `document.body` to allow for a catch-all element when nothing is focused.
   constructor: (options={}) ->
     @[key] = value for key, value of options
     @keyBindings = []
@@ -144,9 +143,9 @@ class KeymapManager
   # Public: Add sets of key bindings grouped by CSS selector.
   #
   # * `source` A {String} (usually a path) uniquely identifying the given bindings
-  #            so they can be removed later.
+  #   so they can be removed later.
   # * `bindings` An {Object} whose top-level keys point at sub-objects mapping
-  #              keystroke patterns to commands.
+  #   keystroke patterns to commands.
   add: (source, keyBindingsBySelector) ->
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
@@ -167,11 +166,10 @@ class KeymapManager
   # Public: Load the key bindings from the given path.
   #
   # * `path` A {String} containing a path to a file or a directory. If the path is
-  #          a directory, all files inside it will be loaded.
+  #   a directory, all files inside it will be loaded.
   # * `options` An {Object} containing the following optional keys:
   #   * `watch` If `true`, the keymap will also reload the file at the given
-  #             path whenever it changes. This option cannot be used with
-  #             directory paths.
+  #     path whenever it changes. This option cannot be used with directory paths.
   loadKeymap: (bindingsPath, options) ->
     checkIfDirectory = options?.checkIfDirectory ? true
     if checkIfDirectory and fs.isDirectorySync(bindingsPath)
@@ -200,7 +198,7 @@ class KeymapManager
   # Public: Remove the key bindings added with {::add} or {::loadKeymap}.
   #
   # * `source` A {String} representing the `source` in a previous call to
-  #            {::add} or the path in {::loadKeymap}.
+  #   {::add} or the path in {::loadKeymap}.
   remove: (source) ->
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
     undefined
@@ -295,13 +293,12 @@ class KeymapManager
   #
   # * `params` An {Object} whose keys constrain the binding search:
   #   * `keystrokes` A {String} representing one or more keystrokes, such as
-  #                  'ctrl-x ctrl-s'
+  #     'ctrl-x ctrl-s'
   #   * `command` A {String} representing the name of a command, such as
-  #               'editor:backspace'
+  #     'editor:backspace'
   #   * `target` An optional DOM element constraining the search. If this
-  #              parameter is supplied, the call will only return bindings that
-  #              can be invoked by a KeyboardEvent originating from the target
-  #              element.
+  #     parameter is supplied, the call will only return bindings that
+  #     can be invoked by a KeyboardEvent originating from the target element.
   #
   # Returns an {Array} of key bindings.
   findKeyBindings: (params={}) ->
