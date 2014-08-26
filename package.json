@@ -44,6 +44,6 @@
     "temp": "^0.6.0",
     "space-pencil": "^0.3.0",
     "grunt-peg": "^1.2.0",
-    "grunt-atomdoc": "^0.2.0"
+    "grunt-atomdoc": "^1.0.0"
   }
 }
