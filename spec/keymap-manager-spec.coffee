@@ -1,6 +1,6 @@
 path = require 'path'
 fs = require 'fs-plus'
-temp = require 'temp'
+temp = require('temp').track()
 {$$} = require 'space-pencil'
 {appendContent} = require './spec-helper'
 KeymapManager = require '../src/keymap-manager'
