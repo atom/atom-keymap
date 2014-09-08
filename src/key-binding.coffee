@@ -6,6 +6,8 @@ module.exports =
 class KeyBinding
   PropertyAccessors.includeInto(this)
 
+  @currentIndex: 1
+
   @::accessor 'keystroke',
     get: ->
       Grim.deprecate('Use KeyBinding.keystrokes instead')
@@ -14,8 +16,6 @@ class KeyBinding
     set: (value) ->
       Grim.deprecate('Use KeyBinding.keystrokes instead')
       @keystrokes = value
-
-  @currentIndex: 1
 
   enabled: true
 
