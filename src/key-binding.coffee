@@ -8,11 +8,11 @@ class KeyBinding
 
   @::accessor 'keystroke',
     get: ->
-      Grim.deprecate("Use KeyBinding.keystrokes instead")
+      Grim.deprecate('Use KeyBinding.keystrokes instead')
       @keystrokes
 
     set: (value) ->
-      Grim.deprecate("Use KeyBinding.keystrokes instead")
+      Grim.deprecate('Use KeyBinding.keystrokes instead')
       @keystrokes = value
 
   @currentIndex: 1
