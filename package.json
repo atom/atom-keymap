@@ -29,7 +29,8 @@
     "season": "^1.0.2",
     "pathwatcher": "^2.0.4",
     "emissary": "^1.1.0",
-    "underscore-plus": "^1.0.0"
+    "underscore-plus": "^1.0.0",
+    "property-accessors": "^1"
   },
   "devDependencies": {
     "coffee-script": "^1.7.0",
