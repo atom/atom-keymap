@@ -63,32 +63,6 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 # the previous keystrokes are replayed. If there is ambiguity again during the
 # replay, the next longest bindings are disabled and the keystrokes are replayed
 # again.
-#
-# ## Events
-#
-# ### matched
-#
-# Emitted when keystrokes match a binding.
-#
-# * `keystrokes` The keystroke {String} that matched the binding
-# * `binding` The {KeyBinding} that was used
-# * `keyboardEventTarget` The target element of the keyboard event
-#
-# ### matched-partially
-#
-# Emitted when keystrokes partially match one or more bindings.
-#
-# * `keystrokes` The keystroke {String} that partially match some bindings
-# * `partiallyMatchedBindings` The {KeyBinding}s that partially matched
-# * `keyboardEventTarget` The target element of the keyboard event
-#
-# ### match-failed
-#
-# Emitted when keystrokes don't match any bindings.
-#
-# * `keystrokes` The keystroke {String} that matched no bindings
-# * `keyboardEventTarget` The target element of the keyboard event
-#
 module.exports =
 class KeymapManager
   EmitterMixin.includeInto(this)
@@ -130,12 +104,47 @@ class KeymapManager
     @queuedKeystrokes = []
     @watchSubscriptions = {}
 
+  # Public: Invoke the given callback when one or more keystrokes completely
+  # match a key binding.
+  #
+  # * `callback` {Function} to be called when keystrokes match a binding.
+  #   * `event` {Object} with the following keys:
+  #     * `keystrokes` {String} of keystrokes that matched the binding.
+  #     * `binding` {KeyBinding} that the keystrokes matched.
+  #     * `keyboardEventTarget` DOM element that was the target of the most
+  #        recent keyboard event.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidMatchBinding: (callback) ->
     @emitter.on 'did-match-binding', callback
 
-  onDidPartiallyMatchBinding: (callback) ->
+  # Public: Invoke the given callback when one or more keystrokes partially
+  # match a binding.
+  #
+  # * `callback` {Function} to be called when keystrokes partially match a
+  #   binding.
+  #   * `event` {Object} with the following keys:
+  #     * `keystrokes` {String} of keystrokes that matched the binding.
+  #     * `partiallyMatchedBindings` {KeyBinding}s that the keystrokes partially
+  #       matched.
+  #     * `keyboardEventTarget` DOM element that was the target of the most
+  #       recent keyboard event.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+  onDidPartiallyMatchBindings: (callback) ->
     @emitter.on 'did-partially-match-binding', callback
 
+  # Public: Invoke the given callback when one or more keystrokes fail to match
+  # any bindings.
+  #
+  # * `callback` {Function} to be called when keystrokes fail to match any
+  #   bindings.
+  #   * `event` {Object} with the following keys:
+  #     * `keystrokes` {String} of keystrokes that matched the binding.
+  #     * `keyboardEventTarget` DOM element that was the target of the most
+  #        recent keyboard event.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidFailToMatchBinding: (callback) ->
     @emitter.on 'did-fail-to-match-binding', callback
 
