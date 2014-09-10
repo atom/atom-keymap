@@ -3,9 +3,9 @@ CSON = require 'season'
 Grim = require 'grim'
 fs = require 'fs-plus'
 path = require 'path'
-{Emitter} = require 'emissary'
+EmitterMixin = require('emissary').Emitter
 {File} = require 'pathwatcher'
-{CompositeDisposable} = require 'event-kit'
+{Emitter, CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
 {normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent} = require './helpers'
@@ -91,7 +91,7 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 #
 module.exports =
 class KeymapManager
-  Emitter.includeInto(this)
+  EmitterMixin.includeInto(this)
 
   # Public: Create a keydown DOM event for testing purposes.
   #
@@ -124,10 +124,26 @@ class KeymapManager
   #     is `document.body` to allow for a catch-all element when nothing is focused.
   constructor: (options={}) ->
     @[key] = value for key, value of options
+    @emitter = new Emitter
     @keyBindings = []
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
     @watchSubscriptions = {}
+
+  onDidMatchBinding: (callback) ->
+    @emitter.on 'did-match-binding', callback
+
+  onDidPartiallyMatchBinding: (callback) ->
+    @emitter.on 'did-partially-match-binding', callback
+
+  onDidFailToMatchBinding: (callback) ->
+    @emitter.on 'did-fail-to-match-binding', callback
+
+  onDidReloadKeymap: (callback) ->
+    @emitter.on 'did-reload-keymap', callback
+
+  onDidUnloadKeymap: (callback) ->
+    @emitter.on 'did-unload-keymap', callback
 
   # Public: Unwatch all watched paths.
   destroy: ->
@@ -276,7 +292,9 @@ class KeymapManager
           @clearQueuedKeystrokes()
           @cancelPendingState()
           if @dispatchCommandEvent(exactMatch.command, target, event)
-            @emit 'matched', {keystrokes, binding: exactMatch, keyboardEventTarget: target}
+            event = {keystrokes, binding: exactMatch, keyboardEventTarget: target}
+            @emit 'matched', event
+            @emitter.emit 'did-match-binding', event
             return
         currentTarget = currentTarget.parentElement
 
@@ -289,9 +307,13 @@ class KeymapManager
       event.preventDefault()
       enableTimeout = foundMatch ? @pendingStateTimeoutHandle?
       @enterPendingState(partialMatches, enableTimeout)
-      @emit 'matched-partially', {keystrokes, partiallyMatchedBindings: partialMatches, keyboardEventTarget: target}
+      event = {keystrokes, partiallyMatchedBindings: partialMatches, keyboardEventTarget: target}
+      @emit 'matched-partially', event
+      @emitter.emit 'did-partially-match-binding', event
     else
-      @emit 'match-failed', {keystrokes, keyboardEventTarget: target}
+      event = {keystrokes, keyboardEventTarget: target}
+      @emit 'match-failed', event
+      @emitter.emit 'did-fail-to-match-binding', event
       @terminatePendingState()
 
   # Public: Get the key bindings for a given command and optional target.
@@ -337,9 +359,11 @@ class KeymapManager
         @remove(filePath)
         @addKeymap(filePath, bindings)
         @emit 'reloaded-key-bindings', filePath
+        @emitter.emit 'did-reload-keymap', {path: filePath}
     else
       @remove(filePath)
       @emit 'unloaded-key-bindings', filePath
+      @emitter.emit 'did-unload-keymap', {path: filePath}
 
   readKeymap: (filePath, suppressErrors) ->
     if suppressErrors
