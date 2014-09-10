@@ -145,6 +145,23 @@ class KeymapManager
   onDidUnloadKeymap: (callback) ->
     @emitter.on 'did-unload-keymap', callback
 
+  on: (eventName) ->
+    switch eventName
+      when 'matched'
+        Grim.deprecated("Call KeymapManager::onDidMatchBinding instead")
+      when 'matched-partially'
+        Grim.deprecated("Call KeymapManager::onDidPartiallyMatchBinding instead")
+      when 'match-failed'
+        Grim.deprecated("Call KeymapManager::onDidFailToMatchBinding instead")
+      when 'reloaded-key-bindings'
+        Grim.deprecated("Call KeymapManager::onDidReloadKeymap instead")
+      when 'unloaded-key-bindings'
+        Grim.deprecated("Call KeymapManager::onDidUnloadKeymap instead")
+      else
+        Grim.deprecated("Use explicit event subscription methods instead")
+
+    EmitterMixin::on.apply(this, arguments)
+
   # Public: Unwatch all watched paths.
   destroy: ->
     for filePath, subscription of @watchSubscriptions
