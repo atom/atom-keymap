@@ -31,6 +31,13 @@ module.exports = (grunt) ->
           stderr: true
           failOnError: true
 
+      'update-atomdoc':
+        command: 'npm update grunt-atomdoc'
+        options:
+          stdout: true
+          stderr: true
+          failOnError: true
+
     peg:
       keystroke:
         src: 'src/keystroke.pegjs'
@@ -49,4 +56,4 @@ module.exports = (grunt) ->
   grunt.registerTask('lint', ['coffeelint'])
   grunt.registerTask('default', ['lint', 'coffee', 'peg'])
   grunt.registerTask('test', ['coffee', 'lint', 'shell:test'])
-  grunt.registerTask('prepublish', ['clean', 'lint', 'coffee', 'peg', 'atomdoc'])
+  grunt.registerTask('prepublish', ['clean', 'lint', 'coffee', 'peg', 'shell:update-atomdoc', 'atomdoc'])
