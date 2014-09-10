@@ -553,15 +553,15 @@ describe "KeymapManager", ->
           expect(keymapManager.findKeyBindings(command: 'x').length).toBe 1
 
         describe "when the file is changed", ->
-          it "reloads the file's key bindings and emits 'reloaded-key-bindings' with the path", ->
+          it "reloads the file's key bindings and notifies ::onDidReloadKeymap observers with the keymap path", ->
             fs.writeFileSync keymapFilePath, """
               '.a': 'ctrl-a': 'y'
               '.b': 'ctrl-b': 'z'
             """
 
             waitsFor 300, (done) ->
-              keymapManager.once 'reloaded-key-bindings', (filePath) ->
-                expect(filePath).toBe keymapFilePath
+              keymapManager.onDidReloadKeymap (event) ->
+                expect(event.path).toBe keymapFilePath
                 done()
 
             runs ->
@@ -578,13 +578,13 @@ describe "KeymapManager", ->
               expect(keymapManager.findKeyBindings(command: 'x').length).toBe 1
 
         describe "when the file is removed", ->
-          it "removes the bindings and emits 'unloaded-key-bindings' with the path", ->
+          it "removes the bindings and notifies ::onDidUnloadKeymap observers with keymap path", ->
             jasmine.unspy(global, 'setTimeout')
             fs.removeSync(keymapFilePath)
 
             waitsFor 300, (done) ->
-              keymapManager.once 'unloaded-key-bindings', (filePath) ->
-                expect(filePath).toBe keymapFilePath
+              keymapManager.onDidUnloadKeymap (event) ->
+                expect(event.path).toBe keymapFilePath
                 done()
 
             runs ->
@@ -597,8 +597,8 @@ describe "KeymapManager", ->
             fs.moveSync(keymapFilePath, newFilePath)
 
             waitsFor 300, (done) ->
-              keymapManager.once 'unloaded-key-bindings', (filePath) ->
-                expect(filePath).toBe keymapFilePath
+              keymapManager.onDidUnloadKeymap (event) ->
+                expect(event.path).toBe keymapFilePath
                 done()
 
             runs ->
@@ -612,7 +612,7 @@ describe "KeymapManager", ->
           """
 
           reloaded = false
-          keymapManager.on 'reloaded-key-bindings', -> reloaded = true
+          keymapManager.onDidReloadKeymap -> reloaded = true
 
           waits 300
           runs ->
@@ -626,7 +626,7 @@ describe "KeymapManager", ->
             """
 
           waitsFor 300, (done) ->
-            keymapManager.once 'reloaded-key-bindings', done
+            keymapManager.onDidReloadKeymap(done)
 
           runs ->
             expect(keymapManager.findKeyBindings(command: 'q').length).toBe 1
@@ -644,7 +644,7 @@ describe "KeymapManager", ->
   describe "events", ->
     it "emits `matched` when a key binding matches an event", ->
       handler = jasmine.createSpy('matched')
-      keymapManager.on 'matched', handler
+      keymapManager.onDidMatchBinding handler
       keymapManager.addKeymap "test",
         "body":
           "ctrl-x": "used-command"
@@ -663,7 +663,7 @@ describe "KeymapManager", ->
 
     it "emits `matched-partially` when a key binding partially matches an event", ->
       handler = jasmine.createSpy('matched-partially handler')
-      keymapManager.on 'matched-partially', handler
+      keymapManager.onDidPartiallyMatchBindings handler
       keymapManager.addKeymap "test",
         "body":
           "ctrl-x 1": "command-1"
@@ -680,7 +680,7 @@ describe "KeymapManager", ->
 
     it "emits `match-failed` when no key bindings match the event", ->
       handler = jasmine.createSpy('match-failed handler')
-      keymapManager.on 'match-failed', handler
+      keymapManager.onDidFailToMatchBinding handler
       keymapManager.addKeymap "test",
         "body":
           "ctrl-x": "command"
