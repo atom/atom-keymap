@@ -21,16 +21,17 @@
     }
   ],
   "dependencies": {
-    "pegjs": "^0.8.0",
     "clear-cut": "^0.3.0",
+    "emissary": "^1.1.0",
+    "event-kit": "^0.7.0",
+    "fs-plus": "^2.0.4",
     "grim": "0.12.0",
     "loophole": "^1.0.0",
-    "fs-plus": "^2.0.4",
+    "pathwatcher": "^2.1.0",
+    "pegjs": "^0.8.0",
+    "property-accessors": "^1",
     "season": "^1.0.2",
-    "pathwatcher": "^2.0.4",
-    "emissary": "^1.1.0",
-    "underscore-plus": "^1.0.0",
-    "property-accessors": "^1"
+    "underscore-plus": "^1.0.0"
   },
   "devDependencies": {
     "coffee-script": "^1.7.0",

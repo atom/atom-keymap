@@ -5,6 +5,7 @@ fs = require 'fs-plus'
 path = require 'path'
 {Emitter} = require 'emissary'
 {File} = require 'pathwatcher'
+{CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
 {normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent} = require './helpers'
@@ -131,7 +132,7 @@ class KeymapManager
   # Public: Unwatch all watched paths.
   destroy: ->
     for filePath, subscription of @watchSubscriptions
-      subscription.off()
+      subscription.dispose()
     undefined
 
   # Public: Get all current key bindings.
@@ -188,10 +189,14 @@ class KeymapManager
   # This method doesn't perform the initial load of the key bindings file. If
   # that's what you're looking for, call {::loadKeymap} with `watch: true`.
   watchKeymap: (filePath) ->
-    unless @watchSubscriptions[filePath]?.cancelled is false
-      @watchSubscriptions[filePath] =
-        new File(filePath).on 'contents-changed moved removed', =>
-          @reloadKeymap(filePath)
+    if not @watchSubscriptions[filePath]? or @watchSubscriptions[filePath].disposed
+      file = new File(filePath)
+      reloadKeymap = => @reloadKeymap(filePath)
+      @watchSubscriptions[filePath] = new CompositeDisposable(
+        file.onDidChange(reloadKeymap)
+        file.onDidRename(reloadKeymap)
+        file.onDidDelete(reloadKeymap)
+      )
 
     undefined
 

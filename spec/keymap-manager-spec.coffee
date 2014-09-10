@@ -605,7 +605,7 @@ describe "KeymapManager", ->
               expect(keymapManager.findKeyBindings(command: 'x').length).toBe 0
 
         it "allows the watch to be cancelled via the returned subscription", ->
-          subscription.off()
+          subscription.dispose()
           fs.writeFileSync keymapFilePath, """
             '.a': 'ctrl-a': 'y'
             '.b': 'ctrl-b': 'z'
