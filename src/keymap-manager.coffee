@@ -148,9 +148,23 @@ class KeymapManager
   onDidFailToMatchBinding: (callback) ->
     @emitter.on 'did-fail-to-match-binding', callback
 
+  # Invoke the given callback when a keymap file is reloaded.
+  #
+  # * `callback` {Function} to be called when a keymap file is reloaded.
+  #   * `event` {Object} with the following keys:
+  #     * `path` {String} representing the path of the reloaded keymap file.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidReloadKeymap: (callback) ->
     @emitter.on 'did-reload-keymap', callback
 
+  # Invoke the given callback when a keymap file is unloaded.
+  #
+  # * `callback` {Function} to be called when a keymap file is unloaded.
+  #   * `event` {Object} with the following keys:
+  #     * `path` {String} representing the path of the unloaded keymap file.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidUnloadKeymap: (callback) ->
     @emitter.on 'did-unload-keymap', callback
 
