@@ -171,17 +171,17 @@ class KeymapManager
   on: (eventName) ->
     switch eventName
       when 'matched'
-        Grim.deprecated("Call KeymapManager::onDidMatchBinding instead")
+        Grim.deprecate("Call KeymapManager::onDidMatchBinding instead")
       when 'matched-partially'
-        Grim.deprecated("Call KeymapManager::onDidPartiallyMatchBinding instead")
+        Grim.deprecate("Call KeymapManager::onDidPartiallyMatchBinding instead")
       when 'match-failed'
-        Grim.deprecated("Call KeymapManager::onDidFailToMatchBinding instead")
+        Grim.deprecate("Call KeymapManager::onDidFailToMatchBinding instead")
       when 'reloaded-key-bindings'
-        Grim.deprecated("Call KeymapManager::onDidReloadKeymap instead")
+        Grim.deprecate("Call KeymapManager::onDidReloadKeymap instead")
       when 'unloaded-key-bindings'
-        Grim.deprecated("Call KeymapManager::onDidUnloadKeymap instead")
+        Grim.deprecate("Call KeymapManager::onDidUnloadKeymap instead")
       else
-        Grim.deprecated("Use explicit event subscription methods instead")
+        Grim.deprecate("Use explicit event subscription methods instead")
 
     EmitterMixin::on.apply(this, arguments)
 
