@@ -663,7 +663,7 @@ describe "KeymapManager", ->
 
     it "emits `matched-partially` when a key binding partially matches an event", ->
       handler = jasmine.createSpy('matched-partially handler')
-      keymapManager.onDidPartiallyMatchBinding handler
+      keymapManager.onDidPartiallyMatchBindings handler
       keymapManager.addKeymap "test",
         "body":
           "ctrl-x 1": "command-1"
