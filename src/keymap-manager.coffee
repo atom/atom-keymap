@@ -232,6 +232,14 @@ class KeymapManager
           console.warn "Invalid keystroke sequence for binding: `#{keystrokes}: #{command}` in #{source}"
     undefined
 
+  # Public: Remove the key bindings added with {::add} or {::loadKeymap}.
+  #
+  # * `source` A {String} representing the `source` in a previous call to
+  #   {::add} or the path in {::loadKeymap}.
+  remove: (source) ->
+    @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
+    undefined
+
   ###
   Section: Managing Keymap Files
   ###
@@ -270,14 +278,6 @@ class KeymapManager
         file.onDidDelete(reloadKeymap)
       )
 
-    undefined
-
-  # Public: Remove the key bindings added with {::add} or {::loadKeymap}.
-  #
-  # * `source` A {String} representing the `source` in a previous call to
-  #   {::add} or the path in {::loadKeymap}.
-  remove: (source) ->
-    @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
     undefined
 
   # Public: Dispatch a custom event associated with the matching key binding for
