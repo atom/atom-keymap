@@ -203,12 +203,9 @@ class KeymapManager
 
     EmitterMixin::on.apply(this, arguments)
 
-
-  # Public: Get all current key bindings.
-  #
-  # Returns an {Array} of {KeyBinding}s.
-  getKeyBindings: ->
-    @keyBindings.slice()
+  ###
+  Section: Adding and Removing Bindings
+  ###
 
   # Public: Add sets of key bindings grouped by CSS selector.
   #
@@ -240,6 +237,52 @@ class KeymapManager
   remove: (source) ->
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
     undefined
+
+  ###
+  Section: Accessing Bindings
+  ###
+
+  # Public: Get all current key bindings.
+  #
+  # Returns an {Array} of {KeyBinding}s.
+  getKeyBindings: ->
+    @keyBindings.slice()
+
+  # Public: Get the key bindings for a given command and optional target.
+  #
+  # * `params` An {Object} whose keys constrain the binding search:
+  #   * `keystrokes` A {String} representing one or more keystrokes, such as
+  #     'ctrl-x ctrl-s'
+  #   * `command` A {String} representing the name of a command, such as
+  #     'editor:backspace'
+  #   * `target` An optional DOM element constraining the search. If this
+  #     parameter is supplied, the call will only return bindings that
+  #     can be invoked by a KeyboardEvent originating from the target element.
+  #
+  # Returns an {Array} of key bindings.
+  findKeyBindings: (params={}) ->
+    {keystrokes, command, target, keyBindings} = params
+
+    bindings = keyBindings ? @keyBindings
+
+    if command?
+      bindings = bindings.filter (binding) -> binding.command is command
+
+    if keystrokes?
+      bindings = bindings.filter (binding) -> binding.keystrokes is keystrokes
+
+    if target?
+      candidateBindings = bindings
+      bindings = []
+      element = target
+      while element? and element isnt document
+        matchingBindings = candidateBindings
+          .filter (binding) -> element.webkitMatchesSelector(binding.selector)
+          .sort (a, b) -> a.compare(b)
+        bindings.push(matchingBindings...)
+        element = element.parentElement
+    bindings
+
 
   ###
   Section: Managing Keymap Files
@@ -372,41 +415,6 @@ class KeymapManager
       @emit 'match-failed', event
       @emitter.emit 'did-fail-to-match-binding', event
       @terminatePendingState()
-
-  # Public: Get the key bindings for a given command and optional target.
-  #
-  # * `params` An {Object} whose keys constrain the binding search:
-  #   * `keystrokes` A {String} representing one or more keystrokes, such as
-  #     'ctrl-x ctrl-s'
-  #   * `command` A {String} representing the name of a command, such as
-  #     'editor:backspace'
-  #   * `target` An optional DOM element constraining the search. If this
-  #     parameter is supplied, the call will only return bindings that
-  #     can be invoked by a KeyboardEvent originating from the target element.
-  #
-  # Returns an {Array} of key bindings.
-  findKeyBindings: (params={}) ->
-    {keystrokes, command, target, keyBindings} = params
-
-    bindings = keyBindings ? @keyBindings
-
-    if command?
-      bindings = bindings.filter (binding) -> binding.command is command
-
-    if keystrokes?
-      bindings = bindings.filter (binding) -> binding.keystrokes is keystrokes
-
-    if target?
-      candidateBindings = bindings
-      bindings = []
-      element = target
-      while element? and element isnt document
-        matchingBindings = candidateBindings
-          .filter (binding) -> element.webkitMatchesSelector(binding.selector)
-          .sort (a, b) -> a.compare(b)
-        bindings.push(matchingBindings...)
-        element = element.parentElement
-    bindings
 
   # Called by the path watcher callback to reload a file at the given path. If
   # we can't read the file cleanly, we don't proceed with the reload.
