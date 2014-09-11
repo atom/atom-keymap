@@ -13,7 +13,7 @@ CommandEvent = require './command-event'
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 
-# Public: Allows commands to be associated with keystrokes in a
+# Extended: Allows commands to be associated with keystrokes in a
 # context-sensitive way. In Atom, you can access a global instance of this
 # object via `atom.keymap`.
 #
