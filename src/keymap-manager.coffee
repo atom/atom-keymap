@@ -67,6 +67,10 @@ module.exports =
 class KeymapManager
   EmitterMixin.includeInto(this)
 
+  ###
+  Section: Class Methods
+  ###
+
   # Public: Create a keydown DOM event for testing purposes.
   #
   # * `key` The key or keyIdentifier of the event. For example, `'a'`, `'1'`,
@@ -89,6 +93,10 @@ class KeymapManager
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
 
+  ###
+  Section: Construction
+  ###
+
   # Public: Create a new KeymapManager.
   #
   # * `options` An {Object} containing properties to assign to the keymap.  You
@@ -103,6 +111,10 @@ class KeymapManager
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
     @watchSubscriptions = {}
+
+  ###
+  Section: Event Subscription
+  ###
 
   # Public: Invoke the given callback when one or more keystrokes completely
   # match a key binding.
