@@ -94,7 +94,7 @@ class KeymapManager
   pendingStateTimeoutHandle: null
 
   ###
-  Section: Construction
+  Section: Construction and Destruction
   ###
 
   # Public: Create a new KeymapManager.
@@ -111,6 +111,12 @@ class KeymapManager
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
     @watchSubscriptions = {}
+
+  # Public: Unwatch all watched paths.
+  destroy: ->
+    for filePath, subscription of @watchSubscriptions
+      subscription.dispose()
+    undefined
 
   ###
   Section: Event Subscription
@@ -197,11 +203,6 @@ class KeymapManager
 
     EmitterMixin::on.apply(this, arguments)
 
-  # Public: Unwatch all watched paths.
-  destroy: ->
-    for filePath, subscription of @watchSubscriptions
-      subscription.dispose()
-    undefined
 
   # Public: Get all current key bindings.
   #
