@@ -232,6 +232,10 @@ class KeymapManager
           console.warn "Invalid keystroke sequence for binding: `#{keystrokes}: #{command}` in #{source}"
     undefined
 
+  ###
+  Section: Managing Keymap Files
+  ###
+
   # Public: Load the key bindings from the given path.
   #
   # * `path` A {String} containing a path to a file or a directory. If the path is
