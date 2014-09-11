@@ -324,6 +324,44 @@ class KeymapManager
 
     undefined
 
+  # Called by the path watcher callback to reload a file at the given path. If
+  # we can't read the file cleanly, we don't proceed with the reload.
+  reloadKeymap: (filePath) ->
+    if fs.isFileSync(filePath)
+      if bindings = @readKeymap(filePath, true)
+        @remove(filePath)
+        @addKeymap(filePath, bindings)
+        @emit 'reloaded-key-bindings', filePath
+        @emitter.emit 'did-reload-keymap', {path: filePath}
+    else
+      @remove(filePath)
+      @emit 'unloaded-key-bindings', filePath
+      @emitter.emit 'did-unload-keymap', {path: filePath}
+
+  readKeymap: (filePath, suppressErrors) ->
+    if suppressErrors
+      try
+        CSON.readFileSync(filePath)
+      catch error
+        console.warn("Failed to reload key bindings file: #{filePath}", error.stack ? error)
+        undefined
+    else
+      CSON.readFileSync(filePath)
+
+  # Determine if the given path should be loaded on this platform. If the
+  # filename has the pattern '<platform>.cson' or 'foo.<platform>.cson' and
+  # <platform> does not match the current platform, returns false. Otherwise
+  # returns true.
+  filePathMatchesPlatform: (filePath) ->
+    otherPlatforms = @getOtherPlatforms()
+    for component in path.basename(filePath).split('.')[0...-1]
+      return false if component in otherPlatforms
+    true
+
+  ###
+  Section: Managing Keyboard Events
+  ###
+
   # Public: Dispatch a custom event associated with the matching key binding for
   # the given `KeyboardEvent` if one can be found.
   #
@@ -416,39 +454,17 @@ class KeymapManager
       @emitter.emit 'did-fail-to-match-binding', event
       @terminatePendingState()
 
-  # Called by the path watcher callback to reload a file at the given path. If
-  # we can't read the file cleanly, we don't proceed with the reload.
-  reloadKeymap: (filePath) ->
-    if fs.isFileSync(filePath)
-      if bindings = @readKeymap(filePath, true)
-        @remove(filePath)
-        @addKeymap(filePath, bindings)
-        @emit 'reloaded-key-bindings', filePath
-        @emitter.emit 'did-reload-keymap', {path: filePath}
-    else
-      @remove(filePath)
-      @emit 'unloaded-key-bindings', filePath
-      @emitter.emit 'did-unload-keymap', {path: filePath}
+  # Public: Translate a keydown event to a keystroke string.
+  #
+  # * `event` A `KeyboardEvent` of type 'keydown'
+  #
+  # Returns a {String} describing the keystroke.
+  keystrokeForKeyboardEvent: (event) ->
+    keystrokeForKeyboardEvent(event)
 
-  readKeymap: (filePath, suppressErrors) ->
-    if suppressErrors
-      try
-        CSON.readFileSync(filePath)
-      catch error
-        console.warn("Failed to reload key bindings file: #{filePath}", error.stack ? error)
-        undefined
-    else
-      CSON.readFileSync(filePath)
-
-  # Determine if the given path should be loaded on this platform. If the
-  # filename has the pattern '<platform>.cson' or 'foo.<platform>.cson' and
-  # <platform> does not match the current platform, returns false. Otherwise
-  # returns true.
-  filePathMatchesPlatform: (filePath) ->
-    otherPlatforms = @getOtherPlatforms()
-    for component in path.basename(filePath).split('.')[0...-1]
-      return false if component in otherPlatforms
-    true
+  ###
+  Section: Private
+  ###
 
   # For testing purposes
   getOtherPlatforms: -> OtherPlatforms
@@ -560,14 +576,6 @@ class KeymapManager
       currentTarget.dispatchEvent(commandEvent)
       break if commandEvent.propagationStopped
       currentTarget = currentTarget.parentElement
-
-  # Public: Translate a keydown event to a keystroke string.
-  #
-  # * `event` A `KeyboardEvent` of type 'keydown'
-  #
-  # Returns a {String} describing the keystroke.
-  keystrokeForKeyboardEvent: (event) ->
-    keystrokeForKeyboardEvent(event)
 
   # Deprecated: Use {::add} instead.
   addKeymap: (source, bindings) ->
