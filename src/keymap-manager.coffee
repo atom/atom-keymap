@@ -569,12 +569,12 @@ class KeymapManager
   keystrokeForKeyboardEvent: (event) ->
     keystrokeForKeyboardEvent(event)
 
-  # Deprecated: Use {::addKeymap} instead.
+  # Deprecated: Use {::add} instead.
   addKeymap: (source, bindings) ->
     # Grim.deprecate("Use KeymapManager::add instead.")
     @add(source, bindings)
 
-  # Deprecated: Use {::removeKeymap} instead.
+  # Deprecated: Use {::remove} instead.
   removeKeymap: (source) ->
     # Grim.deprecate("Use KeymapManager::remove instead.")
     @remove(source)
