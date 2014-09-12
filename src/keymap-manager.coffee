@@ -388,6 +388,8 @@ class KeymapManager
   #
   # If the event's target is `document.body`, it will be treated as if its
   # target is `.defaultTarget` if that property is assigned on the keymap.
+  #
+  # * `event` A `KeyboardEvent` of type 'keydown'
   handleKeyboardEvent: (event, replaying) ->
     keystroke = @keystrokeForKeyboardEvent(event)
 
