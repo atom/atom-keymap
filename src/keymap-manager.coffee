@@ -316,6 +316,9 @@ class KeymapManager
   #
   # This method doesn't perform the initial load of the key bindings file. If
   # that's what you're looking for, call {::loadKeymap} with `watch: true`.
+  #
+  # * `path` A {String} containing a path to a file or a directory. If the path is
+  #   a directory, all files inside it will be loaded.
   watchKeymap: (filePath) ->
     if not @watchSubscriptions[filePath]? or @watchSubscriptions[filePath].disposed
       file = new File(filePath)
