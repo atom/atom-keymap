@@ -13,7 +13,7 @@ CommandEvent = require './command-event'
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 
-# Public: Allows commands to be associated with keystrokes in a
+# Extended: Allows commands to be associated with keystrokes in a
 # context-sensitive way. In Atom, you can access a global instance of this
 # object via `atom.keymap`.
 #
@@ -67,6 +67,10 @@ module.exports =
 class KeymapManager
   EmitterMixin.includeInto(this)
 
+  ###
+  Section: Class Methods
+  ###
+
   # Public: Create a keydown DOM event for testing purposes.
   #
   # * `key` The key or keyIdentifier of the event. For example, `'a'`, `'1'`,
@@ -81,6 +85,10 @@ class KeymapManager
   #   * `target` The target element of the event.
   @keydownEvent: (key, options) -> keydownEvent(key, options)
 
+  ###
+  Section: Properties
+  ###
+
   # Public: The number of milliseconds allowed before pending states caused
   # by partial matches of multi-keystroke bindings are terminated.
   partialMatchTimeout: 1000
@@ -88,6 +96,10 @@ class KeymapManager
   defaultTarget: null
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
+
+  ###
+  Section: Construction and Destruction
+  ###
 
   # Public: Create a new KeymapManager.
   #
@@ -103,6 +115,16 @@ class KeymapManager
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
     @watchSubscriptions = {}
+
+  # Public: Unwatch all watched paths.
+  destroy: ->
+    for filePath, subscription of @watchSubscriptions
+      subscription.dispose()
+    undefined
+
+  ###
+  Section: Event Subscription
+  ###
 
   # Public: Invoke the given callback when one or more keystrokes completely
   # match a key binding.
@@ -185,17 +207,9 @@ class KeymapManager
 
     EmitterMixin::on.apply(this, arguments)
 
-  # Public: Unwatch all watched paths.
-  destroy: ->
-    for filePath, subscription of @watchSubscriptions
-      subscription.dispose()
-    undefined
-
-  # Public: Get all current key bindings.
-  #
-  # Returns an {Array} of {KeyBinding}s.
-  getKeyBindings: ->
-    @keyBindings.slice()
+  ###
+  Section: Adding and Removing Bindings
+  ###
 
   # Public: Add sets of key bindings grouped by CSS selector.
   #
@@ -219,6 +233,64 @@ class KeymapManager
         else
           console.warn "Invalid keystroke sequence for binding: `#{keystrokes}: #{command}` in #{source}"
     undefined
+
+  # Public: Remove the key bindings added with {::add} or {::loadKeymap}.
+  #
+  # * `source` A {String} representing the `source` in a previous call to
+  #   {::add} or the path in {::loadKeymap}.
+  remove: (source) ->
+    @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
+    undefined
+
+  ###
+  Section: Accessing Bindings
+  ###
+
+  # Public: Get all current key bindings.
+  #
+  # Returns an {Array} of {KeyBinding}s.
+  getKeyBindings: ->
+    @keyBindings.slice()
+
+  # Public: Get the key bindings for a given command and optional target.
+  #
+  # * `params` An {Object} whose keys constrain the binding search:
+  #   * `keystrokes` A {String} representing one or more keystrokes, such as
+  #     'ctrl-x ctrl-s'
+  #   * `command` A {String} representing the name of a command, such as
+  #     'editor:backspace'
+  #   * `target` An optional DOM element constraining the search. If this
+  #     parameter is supplied, the call will only return bindings that
+  #     can be invoked by a KeyboardEvent originating from the target element.
+  #
+  # Returns an {Array} of key bindings.
+  findKeyBindings: (params={}) ->
+    {keystrokes, command, target, keyBindings} = params
+
+    bindings = keyBindings ? @keyBindings
+
+    if command?
+      bindings = bindings.filter (binding) -> binding.command is command
+
+    if keystrokes?
+      bindings = bindings.filter (binding) -> binding.keystrokes is keystrokes
+
+    if target?
+      candidateBindings = bindings
+      bindings = []
+      element = target
+      while element? and element isnt document
+        matchingBindings = candidateBindings
+          .filter (binding) -> element.webkitMatchesSelector(binding.selector)
+          .sort (a, b) -> a.compare(b)
+        bindings.push(matchingBindings...)
+        element = element.parentElement
+    bindings
+
+
+  ###
+  Section: Managing Keymap Files
+  ###
 
   # Public: Load the key bindings from the given path.
   #
@@ -244,6 +316,9 @@ class KeymapManager
   #
   # This method doesn't perform the initial load of the key bindings file. If
   # that's what you're looking for, call {::loadKeymap} with `watch: true`.
+  #
+  # * `path` A {String} containing a path to a file or a directory. If the path is
+  #   a directory, all files inside it will be loaded.
   watchKeymap: (filePath) ->
     if not @watchSubscriptions[filePath]? or @watchSubscriptions[filePath].disposed
       file = new File(filePath)
@@ -256,13 +331,43 @@ class KeymapManager
 
     undefined
 
-  # Public: Remove the key bindings added with {::add} or {::loadKeymap}.
-  #
-  # * `source` A {String} representing the `source` in a previous call to
-  #   {::add} or the path in {::loadKeymap}.
-  remove: (source) ->
-    @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
-    undefined
+  # Called by the path watcher callback to reload a file at the given path. If
+  # we can't read the file cleanly, we don't proceed with the reload.
+  reloadKeymap: (filePath) ->
+    if fs.isFileSync(filePath)
+      if bindings = @readKeymap(filePath, true)
+        @remove(filePath)
+        @addKeymap(filePath, bindings)
+        @emit 'reloaded-key-bindings', filePath
+        @emitter.emit 'did-reload-keymap', {path: filePath}
+    else
+      @remove(filePath)
+      @emit 'unloaded-key-bindings', filePath
+      @emitter.emit 'did-unload-keymap', {path: filePath}
+
+  readKeymap: (filePath, suppressErrors) ->
+    if suppressErrors
+      try
+        CSON.readFileSync(filePath)
+      catch error
+        console.warn("Failed to reload key bindings file: #{filePath}", error.stack ? error)
+        undefined
+    else
+      CSON.readFileSync(filePath)
+
+  # Determine if the given path should be loaded on this platform. If the
+  # filename has the pattern '<platform>.cson' or 'foo.<platform>.cson' and
+  # <platform> does not match the current platform, returns false. Otherwise
+  # returns true.
+  filePathMatchesPlatform: (filePath) ->
+    otherPlatforms = @getOtherPlatforms()
+    for component in path.basename(filePath).split('.')[0...-1]
+      return false if component in otherPlatforms
+    true
+
+  ###
+  Section: Managing Keyboard Events
+  ###
 
   # Public: Dispatch a custom event associated with the matching key binding for
   # the given `KeyboardEvent` if one can be found.
@@ -283,6 +388,8 @@ class KeymapManager
   #
   # If the event's target is `document.body`, it will be treated as if its
   # target is `.defaultTarget` if that property is assigned on the keymap.
+  #
+  # * `event` A `KeyboardEvent` of type 'keydown'
   handleKeyboardEvent: (event, replaying) ->
     keystroke = @keystrokeForKeyboardEvent(event)
 
@@ -356,74 +463,17 @@ class KeymapManager
       @emitter.emit 'did-fail-to-match-binding', event
       @terminatePendingState()
 
-  # Public: Get the key bindings for a given command and optional target.
+  # Public: Translate a keydown event to a keystroke string.
   #
-  # * `params` An {Object} whose keys constrain the binding search:
-  #   * `keystrokes` A {String} representing one or more keystrokes, such as
-  #     'ctrl-x ctrl-s'
-  #   * `command` A {String} representing the name of a command, such as
-  #     'editor:backspace'
-  #   * `target` An optional DOM element constraining the search. If this
-  #     parameter is supplied, the call will only return bindings that
-  #     can be invoked by a KeyboardEvent originating from the target element.
+  # * `event` A `KeyboardEvent` of type 'keydown'
   #
-  # Returns an {Array} of key bindings.
-  findKeyBindings: (params={}) ->
-    {keystrokes, command, target, keyBindings} = params
+  # Returns a {String} describing the keystroke.
+  keystrokeForKeyboardEvent: (event) ->
+    keystrokeForKeyboardEvent(event)
 
-    bindings = keyBindings ? @keyBindings
-
-    if command?
-      bindings = bindings.filter (binding) -> binding.command is command
-
-    if keystrokes?
-      bindings = bindings.filter (binding) -> binding.keystrokes is keystrokes
-
-    if target?
-      candidateBindings = bindings
-      bindings = []
-      element = target
-      while element? and element isnt document
-        matchingBindings = candidateBindings
-          .filter (binding) -> element.webkitMatchesSelector(binding.selector)
-          .sort (a, b) -> a.compare(b)
-        bindings.push(matchingBindings...)
-        element = element.parentElement
-    bindings
-
-  # Called by the path watcher callback to reload a file at the given path. If
-  # we can't read the file cleanly, we don't proceed with the reload.
-  reloadKeymap: (filePath) ->
-    if fs.isFileSync(filePath)
-      if bindings = @readKeymap(filePath, true)
-        @remove(filePath)
-        @addKeymap(filePath, bindings)
-        @emit 'reloaded-key-bindings', filePath
-        @emitter.emit 'did-reload-keymap', {path: filePath}
-    else
-      @remove(filePath)
-      @emit 'unloaded-key-bindings', filePath
-      @emitter.emit 'did-unload-keymap', {path: filePath}
-
-  readKeymap: (filePath, suppressErrors) ->
-    if suppressErrors
-      try
-        CSON.readFileSync(filePath)
-      catch error
-        console.warn("Failed to reload key bindings file: #{filePath}", error.stack ? error)
-        undefined
-    else
-      CSON.readFileSync(filePath)
-
-  # Determine if the given path should be loaded on this platform. If the
-  # filename has the pattern '<platform>.cson' or 'foo.<platform>.cson' and
-  # <platform> does not match the current platform, returns false. Otherwise
-  # returns true.
-  filePathMatchesPlatform: (filePath) ->
-    otherPlatforms = @getOtherPlatforms()
-    for component in path.basename(filePath).split('.')[0...-1]
-      return false if component in otherPlatforms
-    true
+  ###
+  Section: Private
+  ###
 
   # For testing purposes
   getOtherPlatforms: -> OtherPlatforms
@@ -536,20 +586,12 @@ class KeymapManager
       break if commandEvent.propagationStopped
       currentTarget = currentTarget.parentElement
 
-  # Public: Translate a keydown event to a keystroke string.
-  #
-  # * `event` A `KeyboardEvent` of type 'keydown'
-  #
-  # Returns a {String} describing the keystroke.
-  keystrokeForKeyboardEvent: (event) ->
-    keystrokeForKeyboardEvent(event)
-
-  # Deprecated: Use {::addKeymap} instead.
+  # Deprecated: Use {::add} instead.
   addKeymap: (source, bindings) ->
     # Grim.deprecate("Use KeymapManager::add instead.")
     @add(source, bindings)
 
-  # Deprecated: Use {::removeKeymap} instead.
+  # Deprecated: Use {::remove} instead.
   removeKeymap: (source) ->
     # Grim.deprecate("Use KeymapManager::remove instead.")
     @remove(source)
