@@ -85,6 +85,10 @@ class KeymapManager
   #   * `target` The target element of the event.
   @keydownEvent: (key, options) -> keydownEvent(key, options)
 
+  ###
+  Section: Properties
+  ###
+
   # Public: The number of milliseconds allowed before pending states caused
   # by partial matches of multi-keystroke bindings are terminated.
   partialMatchTimeout: 1000
