@@ -185,7 +185,6 @@ normalizeKeystroke = (keystroke) ->
   modifiers = new Set
 
   for key, i in keys
-
     if AtomModifiers.has(key)
       modifiers.add(key)
     else
