@@ -100,9 +100,13 @@ exports.normalizeKeystrokes = (keystrokes) ->
       return false
   normalizedKeystrokes.join(' ')
 
-exports.keystrokeForKeyboardEvent = (event) ->
+exports.keystrokeForKeyboardEvent = (event, dvorakQwertyHackEnabled) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     charCode = charCodeFromKeyIdentifier(event.keyIdentifier)
+
+    if dvorakQwertyHackEnabled and typeof charCode is 'number'
+      charCode = event.keyCode
+
     if charCode?
       if process.platform is 'linux' or process.platform is 'win32'
         charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)

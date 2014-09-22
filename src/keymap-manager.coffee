@@ -67,6 +67,8 @@ module.exports =
 class KeymapManager
   EmitterMixin.includeInto(this)
 
+  dvorakQwertyHackEnabled: false
+
   ###
   Section: Class Methods
   ###
@@ -469,7 +471,7 @@ class KeymapManager
   #
   # Returns a {String} describing the keystroke.
   keystrokeForKeyboardEvent: (event) ->
-    keystrokeForKeyboardEvent(event)
+    keystrokeForKeyboardEvent(event, @dvorakQwertyHackEnabled)
 
   ###
   Section: Private
