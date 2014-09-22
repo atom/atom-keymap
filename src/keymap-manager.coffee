@@ -2,6 +2,7 @@ _ = require "underscore-plus"
 CSON = require 'season'
 Grim = require 'grim'
 fs = require 'fs-plus'
+{observeCurrentKeyboardLayout} = require 'keyboard-layout'
 path = require 'path'
 EmitterMixin = require('emissary').Emitter
 {File} = require 'pathwatcher'
@@ -117,12 +118,18 @@ class KeymapManager
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
     @watchSubscriptions = {}
+    @enableDvorakQwertyHackIfNeeded()
 
   # Public: Unwatch all watched paths.
   destroy: ->
+    @keyboardLayoutSubscription.dispose()
     for filePath, subscription of @watchSubscriptions
       subscription.dispose()
     undefined
+
+  enableDvorakQwertyHackIfNeeded: ->
+    @keyboardLayoutSubscription = observeCurrentKeyboardLayout (layoutId) =>
+      @dvorakQwertyHackEnabled = layoutId is 'com.apple.keylayout.DVORAK-QWERTYCMD'
 
   ###
   Section: Event Subscription
