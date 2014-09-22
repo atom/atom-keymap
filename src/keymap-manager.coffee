@@ -68,8 +68,6 @@ module.exports =
 class KeymapManager
   EmitterMixin.includeInto(this)
 
-  dvorakQwertyHackEnabled: false
-
   ###
   Section: Class Methods
   ###
@@ -99,6 +97,7 @@ class KeymapManager
   defaultTarget: null
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
+  dvorakQwertyHackEnabled: false
 
   ###
   Section: Construction and Destruction
