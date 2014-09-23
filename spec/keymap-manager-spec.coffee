@@ -430,6 +430,11 @@ describe "KeymapManager", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
         expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, keyCode: 122))).toBe 'cmd-z'
 
+    describe "when KeymapManager::dvorakQwertyWorkaroundEnabled is true", ->
+      it "uses event.keyCode instead of event.keyIdentifier when event.keyIdentifier is numeric", ->
+        keymapManager.dvorakQwertyWorkaroundEnabled = true
+        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004A', cmd: true, keyCode: 67))).toBe 'cmd-c'
+
     describe "on Windows and Linux", ->
       originalPlatform = null
 
