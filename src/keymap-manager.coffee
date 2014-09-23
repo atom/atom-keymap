@@ -97,7 +97,7 @@ class KeymapManager
   defaultTarget: null
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
-  dvorakQwertyHackEnabled: false
+  dvorakQwertyWorkaroundEnabled: false
 
   ###
   Section: Construction and Destruction
@@ -117,7 +117,7 @@ class KeymapManager
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
     @watchSubscriptions = {}
-    @enableDvorakQwertyHackIfNeeded()
+    @enableDvorakQwertyWorkaroundIfNeeded()
 
   # Public: Unwatch all watched paths.
   destroy: ->
@@ -126,9 +126,9 @@ class KeymapManager
       subscription.dispose()
     undefined
 
-  enableDvorakQwertyHackIfNeeded: ->
+  enableDvorakQwertyWorkaroundIfNeeded: ->
     @keyboardLayoutSubscription = observeCurrentKeyboardLayout (layoutId) =>
-      @dvorakQwertyHackEnabled = layoutId is 'com.apple.keylayout.DVORAK-QWERTYCMD'
+      @dvorakQwertyWorkaroundEnabled = layoutId is 'com.apple.keylayout.DVORAK-QWERTYCMD'
 
   ###
   Section: Event Subscription
@@ -477,7 +477,7 @@ class KeymapManager
   #
   # Returns a {String} describing the keystroke.
   keystrokeForKeyboardEvent: (event) ->
-    keystrokeForKeyboardEvent(event, @dvorakQwertyHackEnabled)
+    keystrokeForKeyboardEvent(event, @dvorakQwertyWorkaroundEnabled)
 
   ###
   Section: Private

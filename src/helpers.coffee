@@ -100,11 +100,11 @@ exports.normalizeKeystrokes = (keystrokes) ->
       return false
   normalizedKeystrokes.join(' ')
 
-exports.keystrokeForKeyboardEvent = (event, dvorakQwertyHackEnabled) ->
+exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
   unless KeyboardEventModifiers.has(event.keyIdentifier)
     charCode = charCodeFromKeyIdentifier(event.keyIdentifier)
 
-    if dvorakQwertyHackEnabled and typeof charCode is 'number'
+    if dvorakQwertyWorkaroundEnabled and typeof charCode is 'number'
       charCode = event.keyCode
 
     if charCode?
