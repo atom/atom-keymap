@@ -6,7 +6,7 @@ fs = require 'fs-plus'
 path = require 'path'
 EmitterMixin = require('emissary').Emitter
 {File} = require 'pathwatcher'
-{Emitter, CompositeDisposable} = require 'event-kit'
+{Emitter, Disposable, CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
 {normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent} = require './helpers'
@@ -226,6 +226,7 @@ class KeymapManager
   # * `bindings` An {Object} whose top-level keys point at sub-objects mapping
   #   keystroke patterns to commands.
   add: (source, keyBindingsBySelector) ->
+    addedKeyBindings = []
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
       try
@@ -237,10 +238,15 @@ class KeymapManager
       for keystrokes, command of keyBindings
         if normalizedKeystrokes = normalizeKeystrokes(keystrokes)
           keyBinding = new KeyBinding(source, command, normalizedKeystrokes, selector)
+          addedKeyBindings.push(keyBinding)
           @keyBindings.push(keyBinding)
         else
           console.warn "Invalid keystroke sequence for binding: `#{keystrokes}: #{command}` in #{source}"
-    undefined
+
+    new Disposable =>
+      for keyBinding in addedKeyBindings
+        index = @keyBindings.indexOf(keyBinding)
+        @keyBindings.splice(index, 1) unless index is -1
 
   # Public: Remove the key bindings added with {::add} or {::loadKeymap}.
   #

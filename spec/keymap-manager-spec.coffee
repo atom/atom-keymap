@@ -344,7 +344,7 @@ describe "KeymapManager", ->
 
       expect(events).toEqual ['c', 'b1']
 
-  describe "::addKeymap(source, bindings)", ->
+  describe "::add(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->
       keymapManager.addKeymap 'test', '*': 'ctrl-shift-l': 'a'
       keymapManager.addKeymap 'test', '*': 'ctrl-shift-L': 'b'
@@ -373,15 +373,14 @@ describe "KeymapManager", ->
       keymapManager.handleKeyboardEvent(event)
       expect(event.defaultPrevented).toBe false
 
-  describe "::removeKeymap(source)", ->
-    it "removes all bindings originating from the given source", ->
-      keymapManager.addKeymap 'foo',
+    it "returns a disposable allowing the added bindings to be removed", ->
+      disposable1 = keymapManager.addKeymap 'foo',
         '.a':
           'ctrl-a': 'x'
         '.b':
           'ctrl-b': 'y'
 
-      keymapManager.addKeymap 'bar',
+      disposable2 = keymapManager.addKeymap 'bar',
         '.c':
           'ctrl-c': 'z'
 
@@ -389,7 +388,7 @@ describe "KeymapManager", ->
       expect(keymapManager.findKeyBindings(command: 'y').length).toBe 1
       expect(keymapManager.findKeyBindings(command: 'z').length).toBe 1
 
-      keymapManager.removeKeymap('bar')
+      disposable2.dispose()
 
       expect(keymapManager.findKeyBindings(command: 'x').length).toBe 1
       expect(keymapManager.findKeyBindings(command: 'y').length).toBe 1
