@@ -248,11 +248,11 @@ class KeymapManager
         index = @keyBindings.indexOf(keyBinding)
         @keyBindings.splice(index, 1) unless index is -1
 
-  # Public: Remove the key bindings added with {::add} or {::loadKeymap}.
-  #
-  # * `source` A {String} representing the `source` in a previous call to
-  #   {::add} or the path in {::loadKeymap}.
   remove: (source) ->
+    Grim.deprecate("Call .dispose() on the Disposable returned from KeymapManager::add instead")
+    @removeBindingsFromSource(source)
+
+  removeBindingsFromSource: (source) ->
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
     undefined
 
@@ -350,12 +350,12 @@ class KeymapManager
   reloadKeymap: (filePath) ->
     if fs.isFileSync(filePath)
       if bindings = @readKeymap(filePath, true)
-        @remove(filePath)
+        @removeBindingsFromSource(filePath)
         @addKeymap(filePath, bindings)
         @emit 'reloaded-key-bindings', filePath
         @emitter.emit 'did-reload-keymap', {path: filePath}
     else
-      @remove(filePath)
+      @removeBindingsFromSource(filePath)
       @emit 'unloaded-key-bindings', filePath
       @emitter.emit 'did-unload-keymap', {path: filePath}
 
