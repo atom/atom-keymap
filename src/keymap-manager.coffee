@@ -598,7 +598,8 @@ class KeymapManager
     while currentTarget?
       currentTarget.dispatchEvent(commandEvent)
       break if commandEvent.propagationStopped
-      currentTarget = currentTarget.parentElement
+      break if currentTarget is window
+      currentTarget = currentTarget.parentNode ? window
 
   # Deprecated: Use {::add} instead.
   addKeymap: (source, bindings) ->
