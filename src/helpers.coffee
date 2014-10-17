@@ -101,24 +101,28 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
-  unless KeyboardEventModifiers.has(event.keyIdentifier)
-    charCode = charCodeFromKeyIdentifier(event.keyIdentifier)
+  keyIdentifier = event.keyIdentifier
+  unless KeyboardEventModifiers.has(keyIdentifier)
+    if keyIdentifier == 'Unidentified'
+      keyIdentifier = "U+#{event.keyCode.toString(16)}"
 
-    if dvorakQwertyWorkaroundEnabled and typeof charCode is 'number'
+    charCode = charCodeFromKeyIdentifier(keyIdentifier)
+
+    if dvorakQwertyWozrkaroundEnabled and typeof charCode is 'number'
       charCode = event.keyCode
 
     if charCode?
       if process.platform is 'linux' or process.platform is 'win32'
         charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
 
-      if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
+    if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
         # This is a numpad number
-        charCode = numpadToASCII(charCode)
+      charCode = numpadToASCII(charCode)
 
       charCode = event.which if not isASCII(charCode) and isASCII(event.keyCode)
       key = keyFromCharCode(charCode)
     else
-      key = event.keyIdentifier.toLowerCase()
+      key = keyIdentifier.toLowerCase()
 
   keystroke = ''
   if event.ctrlKey
