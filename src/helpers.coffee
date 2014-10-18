@@ -120,6 +120,10 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
     else
       key = event.keyIdentifier.toLowerCase()
 
+    if key is 'unidentified'
+      hexCode = "0000#{event.keyCode.toString(16)}"[-4..]
+      key = "U+#{hexCode}"
+
   keystroke = ''
   if event.ctrlKey
     keystroke += 'ctrl'
