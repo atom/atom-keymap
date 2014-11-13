@@ -294,7 +294,7 @@ describe "KeymapManager", ->
 
     it "does not enqueue keydown events consisting only of modifier keys", ->
       element = $$ -> @div class: 'a'
-      keymapManager.addKeymap 'test', '.a': 'ctrl-a ctrl-b': 'command'
+      keymapManager.addKeymap 'test', '.a': 'ctrl-a ctrl-alt-b': 'command'
       events = []
       element.addEventListener 'command', -> events.push('command')
 
@@ -303,7 +303,8 @@ describe "KeymapManager", ->
       keymapManager.handleKeyboardEvent(keydownEvent('ctrl', target: element))
       keymapManager.handleKeyboardEvent(keydownEvent('a', ctrl: true, target: element))
       keymapManager.handleKeyboardEvent(keydownEvent('ctrl', target: element))
-      keymapManager.handleKeyboardEvent(keydownEvent('b', ctrl: true, target: element))
+      keymapManager.handleKeyboardEvent(keydownEvent('alt', ctrl: true, target: element))
+      keymapManager.handleKeyboardEvent(keydownEvent('b', ctrl: true, alt: true, target: element))
 
       expect(events).toEqual ['command']
 

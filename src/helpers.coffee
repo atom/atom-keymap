@@ -4,6 +4,8 @@
 AtomModifiers = new Set
 AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
 
+AtomModifierRegex = /(ctrl|alt|shift|cmd)$/
+
 KeyboardEventModifiers = new Set
 KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
 
@@ -151,8 +153,8 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
 exports.calculateSpecificity = (selector) ->
   SpecificityCache[selector] ?= specificity(selector)
 
-exports.isAtomModifier = (key) ->
-  AtomModifiers.has(key)
+exports.isAtomModifier = (keystroke) ->
+  AtomModifiers.has(keystroke) or AtomModifierRegex.test(keystroke)
 
 exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
   event = document.createEvent('KeyboardEvent')
