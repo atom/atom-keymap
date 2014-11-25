@@ -198,7 +198,7 @@ class KeymapManager
   onDidUnloadKeymap: (callback) ->
     @emitter.on 'did-unload-keymap', callback
 
-  # Invoke the given callback when a keymap file not able to be loaded.
+  # Public: Invoke the given callback when a keymap file not able to be loaded.
   #
   # * `callback` {Function} to be called when a keymap file is unloaded.
   #   * `error` {Object} with the following keys:
