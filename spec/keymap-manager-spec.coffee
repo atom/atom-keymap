@@ -574,7 +574,7 @@ describe "KeymapManager", ->
               expect(keymapManager.findKeyBindings(command: 'y').length).toBe 1
               expect(keymapManager.findKeyBindings(command: 'z').length).toBe 1
 
-          it "emits an event and logs a warning and does not reload if there is a problem reloading the file", ->
+          it "emits an event, logs a warning and does not reload if there is a problem reloading the file", ->
             didFailSpy = jasmine.createSpy()
             keymapManager.onDidFailToReadFile(didFailSpy)
             spyOn(console, 'warn')
