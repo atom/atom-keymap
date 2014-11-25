@@ -198,6 +198,17 @@ class KeymapManager
   onDidUnloadKeymap: (callback) ->
     @emitter.on 'did-unload-keymap', callback
 
+  # Invoke the given callback when a keymap file not able to be loaded.
+  #
+  # * `callback` {Function} to be called when a keymap file is unloaded.
+  #   * `error` {Object} with the following keys:
+  #     * `message` {String} the error message.
+  #     * `stack` {String} the error stack trace.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+  onDidFailToReadFile: (callback) ->
+    @emitter.on 'did-fail-to-read-file', callback
+
   on: (eventName) ->
     switch eventName
       when 'matched'
@@ -365,6 +376,7 @@ class KeymapManager
         CSON.readFileSync(filePath)
       catch error
         console.warn("Failed to reload key bindings file: #{filePath}", error.stack ? error)
+        @emitter.emit 'did-fail-to-read-file', error
         undefined
     else
       CSON.readFileSync(filePath)
