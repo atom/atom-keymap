@@ -23,7 +23,7 @@
   "dependencies": {
     "clear-cut": "^0.3.0",
     "emissary": "^1.1.0",
-    "event-kit": "^0.7.0",
+    "event-kit": "^1.0.0",
     "fs-plus": "^2.0.4",
     "grim": "^1.0.0",
     "keyboard-layout": "^0.7.0",
