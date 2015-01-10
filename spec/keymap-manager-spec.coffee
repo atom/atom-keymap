@@ -229,14 +229,14 @@ describe "KeymapManager", ->
         it "disables partially-matching bindings and replays the queued keystrokes if the ::partialMatchTimeout expires", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
           expect(events).toEqual []
-          advanceClock(keymapManager.partialMatchTimeout)
+          advanceClock(keymapManager.getPartialMatchTimeout())
           expect(events).toEqual ['enter-visual-mode']
 
           events = []
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
           expect(events).toEqual []
-          advanceClock(keymapManager.partialMatchTimeout)
+          advanceClock(keymapManager.getPartialMatchTimeout())
           expect(events).toEqual ['enter-visual-mode']
 
           events = []
@@ -244,7 +244,7 @@ describe "KeymapManager", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
           expect(events).toEqual []
-          advanceClock(keymapManager.partialMatchTimeout)
+          advanceClock(keymapManager.getPartialMatchTimeout())
           expect(events).toEqual ['viv']
 
         it "does not enter a pending state or prevent the default action if the matching binding's command is 'native!'", ->
@@ -260,8 +260,8 @@ describe "KeymapManager", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
 
-          advanceClock(keymapManager.partialMatchTimeout)
-          advanceClock(keymapManager.partialMatchTimeout)
+          advanceClock(keymapManager.getPartialMatchTimeout())
+          advanceClock(keymapManager.getPartialMatchTimeout())
 
           expect(events).toEqual []
           keymapManager.handleKeyboardEvent(buildKeydownEvent('g', target: editor))

@@ -94,8 +94,6 @@ class KeymapManager
   Section: Properties
   ###
 
-  # Public: The number of milliseconds allowed before pending states caused
-  # by partial matches of multi-keystroke bindings are terminated.
   partialMatchTimeout: 1000
 
   defaultTarget: null
@@ -500,6 +498,13 @@ class KeymapManager
   # Returns a {String} describing the keystroke.
   keystrokeForKeyboardEvent: (event) ->
     keystrokeForKeyboardEvent(event, @dvorakQwertyWorkaroundEnabled)
+
+  # Public: Get the number of milliseconds allowed before pending states caused
+  # by partial matches of multi-keystroke bindings are terminated.
+  #
+  # Returns a {Number}
+  getPartialMatchTimeout: ->
+    @partialMatchTimeout
 
   ###
   Section: Private
