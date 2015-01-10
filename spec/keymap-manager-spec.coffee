@@ -4,7 +4,7 @@ temp = require 'temp'
 {$$} = require 'space-pencil'
 {appendContent} = require './spec-helper'
 KeymapManager = require '../src/keymap-manager'
-{keydownEvent} = KeymapManager
+{buildKeydownEvent} = KeymapManager
 
 describe "KeymapManager", ->
   keymapManager = null
@@ -18,7 +18,7 @@ describe "KeymapManager", ->
   describe "::handleKeyboardEvent(event)", ->
     describe "when the keystroke matches no bindings", ->
       it "does not prevent the event's default action", ->
-        event = keydownEvent('q')
+        event = buildKeydownEvent('q')
         keymapManager.handleKeyboardEvent(event)
         expect(event.defaultPrevented).toBe false
 
@@ -45,19 +45,19 @@ describe "KeymapManager", ->
             "ctrl-y": "y-command"
 
       it "dispatches the matching binding's command event on the keyboard event's target", ->
-        keymapManager.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: elementB))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementB))
         expect(events.length).toBe 1
         expect(events[0].type).toBe 'y-command'
         expect(events[0].target).toBe elementB
 
         events = []
-        keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
         expect(events.length).toBe 1
         expect(events[0].type).toBe 'x-command'
         expect(events[0].target).toBe elementB
 
       it "prevents the default action", ->
-        event = keydownEvent('y', ctrl: true, target: elementB)
+        event = buildKeydownEvent('y', ctrl: true, target: elementB)
         keymapManager.handleKeyboardEvent(event)
         expect(event.defaultPrevented).toBe true
 
@@ -67,7 +67,7 @@ describe "KeymapManager", ->
           elementB.addEventListener 'y-command', (e) -> events.push(e) # should never be called
           elementB.addEventListener 'z-command', (e) -> events.push(e); e.abortKeyBinding()
 
-          event = keydownEvent('y', ctrl: true, target: elementB)
+          event = buildKeydownEvent('y', ctrl: true, target: elementB)
           keymapManager.handleKeyboardEvent(event)
           expect(event.defaultPrevented).toBe false
 
@@ -82,7 +82,7 @@ describe "KeymapManager", ->
       describe "if the keyboard event's target is document.body", ->
         it "starts matching keybindings at the .defaultTarget", ->
           keymapManager.defaultTarget = elementA
-          keymapManager.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: document.body))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: document.body))
           expect(events.length).toBe 1
           expect(events[0].type).toBe 'y-command'
           expect(events[0].target).toBe elementA
@@ -94,7 +94,7 @@ describe "KeymapManager", ->
             ".b":
               "ctrl-y": "native!"
 
-          event = keydownEvent('y', ctrl: true, target: elementB)
+          event = buildKeydownEvent('y', ctrl: true, target: elementB)
           keymapManager.handleKeyboardEvent(event)
           expect(events).toEqual []
           expect(event.defaultPrevented).toBe false
@@ -108,7 +108,7 @@ describe "KeymapManager", ->
             ".b":
               "ctrl-y": "unset!"
 
-          event = keydownEvent('y', ctrl: true, target: elementB)
+          event = buildKeydownEvent('y', ctrl: true, target: elementB)
           keymapManager.handleKeyboardEvent(event)
           expect(events.length).toBe 1
           expect(events[0].type).toBe 'x-command'
@@ -124,12 +124,12 @@ describe "KeymapManager", ->
             ".b":
               "ctrl-y": "abort!"
 
-          event = keydownEvent('y', ctrl: true, target: elementB)
+          event = buildKeydownEvent('y', ctrl: true, target: elementB)
           keymapManager.handleKeyboardEvent(event)
           expect(events.length).toBe 0
           expect(event.defaultPrevented).toBe true
 
-          keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
           expect(events.length).toBe 1
 
     describe "when the keystroke matches multiple bindings on the same element", ->
@@ -154,7 +154,7 @@ describe "KeymapManager", ->
               "ctrl-x": "command-2"
 
         it "dispatches the command associated with the most specific binding", ->
-          keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
           expect(events.length).toBe 1
           expect(events[0].type).toBe 'command-1'
           expect(events[0].target).toBe elementB
@@ -168,7 +168,7 @@ describe "KeymapManager", ->
               "ctrl-x": "command-2"
 
         it "dispatches the command associated with the most recently added binding", ->
-          keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: elementB))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
           expect(events.length).toBe 1
           expect(events[0].type).toBe 'command-2'
           expect(events[0].target).toBe elementB
@@ -199,26 +199,26 @@ describe "KeymapManager", ->
 
       describe "when subsequent keystrokes yield an exact match", ->
         it "dispatches the command associated with the matched multi-keystroke binding", ->
-          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(keydownEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(keydownEvent('a', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: editor))
           expect(events).toEqual ['viva!']
 
       describe "when subsequent keystrokes yield no matches", ->
         it "disables the bindings with the longest keystroke sequences and replays the queued keystrokes", ->
-          keymapManager.handleKeyboardEvent(vEvent = keydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(iEvent = keydownEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(wEvent = keydownEvent('w', target: editor))
+          keymapManager.handleKeyboardEvent(vEvent = buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(iEvent = buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(wEvent = buildKeydownEvent('w', target: editor))
           expect(vEvent.defaultPrevented).toBe true
           expect(iEvent.defaultPrevented).toBe true
           expect(wEvent.defaultPrevented).toBe true
           expect(events).toEqual ['enter-visual-mode', 'select-inside-word']
 
           events = []
-          keymapManager.handleKeyboardEvent(vEvent = keydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(iEvent = keydownEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(kEvent = keydownEvent('k', target: editor))
+          keymapManager.handleKeyboardEvent(vEvent = buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(iEvent = buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(kEvent = buildKeydownEvent('k', target: editor))
           expect(vEvent.defaultPrevented).toBe true
           expect(iEvent.defaultPrevented).toBe true
           expect(kEvent.defaultPrevented).toBe false
@@ -227,29 +227,29 @@ describe "KeymapManager", ->
 
       describe "when the currently queued keystrokes exactly match at least one binding", ->
         it "disables partially-matching bindings and replays the queued keystrokes if the ::partialMatchTimeout expires", ->
-          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
           expect(events).toEqual []
           advanceClock(keymapManager.partialMatchTimeout)
           expect(events).toEqual ['enter-visual-mode']
 
           events = []
-          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(keydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
           expect(events).toEqual []
           advanceClock(keymapManager.partialMatchTimeout)
           expect(events).toEqual ['enter-visual-mode']
 
           events = []
-          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(keydownEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
           expect(events).toEqual []
           advanceClock(keymapManager.partialMatchTimeout)
           expect(events).toEqual ['viv']
 
         it "does not enter a pending state or prevent the default action if the matching binding's command is 'native!'", ->
           keymapManager.addKeymap 'test', '.workspace': 'v': 'native!'
-          event = keydownEvent('v', target: editor)
+          event = buildKeydownEvent('v', target: editor)
           keymapManager.handleKeyboardEvent(event)
           expect(event.defaultPrevented).toBe false
           expect(global.setTimeout).not.toHaveBeenCalled()
@@ -257,14 +257,14 @@ describe "KeymapManager", ->
 
       describe "when the currently queued keystrokes don't exactly match any bindings", ->
         it "never times out of the pending state", ->
-          keymapManager.handleKeyboardEvent(keydownEvent('d', target: editor))
-          keymapManager.handleKeyboardEvent(keydownEvent('o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
 
           advanceClock(keymapManager.partialMatchTimeout)
           advanceClock(keymapManager.partialMatchTimeout)
 
           expect(events).toEqual []
-          keymapManager.handleKeyboardEvent(keydownEvent('g', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('g', target: editor))
           expect(events).toEqual ['dog']
 
       describe "when the partially matching bindings all map to the 'unset!' directive", ->
@@ -274,7 +274,7 @@ describe "KeymapManager", ->
               'v i v a': 'unset!'
               'v i v': 'unset!'
 
-          keymapManager.handleKeyboardEvent(keydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
 
           expect(events).toEqual ['enter-visual-mode']
 
@@ -289,7 +289,7 @@ describe "KeymapManager", ->
       element.addEventListener 'command-b', -> events.push('command-b')
 
       # Should *only* match ctrl-a, not ctrl-alt-a (can't just use a textual prefix match)
-      keymapManager.handleKeyboardEvent(keydownEvent('a', ctrl: true, target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('a', ctrl: true, target: element))
       expect(events).toEqual ['command-b']
 
     it "does not enqueue keydown events consisting only of modifier keys", ->
@@ -300,11 +300,11 @@ describe "KeymapManager", ->
 
       # Simulate keydown events for the modifier key being pressed on its own
       # prior to the key it is modifying.
-      keymapManager.handleKeyboardEvent(keydownEvent('ctrl', target: element))
-      keymapManager.handleKeyboardEvent(keydownEvent('a', ctrl: true, target: element))
-      keymapManager.handleKeyboardEvent(keydownEvent('ctrl', target: element))
-      keymapManager.handleKeyboardEvent(keydownEvent('alt', ctrl: true, target: element))
-      keymapManager.handleKeyboardEvent(keydownEvent('b', ctrl: true, alt: true, target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('a', ctrl: true, target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('alt', ctrl: true, target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('b', ctrl: true, alt: true, target: element))
 
       expect(events).toEqual ['command']
 
@@ -314,7 +314,7 @@ describe "KeymapManager", ->
       events = []
       element.addEventListener 'command', -> events.push('command')
 
-      keymapManager.handleKeyboardEvent(keydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', target: element))
       expect(events).toEqual ['command']
 
     it "simulates bubbling if the target is detached", ->
@@ -341,7 +341,7 @@ describe "KeymapManager", ->
         expect(e.target).toBe elementC
         expect(e.currentTarget).toBe elementC
 
-      keymapManager.handleKeyboardEvent(keydownEvent('x', target: elementC))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('x', target: elementC))
 
       expect(events).toEqual ['c', 'b1']
 
@@ -370,7 +370,7 @@ describe "KeymapManager", ->
       keymapManager.addKeymap 'test', '*': 'meta-shift-A': 'a'
       expect(console.warn).toHaveBeenCalled()
 
-      event = keydownEvent('A', shift: true, target: document.body)
+      event = buildKeydownEvent('A', shift: true, target: document.body)
       keymapManager.handleKeyboardEvent(event)
       expect(event.defaultPrevented).toBe false
 
@@ -398,42 +398,42 @@ describe "KeymapManager", ->
   describe "::keystrokeForKeyboardEvent(event)", ->
     describe "when no modifiers are pressed", ->
       it "returns a string that identifies the unmodified keystroke", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a'))).toBe 'a'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('['))).toBe '['
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('*'))).toBe '*'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left'))).toBe 'left'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('\b'))).toBe 'backspace'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('a'))).toBe 'a'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('['))).toBe '['
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('*'))).toBe '*'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('left'))).toBe 'left'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('\b'))).toBe 'backspace'
 
     describe "when a modifier key is combined with a non-modifier key", ->
       it "returns a string that identifies the modified keystroke", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a', alt: true))).toBe 'alt-a'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('[', cmd: true))).toBe 'cmd-['
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('*', ctrl: true))).toBe 'ctrl-*'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left', ctrl: true, alt: true, cmd: true))).toBe 'ctrl-alt-cmd-left'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('A', shift: true))).toBe 'shift-A'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('a', ctrl: true, shift: true))).toBe 'ctrl-shift-A'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('{', shift: true))).toBe '{'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('left', shift: true))).toBe 'shift-left'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('Left', shift: true))).toBe 'shift-left'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('a', alt: true))).toBe 'alt-a'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('[', cmd: true))).toBe 'cmd-['
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('*', ctrl: true))).toBe 'ctrl-*'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('left', ctrl: true, alt: true, cmd: true))).toBe 'ctrl-alt-cmd-left'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('A', shift: true))).toBe 'shift-A'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('a', ctrl: true, shift: true))).toBe 'ctrl-shift-A'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('{', shift: true))).toBe '{'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('left', shift: true))).toBe 'shift-left'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('Left', shift: true))).toBe 'shift-left'
 
     describe "when a numpad key is pressed", ->
       it "returns a string that identifies the key as the appropriate num-key", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0041', keyCode: 97, location: 3))).toBe '1'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0045', keyCode: 101, location: 3))).toBe '5'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0049', keyCode: 105, location: 3))).toBe '9'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageDown', keyCode: 34, location: 3))).toBe 'pagedown'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('PageUp', keyCode: 33, location: 3))).toBe 'pageup'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004B', keyCode: 107, location: 3))).toBe '+'
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+007F', keyCode: 46, location: 3))).toBe 'delete'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0041', keyCode: 97, location: 3))).toBe '1'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0045', keyCode: 101, location: 3))).toBe '5'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0049', keyCode: 105, location: 3))).toBe '9'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('PageDown', keyCode: 34, location: 3))).toBe 'pagedown'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('PageUp', keyCode: 33, location: 3))).toBe 'pageup'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+004B', keyCode: 107, location: 3))).toBe '+'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+007F', keyCode: 46, location: 3))).toBe 'delete'
 
     describe "when a non-English keyboard language is used", ->
       it "uses the physical character pressed instead of the character it maps to in the current language", ->
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+03B6', cmd: true, keyCode: 122))).toBe 'cmd-z'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+03B6', cmd: true, keyCode: 122))).toBe 'cmd-z'
 
     describe "when KeymapManager::dvorakQwertyWorkaroundEnabled is true", ->
       it "uses event.keyCode instead of event.keyIdentifier when event.keyIdentifier is numeric", ->
         keymapManager.dvorakQwertyWorkaroundEnabled = true
-        expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+004A', cmd: true, keyCode: 67))).toBe 'cmd-c'
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+004A', cmd: true, keyCode: 67))).toBe 'cmd-c'
 
     describe "on Windows and Linux", ->
       originalPlatform = null
@@ -447,52 +447,52 @@ describe "KeymapManager", ->
       it "corrects a Chromium bug where the keyIdentifier is incorrect for certain keypress events", ->
         testTranslations = ->
           # Number row
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0030', ctrl: true))).toBe 'ctrl-0'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0031', ctrl: true))).toBe 'ctrl-1'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0032', ctrl: true))).toBe 'ctrl-2'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0033', ctrl: true))).toBe 'ctrl-3'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0034', ctrl: true))).toBe 'ctrl-4'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0035', ctrl: true))).toBe 'ctrl-5'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0036', ctrl: true))).toBe 'ctrl-6'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0037', ctrl: true))).toBe 'ctrl-7'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0038', ctrl: true))).toBe 'ctrl-8'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0039', ctrl: true))).toBe 'ctrl-9'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0030', ctrl: true))).toBe 'ctrl-0'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0031', ctrl: true))).toBe 'ctrl-1'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0032', ctrl: true))).toBe 'ctrl-2'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0033', ctrl: true))).toBe 'ctrl-3'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0034', ctrl: true))).toBe 'ctrl-4'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0035', ctrl: true))).toBe 'ctrl-5'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0036', ctrl: true))).toBe 'ctrl-6'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0037', ctrl: true))).toBe 'ctrl-7'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0038', ctrl: true))).toBe 'ctrl-8'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0039', ctrl: true))).toBe 'ctrl-9'
 
           # Number row shifted
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0030', ctrl: true, shift: true))).toBe 'ctrl-)'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0031', ctrl: true, shift: true))).toBe 'ctrl-!'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0032', ctrl: true, shift: true))).toBe 'ctrl-@'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0033', ctrl: true, shift: true))).toBe 'ctrl-#'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0034', ctrl: true, shift: true))).toBe 'ctrl-$'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0035', ctrl: true, shift: true))).toBe 'ctrl-%'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0036', ctrl: true, shift: true))).toBe 'ctrl-^'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0037', ctrl: true, shift: true))).toBe 'ctrl-&'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0038', ctrl: true, shift: true))).toBe 'ctrl-*'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+0039', ctrl: true, shift: true))).toBe 'ctrl-('
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0030', ctrl: true, shift: true))).toBe 'ctrl-)'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0031', ctrl: true, shift: true))).toBe 'ctrl-!'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0032', ctrl: true, shift: true))).toBe 'ctrl-@'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0033', ctrl: true, shift: true))).toBe 'ctrl-#'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0034', ctrl: true, shift: true))).toBe 'ctrl-$'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0035', ctrl: true, shift: true))).toBe 'ctrl-%'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0036', ctrl: true, shift: true))).toBe 'ctrl-^'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0037', ctrl: true, shift: true))).toBe 'ctrl-&'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0038', ctrl: true, shift: true))).toBe 'ctrl-*'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0039', ctrl: true, shift: true))).toBe 'ctrl-('
 
           # Other symbols
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true))).toBe 'ctrl-;'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true))).toBe 'ctrl-='
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true))).toBe 'ctrl-,'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bd', ctrl: true))).toBe 'ctrl--'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00be', ctrl: true))).toBe 'ctrl-.'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true))).toBe 'ctrl-/'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00db', ctrl: true))).toBe 'ctrl-['
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dc', ctrl: true))).toBe 'ctrl-\\'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true))).toBe 'ctrl-]'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true))).toBe 'ctrl-\''
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00ba', ctrl: true))).toBe 'ctrl-;'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bb', ctrl: true))).toBe 'ctrl-='
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bc', ctrl: true))).toBe 'ctrl-,'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bd', ctrl: true))).toBe 'ctrl--'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00be', ctrl: true))).toBe 'ctrl-.'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bf', ctrl: true))).toBe 'ctrl-/'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00db', ctrl: true))).toBe 'ctrl-['
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00dc', ctrl: true))).toBe 'ctrl-\\'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00dd', ctrl: true))).toBe 'ctrl-]'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00de', ctrl: true))).toBe 'ctrl-\''
 
           # Other symbols shifted
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00ba', ctrl: true, shift: true))).toBe 'ctrl-:'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bb', ctrl: true, shift: true))).toBe 'ctrl-+'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bc', ctrl: true, shift: true))).toBe 'ctrl-<'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bd', ctrl: true, shift: true))).toBe 'ctrl-_'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00be', ctrl: true, shift: true))).toBe 'ctrl->'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00db', ctrl: true, shift: true))).toBe 'ctrl-{'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dc', ctrl: true, shift: true))).toBe 'ctrl-|'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00dd', ctrl: true, shift: true))).toBe 'ctrl-}'
-          expect(keymapManager.keystrokeForKeyboardEvent(keydownEvent('U+00de', ctrl: true, shift: true))).toBe 'ctrl-"'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00ba', ctrl: true, shift: true))).toBe 'ctrl-:'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bb', ctrl: true, shift: true))).toBe 'ctrl-+'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bc', ctrl: true, shift: true))).toBe 'ctrl-<'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bd', ctrl: true, shift: true))).toBe 'ctrl-_'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00be', ctrl: true, shift: true))).toBe 'ctrl->'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bf', ctrl: true, shift: true))).toBe 'ctrl-?'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00db', ctrl: true, shift: true))).toBe 'ctrl-{'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00dc', ctrl: true, shift: true))).toBe 'ctrl-|'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00dd', ctrl: true, shift: true))).toBe 'ctrl-}'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00de', ctrl: true, shift: true))).toBe 'ctrl-"'
 
         Object.defineProperty process, 'platform', value: 'win32'
         testTranslations()
@@ -662,7 +662,7 @@ describe "KeymapManager", ->
         ".not-in-the-dom":
           "ctrl-x": "unmached-command"
 
-      keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
 
       {keystrokes, binding, keyboardEventTarget} = handler.argsForCall[0][0]
@@ -678,7 +678,7 @@ describe "KeymapManager", ->
           "ctrl-x 1": "command-1"
           "ctrl-x 2": "command-2"
 
-      keymapManager.handleKeyboardEvent(keydownEvent('x', ctrl: true, target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
 
       {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.argsForCall[0][0]
@@ -694,7 +694,7 @@ describe "KeymapManager", ->
         "body":
           "ctrl-x": "command"
 
-      keymapManager.handleKeyboardEvent(keydownEvent('y', ctrl: true, target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
 
       {keystrokes, keyboardEventTarget} = handler.argsForCall[0][0]

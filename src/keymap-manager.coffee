@@ -84,7 +84,11 @@ class KeymapManager
   #   * `which`  A {Number} indicating `which` value of the event. See
   #     the docs for KeyboardEvent for more information.
   #   * `target` The target element of the event.
-  @keydownEvent: (key, options) -> keydownEvent(key, options)
+  @buildKeydownEvent: (key, options) -> keydownEvent(key, options)
+
+  @keydownEvent: (key, options) ->
+    Grim.deprecate("Use .buildKeydownEvent instead.")
+    keydownEvent(key, options)
 
   ###
   Section: Properties
