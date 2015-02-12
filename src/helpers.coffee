@@ -103,46 +103,26 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
-  unless KeyboardEventModifiers.has(event.keyIdentifier)
-    charCode = charCodeFromKeyIdentifier(event.keyIdentifier)
-
-    if dvorakQwertyWorkaroundEnabled and typeof charCode is 'number'
-      charCode = event.keyCode
-
-    if charCode?
-      if process.platform is 'linux' or process.platform is 'win32'
-        charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
-
-      if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
-        # This is a numpad number
-        charCode = numpadToASCII(charCode)
-
-      charCode = event.which if not isASCII(charCode) and isASCII(event.keyCode)
-      key = keyFromCharCode(charCode)
-    else
-      key = event.keyIdentifier.toLowerCase()
+  preprocessedEvent = new PreprocessedKeyboardEvent(
+    event, dvorakQwertyWorkaroundEnabled)
 
   keystroke = ''
-  if event.ctrlKey
+  if preprocessedEvent.ctrlKey
     keystroke += 'ctrl'
-  if event.altKey
+  if preprocessedEvent.altKey
     keystroke += '-' if keystroke
     keystroke += 'alt'
-  if event.shiftKey
+  if preprocessedEvent.shiftKey
     # Don't push 'shift' when modifying symbolic characters like '{'
-    unless /^[^A-Za-z]$/.test(key)
+    unless /^[^A-Za-z]$/.test(preprocessedEvent.key)
       keystroke += '-' if keystroke
       keystroke += 'shift'
-    # Only upper case alphabetic characters like 'a'
-    key = key.toUpperCase() if /^[a-z]$/.test(key)
-  else
-    key = key.toLowerCase() if /^[A-Z]$/.test(key)
-  if event.metaKey
+  if preprocessedEvent.metaKey
     keystroke += '-' if keystroke
     keystroke += 'cmd'
-  if key?
+  if preprocessedEvent.key?
     keystroke += '-' if keystroke
-    keystroke += key
+    keystroke += preprocessedEvent.key
 
   keystroke
 
@@ -224,32 +204,86 @@ parseKeystroke = (keystroke) ->
 
   parser.parse(keystroke)
 
-charCodeFromKeyIdentifier = (keyIdentifier) ->
-  parseInt(keyIdentifier[2..], 16) if keyIdentifier.indexOf('U+') is 0
+# See http://www.w3.org/TR/2007/WD-DOM-Level-3-Events-20071221/events.html
+# for the specification of KeyboardEvent that Chromium implements now.
+class PreprocessedKeyboardEvent
+  constructor: (event, dvorakQwertyWorkaroundEnabled) ->
+    @keyIdentifier = event.keyIdentifier
+    @charCode = event.charCode
+    @keyCode = event.keyCode
+    @key = event.key
+    @which = event.which
+    @location = event.location
 
-# Chromium includes incorrect keyIdentifier values on keypress events for
-# certain symbols keys on Window and Linux.
-#
-# See https://code.google.com/p/chromium/issues/detail?id=51024
-# See https://bugs.webkit.org/show_bug.cgi?id=19906
-translateCharCodeForWindowsAndLinuxChromiumBug = (charCode, shift) ->
-  if translation = WindowsAndLinuxCharCodeTranslations[charCode]
-    if shift then translation.shifted else translation.unshifted
-  else
-    charCode
+    @ctrlKey = event.ctrlKey
+    @altKey = event.altKey
+    @shiftKey = event.shiftKey
+    @metaKey = event.metaKey
 
-keyFromCharCode = (charCode) ->
-  switch charCode
-    when 8 then 'backspace'
-    when 9 then 'tab'
-    when 13 then 'enter'
-    when 27 then 'escape'
-    when 32 then 'space'
-    when 127 then 'delete'
-    else String.fromCharCode(charCode)
+    @original_event = event
 
-isASCII = (charCode) ->
-  0 <= charCode <= 127
+    @preprocess(dvorakQwertyWorkaroundEnabled)
 
-numpadToASCII = (charCode) ->
-  NumPadToASCII[charCode] ? charCode
+  preprocess: (dvorakQwertyWorkaroundEnabled) ->
+    @populateCharCode()
+    @workAroundDvorakQwerty() if dvorakQwertyWorkaroundEnabled
+    @translateCharCodeForWindowsAndLinuxChromiumBug()
+    @translateNumpadCharCode()
+    @populateKey()
+    @correctKeyCase()
+
+  @charCodeFromKeyIdentifier: (keyIdentifier) ->
+    parseInt(keyIdentifier[2..], 16) if keyIdentifier.indexOf('U+') is 0
+
+  populateCharCode: ->
+    @charCode = @constructor.charCodeFromKeyIdentifier(@keyIdentifier)
+
+  workAroundDvorakQwerty: ->
+    if typeof @charCode is 'number'
+      @charCode = @keyCode
+
+  # Chromium includes incorrect keyIdentifier values on keypress events for
+  # certain symbols keys on Window and Linux.
+  #
+  # See https://code.google.com/p/chromium/issues/detail?id=51024
+  # See https://bugs.webkit.org/show_bug.cgi?id=19906
+  translateCharCodeForWindowsAndLinuxChromiumBug: ->
+    if (process.platform is 'linux' or process.platform is 'win32') and
+       (translation = WindowsAndLinuxCharCodeTranslations[@charCode])
+      @charCode = if @shiftKey then translation.shifted else
+                                    translation.unshifted
+
+  @numpadToASCII: (charCode) ->
+    NumPadToASCII[charCode] ? charCode
+
+  translateNumpadCharCode: ->
+    if @charCode? and @location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
+      @charCode = @constructor.numpadToASCII(@charCode)
+
+  @isASCII: (charCode) ->
+    0 <= charCode <= 127
+
+  @keyFromCharCode: (charCode) ->
+    switch charCode
+      when 8 then 'backspace'
+      when 9 then 'tab'
+      when 13 then 'enter'
+      when 27 then 'escape'
+      when 32 then 'space'
+      when 127 then 'delete'
+      else String.fromCharCode(charCode)
+
+  populateKey: ->
+    unless KeyboardEventModifiers.has(@keyIdentifier)
+      if @charCode?
+        @charCode = @which if not @constructor.isASCII(@charCode) and
+                              @constructor.isASCII(@keyCode)
+        @key = @constructor.keyFromCharCode(@charCode)
+      else
+        @key = @keyIdentifier.toLowerCase()
+
+  correctKeyCase: ->
+    if @shiftKey
+      @key = @key.toUpperCase() if /^[a-z]$/.test(@key)
+    else
+      @key = @key.toLowerCase() if /^[A-Z]$/.test(@key)
