@@ -11,6 +11,15 @@ KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift',
 
 SpecificityCache = {}
 
+WindowsAndLinuxKeyIdentifierTranslations =
+  'U+00A0': 'Shift'
+  'U+00A1': 'Shift'
+  'U+00A2': 'Control'
+  'U+00A3': 'Control'
+  'U+00A4': 'Alt'
+  'U+00A5': 'Alt'
+  'Win': 'Meta'
+
 WindowsAndLinuxCharCodeTranslations =
   48:
     shifted: 41    # ")"
@@ -103,8 +112,12 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
-  unless KeyboardEventModifiers.has(event.keyIdentifier)
-    charCode = charCodeFromKeyIdentifier(event.keyIdentifier)
+  keyIdentifier = event.keyIdentifier
+  if process.platform is 'linux' or process.platform is 'win32'
+    keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
+
+  unless KeyboardEventModifiers.has(keyIdentifier)
+    charCode = charCodeFromKeyIdentifier(keyIdentifier)
 
     if dvorakQwertyWorkaroundEnabled and typeof charCode is 'number'
       charCode = event.keyCode
@@ -120,7 +133,7 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
       charCode = event.which if not isASCII(charCode) and isASCII(event.keyCode)
       key = keyFromCharCode(charCode)
     else
-      key = event.keyIdentifier.toLowerCase()
+      key = keyIdentifier.toLowerCase()
 
   keystroke = ''
   if event.ctrlKey
@@ -232,6 +245,9 @@ charCodeFromKeyIdentifier = (keyIdentifier) ->
 #
 # See https://code.google.com/p/chromium/issues/detail?id=51024
 # See https://bugs.webkit.org/show_bug.cgi?id=19906
+translateKeyIdentifierForWindowsAndLinuxChromiumBug = (keyIdentifier) ->
+  WindowsAndLinuxKeyIdentifierTranslations[keyIdentifier] ? keyIdentifier
+
 translateCharCodeForWindowsAndLinuxChromiumBug = (charCode, shift) ->
   if translation = WindowsAndLinuxCharCodeTranslations[charCode]
     if shift then translation.shifted else translation.unshifted

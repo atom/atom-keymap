@@ -494,6 +494,14 @@ describe "KeymapManager", ->
           expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00dd', ctrl: true, shift: true))).toBe 'ctrl-}'
           expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00de', ctrl: true, shift: true))).toBe 'ctrl-"'
 
+          # Single modifiers
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A0', shift: true))).toBe 'shift'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A1', shift: true))).toBe 'shift'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A2', ctrl: true))).toBe 'ctrl'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A3', ctrl: true))).toBe 'ctrl'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A4', alt: true))).toBe 'alt'
+          expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A5', alt: true))).toBe 'alt'
+
         Object.defineProperty process, 'platform', value: 'win32'
         testTranslations()
         Object.defineProperty process, 'platform', value: 'linux'
