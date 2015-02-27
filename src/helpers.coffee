@@ -120,7 +120,10 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
     charCode = charCodeFromKeyIdentifier(keyIdentifier)
 
     if dvorakQwertyWorkaroundEnabled and typeof charCode is 'number'
-      charCode = event.keyCode
+      if event.keyCode is 46 # key code for 'delete'
+        charCode = 127 # ASCII character code for 'delete'
+      else
+        charCode = event.keyCode
 
     if charCode?
       if process.platform is 'linux' or process.platform is 'win32'

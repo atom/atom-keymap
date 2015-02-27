@@ -435,6 +435,10 @@ describe "KeymapManager", ->
         keymapManager.dvorakQwertyWorkaroundEnabled = true
         expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+004A', cmd: true, keyCode: 67))).toBe 'cmd-c'
 
+      it "maps the keyCode for delete (46) to the ASCII code for delete (127)", ->
+        keymapManager.dvorakQwertyWorkaroundEnabled = true
+        expect(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+007F', keyCode: 46))).toBe 'delete'
+
     describe "on Windows and Linux", ->
       originalPlatform = null
 
