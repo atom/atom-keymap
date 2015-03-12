@@ -28,7 +28,7 @@
     "grim": "^1.0.0",
     "keyboard-layout": "^0.10.0",
     "loophole": "^1.0.0",
-    "pathwatcher": "^3.0.0",
+    "pathwatcher": "^4",
     "pegjs": "^0.8.0",
     "property-accessors": "^1",
     "season": "^5.0.2",
