@@ -1,11 +1,12 @@
 helpers = require '../src/helpers'
 
-start = Date.now()
 count = 0
 
 normalize = (keystrokes) ->
   count++
   helpers.normalizeKeystrokes(keystrokes)
+
+start = Date.now()
 
 for letter in 'abcdefghijklmnopqrztuvwxyz0123456789'
   normalize(letter)
