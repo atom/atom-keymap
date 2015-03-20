@@ -6,6 +6,8 @@ AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
 
 AtomModifierRegex = /(ctrl|alt|shift|cmd)$/
 WhitespaceRegex = /\s+/
+LowerCaseLetterRegex = /^[a-z]$/
+UpperCaseLetterRegex = /^[A-Z]$/
 
 KeyboardEventModifiers = new Set
 KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
@@ -151,9 +153,9 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
       keystroke += '-' if keystroke
       keystroke += 'shift'
     # Only upper case alphabetic characters like 'a'
-    key = key.toUpperCase() if /^[a-z]$/.test(key)
+    key = key.toUpperCase() if LowerCaseLetterRegex.test(key)
   else
-    key = key.toLowerCase() if /^[A-Z]$/.test(key)
+    key = key.toLowerCase() if UpperCaseLetterRegex.test(key)
   if event.metaKey
     keystroke += '-' if keystroke
     keystroke += 'cmd'
@@ -175,7 +177,7 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}=
   cancelable = true
   view = null
 
-  key = key.toUpperCase() if /^[a-z]$/.test(key)
+  key = key.toUpperCase() if LowerCaseLetterRegex.test(key)
   if key.length is 1
     keyIdentifier = "U+#{key.charCodeAt(0).toString(16)}"
   else
@@ -217,8 +219,9 @@ normalizeKeystroke = (keystroke) ->
       else
         return false
 
-  modifiers.add('shift') if /^[A-Z]$/.test(primaryKey)
-  primaryKey = primaryKey.toUpperCase() if modifiers.has('shift') and /^[a-z]$/.test(primaryKey)
+  modifiers.add('shift') if UpperCaseLetterRegex.test(primaryKey)
+  if modifiers.has('shift') and LowerCaseLetterRegex.test(primaryKey)
+    primaryKey = primaryKey.toUpperCase()
 
   keystroke = []
   keystroke.push('ctrl') if modifiers.has('ctrl')
