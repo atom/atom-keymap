@@ -8,3 +8,4 @@ npm-debug.log
 .travis.yml
 .pairs
 .coffee
+benchmark
