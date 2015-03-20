@@ -1,30 +1,35 @@
 helpers = require '../src/helpers'
 
 start = Date.now()
+count = 0
 
-for letter in 'abcdefghijklmnopqrztuvwxyz'
-  helpers.normalizeKeystrokes(letter)
-  helpers.normalizeKeystrokes("shift-#{letter}")
+normalize = (keystrokes) ->
+  count++
+  helpers.normalizeKeystrokes(keystrokes)
 
-  helpers.normalizeKeystrokes("cmd-#{letter}")
-  helpers.normalizeKeystrokes("cmd-shift-#{letter}")
-  helpers.normalizeKeystrokes("cmd-alt-#{letter}")
-  helpers.normalizeKeystrokes("cmd-alt-ctrl-#{letter}")
-  helpers.normalizeKeystrokes("cmd-alt-ctrl-shfit-#{letter}")
-  helpers.normalizeKeystrokes("cmd-#{letter} cmd-v")
+for letter in 'abcdefghijklmnopqrztuvwxyz0123456789'
+  normalize(letter)
+  normalize("shift-#{letter}")
 
-  helpers.normalizeKeystrokes("alt-#{letter}")
-  helpers.normalizeKeystrokes("alt-shift-#{letter}")
-  helpers.normalizeKeystrokes("alt-cmd-#{letter}")
-  helpers.normalizeKeystrokes("alt-cmd-ctrl-#{letter}")
-  helpers.normalizeKeystrokes("alt-cmd-ctrl-shift-#{letter}")
-  helpers.normalizeKeystrokes("alt-#{letter} alt-v")
+  normalize("cmd-#{letter}")
+  normalize("cmd-shift-#{letter}")
+  normalize("cmd-alt-#{letter}")
+  normalize("cmd-alt-ctrl-#{letter}")
+  normalize("cmd-alt-ctrl-shfit-#{letter}")
+  normalize("cmd-#{letter} cmd-v")
 
-  helpers.normalizeKeystrokes("ctrl-#{letter}")
-  helpers.normalizeKeystrokes("ctrl-shift-#{letter}")
-  helpers.normalizeKeystrokes("ctrl-alt-#{letter}")
-  helpers.normalizeKeystrokes("ctrl-alt-cmd-#{letter}")
-  helpers.normalizeKeystrokes("ctrl-alt-cmd-shift#{letter}")
-  helpers.normalizeKeystrokes("ctrl-#{letter} ctrl-v")
+  normalize("alt-#{letter}")
+  normalize("alt-shift-#{letter}")
+  normalize("alt-cmd-#{letter}")
+  normalize("alt-cmd-ctrl-#{letter}")
+  normalize("alt-cmd-ctrl-shift-#{letter}")
+  normalize("alt-#{letter} alt-v")
 
-console.log Date.now() - start
+  normalize("ctrl-#{letter}")
+  normalize("ctrl-shift-#{letter}")
+  normalize("ctrl-alt-#{letter}")
+  normalize("ctrl-alt-cmd-#{letter}")
+  normalize("ctrl-alt-cmd-shift#{letter}")
+  normalize("ctrl-#{letter} ctrl-v")
+
+console.log "Normalized #{count} keystrokes in #{Date.now() - start}ms"
