@@ -116,7 +116,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
 
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
   keyIdentifier = event.keyIdentifier
-  if process.platform is 'linux' or process.platform is 'win32'
+  if process.platform in ['linux', 'win32']
     keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
 
   unless KeyboardEventModifiers.has(keyIdentifier)
