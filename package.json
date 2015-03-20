@@ -29,7 +29,6 @@
     "keyboard-layout": "^0.10.0",
     "loophole": "^1.0.0",
     "pathwatcher": "^4.2",
-    "pegjs": "^0.8.0",
     "property-accessors": "^1",
     "season": "^5.0.2",
     "underscore-plus": "^1.0.0"
@@ -46,7 +45,6 @@
     "coffee-cache": "^0.2.0",
     "temp": "^0.6.0",
     "space-pencil": "^0.3.0",
-    "grunt-peg": "^1.2.0",
     "grunt-atomdoc": "^1.0.0"
   }
 }
