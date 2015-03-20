@@ -120,12 +120,14 @@ class KeymapManager
     @queuedKeystrokes = []
     @watchSubscriptions = {}
     @enableDvorakQwertyWorkaroundIfNeeded()
+    @testSelectorElement = document.createElement('div')
 
   # Public: Unwatch all watched paths.
   destroy: ->
     @keyboardLayoutSubscription.dispose()
     for filePath, subscription of @watchSubscriptions
       subscription.dispose()
+    @testSelectorElement = null
     undefined
 
   enableDvorakQwertyWorkaroundIfNeeded: ->
@@ -242,9 +244,7 @@ class KeymapManager
     addedKeyBindings = []
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
-      try
-        document.body.webkitMatchesSelector(selector.replace(/!important/g, ''))
-      catch e
+      unless @isValidSelector(selector.replace(/!important/g, ''))
         console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
         return
 
@@ -609,6 +609,13 @@ class KeymapManager
     {keyBindingAborted} = commandEvent
     keyboardEvent.preventDefault() unless keyBindingAborted
     not keyBindingAborted
+
+  isValidSelector: (selector) ->
+    try
+      @testSelectorElement.querySelector(selector)
+      true
+    catch error
+      false
 
   # Chromium does not bubble events dispatched on detached targets, which makes
   # testing a pain in the ass. This method simulates bubbling manually.
