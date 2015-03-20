@@ -1,5 +1,5 @@
 {specificity} = require 'clear-cut'
-[parser, fs, loophole, pegjs] = []
+[fs, loophole, pegjs] = []
 
 AtomModifiers = new Set
 AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
@@ -228,17 +228,14 @@ normalizeKeystroke = (keystroke) ->
   keystroke.join('-')
 
 parseKeystroke = (keystroke) ->
-  unless parser?
-    try
-      parser = require './keystroke'
-    catch e
-      fs ?= require 'fs'
-      loophole ?= require 'loophole'
-      pegjs ?= require 'pegjs'
-      keystrokeGrammar = fs.readFileSync(require.resolve('./keystroke.pegjs'), 'utf8')
-      loophole.allowUnsafeEval => parser = pegjs.buildParser(keystrokeGrammar)
-
-  parser.parse(keystroke)
+  keys = []
+  keyStart = 0
+  for character, index in keystroke when character is '-'
+    if index > keyStart
+      keys.push(keystroke.substring(keyStart, index))
+      keyStart = index + 1
+  keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
+  keys
 
 charCodeFromKeyIdentifier = (keyIdentifier) ->
   parseInt(keyIdentifier[2..], 16) if keyIdentifier.indexOf('U+') is 0
