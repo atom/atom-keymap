@@ -260,6 +260,7 @@ class KeymapManager
       for keyBinding in addedKeyBindings
         index = @keyBindings.indexOf(keyBinding)
         @keyBindings.splice(index, 1) unless index is -1
+      return
 
   remove: (source) ->
     Grim.deprecate("Call .dispose() on the Disposable returned from KeymapManager::add instead")
@@ -590,6 +591,7 @@ class KeymapManager
     binding.enabled = false for binding in bindingsToDisable
     @handleKeyboardEvent(event, true) for event in eventsToReplay
     binding.enabled = true for binding in bindingsToDisable
+    return
 
   # After we match a binding, we call this method to dispatch a custom event
   # based on the binding's command.
@@ -628,6 +630,7 @@ class KeymapManager
       break if commandEvent.propagationStopped
       break if currentTarget is window
       currentTarget = currentTarget.parentNode ? window
+    return
 
   # Deprecated: Use {::add} instead.
   addKeymap: (source, bindings) ->
