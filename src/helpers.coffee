@@ -5,6 +5,7 @@ AtomModifiers = new Set
 AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
 
 AtomModifierRegex = /(ctrl|alt|shift|cmd)$/
+WhitespaceRegex = /\s+/
 
 KeyboardEventModifiers = new Set
 KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
@@ -104,7 +105,7 @@ NumPadToASCII =
 
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
-  for keystroke in keystrokes.split(/\s+/)
+  for keystroke in keystrokes.split(WhitespaceRegex)
     if normalizedKeystroke = normalizeKeystroke(keystroke)
       normalizedKeystrokes.push(normalizedKeystroke)
     else
