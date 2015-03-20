@@ -127,7 +127,7 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
         charCode = event.keyCode
 
     if charCode?
-      if process.platform is 'linux' or process.platform is 'win32'
+      if process.platform in ['linux', 'win32']
         charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
 
       if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
