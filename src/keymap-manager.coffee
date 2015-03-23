@@ -120,15 +120,20 @@ class KeymapManager
     @queuedKeystrokes = []
     @watchSubscriptions = {}
     @enableDvorakQwertyWorkaroundIfNeeded()
+
     @testSelectorElement = document.createElement('div')
+    @selectorCache = {}
 
   # Public: Unwatch all watched paths.
   destroy: ->
     @keyboardLayoutSubscription.dispose()
     for filePath, subscription of @watchSubscriptions
       subscription.dispose()
+
     @testSelectorElement = null
-    undefined
+    @selectorCache = null
+
+    return
 
   enableDvorakQwertyWorkaroundIfNeeded: ->
     @keyboardLayoutSubscription = observeCurrentKeyboardLayout (layoutId) =>
@@ -613,10 +618,15 @@ class KeymapManager
     not keyBindingAborted
 
   isValidSelector: (selector) ->
+    cachedValue = @selectorCache[selector]
+    return cachedValue if cachedValue?
+
     try
       @testSelectorElement.querySelector(selector)
+      @selectorCache[selector] = true
       true
     catch error
+      @selectorCache[selector] = false
       false
 
   # Chromium does not bubble events dispatched on detached targets, which makes
