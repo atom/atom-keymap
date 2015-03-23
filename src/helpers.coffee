@@ -1,5 +1,4 @@
 {specificity} = require 'clear-cut'
-[fs, loophole, pegjs] = []
 
 AtomModifiers = new Set
 AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
