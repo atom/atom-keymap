@@ -205,6 +205,8 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}=
 
 normalizeKeystroke = (keystroke) ->
   keys = parseKeystroke(keystroke)
+  return false unless keys
+
   primaryKey = null
   modifiers = new Set
 
@@ -237,6 +239,9 @@ parseKeystroke = (keystroke) ->
     if index > keyStart
       keys.push(keystroke.substring(keyStart, index))
       keyStart = index + 1
+
+      # The keystroke has a trailing - and is invalid
+      return false if keyStart is keystroke.length
   keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
   keys
 
