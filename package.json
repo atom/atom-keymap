@@ -26,7 +26,7 @@
     "emissary": "^1.1.0",
     "event-kit": "^1.0.0",
     "fs-plus": "^2.0.4",
-    "grim": "^1.0.0",
+    "grim": "^1.2.1",
     "keyboard-layout": "^0.10.0",
     "pathwatcher": "^4.2",
     "property-accessors": "^1",
