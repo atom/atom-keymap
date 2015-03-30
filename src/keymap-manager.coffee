@@ -121,12 +121,19 @@ class KeymapManager
     @watchSubscriptions = {}
     @enableDvorakQwertyWorkaroundIfNeeded()
 
+    @testSelectorElement = document.createElement('div')
+    @selectorCache = {}
+
   # Public: Unwatch all watched paths.
   destroy: ->
     @keyboardLayoutSubscription.dispose()
     for filePath, subscription of @watchSubscriptions
       subscription.dispose()
-    undefined
+
+    @testSelectorElement = null
+    @selectorCache = null
+
+    return
 
   enableDvorakQwertyWorkaroundIfNeeded: ->
     @keyboardLayoutSubscription = observeCurrentKeyboardLayout (layoutId) =>
@@ -242,9 +249,7 @@ class KeymapManager
     addedKeyBindings = []
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
-      try
-        document.body.webkitMatchesSelector(selector.replace(/!important/g, ''))
-      catch e
+      unless @isValidSelector(selector.replace(/!important/g, ''))
         console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
         return
 
@@ -260,6 +265,7 @@ class KeymapManager
       for keyBinding in addedKeyBindings
         index = @keyBindings.indexOf(keyBinding)
         @keyBindings.splice(index, 1) unless index is -1
+      return
 
   remove: (source) ->
     Grim.deprecate("Call .dispose() on the Disposable returned from KeymapManager::add instead")
@@ -590,6 +596,7 @@ class KeymapManager
     binding.enabled = false for binding in bindingsToDisable
     @handleKeyboardEvent(event, true) for event in eventsToReplay
     binding.enabled = true for binding in bindingsToDisable
+    return
 
   # After we match a binding, we call this method to dispatch a custom event
   # based on the binding's command.
@@ -610,6 +617,18 @@ class KeymapManager
     keyboardEvent.preventDefault() unless keyBindingAborted
     not keyBindingAborted
 
+  isValidSelector: (selector) ->
+    cachedValue = @selectorCache[selector]
+    return cachedValue if cachedValue?
+
+    try
+      @testSelectorElement.querySelector(selector)
+      @selectorCache[selector] = true
+      true
+    catch error
+      @selectorCache[selector] = false
+      false
+
   # Chromium does not bubble events dispatched on detached targets, which makes
   # testing a pain in the ass. This method simulates bubbling manually.
   simulateBubblingOnDetachedTarget: (target, commandEvent) ->
@@ -621,6 +640,7 @@ class KeymapManager
       break if commandEvent.propagationStopped
       break if currentTarget is window
       currentTarget = currentTarget.parentNode ? window
+    return
 
   # Deprecated: Use {::add} instead.
   addKeymap: (source, bindings) ->

@@ -5,3 +5,4 @@ lib/
 atom
 .coffee/
 api.json
+npm-debug.log

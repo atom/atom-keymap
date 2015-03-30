@@ -19,9 +19,8 @@ describe ".normalizeKeystrokes(keystrokes)", ->
     expect(normalizeKeystrokes('a-b')).toBe false
     expect(normalizeKeystrokes('---')).toBe false
     expect(normalizeKeystrokes('cmd-a-b')).toBe false
-
-    expect(-> normalizeKeystrokes('-a-b')).toThrow()
-    expect(-> normalizeKeystrokes('ctrl-')).toThrow()
-    expect(-> normalizeKeystrokes('--')).toThrow()
-    expect(-> normalizeKeystrokes('- ')).toThrow()
-    expect(-> normalizeKeystrokes('a ')).toThrow()
+    expect(normalizeKeystrokes('-a-b')).toBe false
+    expect(normalizeKeystrokes('ctrl-')).toBe false
+    expect(normalizeKeystrokes('--')).toBe false
+    expect(normalizeKeystrokes('- ')).toBe false
+    expect(normalizeKeystrokes('a ')).toBe false

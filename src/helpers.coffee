@@ -1,10 +1,12 @@
 {specificity} = require 'clear-cut'
-[parser, fs, loophole, pegjs] = []
 
 AtomModifiers = new Set
 AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
 
 AtomModifierRegex = /(ctrl|alt|shift|cmd)$/
+WhitespaceRegex = /\s+/
+LowerCaseLetterRegex = /^[a-z]$/
+UpperCaseLetterRegex = /^[A-Z]$/
 
 KeyboardEventModifiers = new Set
 KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
@@ -104,7 +106,7 @@ NumPadToASCII =
 
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
-  for keystroke in keystrokes.split(/\s+/)
+  for keystroke in keystrokes.split(WhitespaceRegex)
     if normalizedKeystroke = normalizeKeystroke(keystroke)
       normalizedKeystrokes.push(normalizedKeystroke)
     else
@@ -113,7 +115,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
 
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
   keyIdentifier = event.keyIdentifier
-  if process.platform is 'linux' or process.platform is 'win32'
+  if process.platform in ['linux', 'win32']
     keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
 
   unless KeyboardEventModifiers.has(keyIdentifier)
@@ -126,7 +128,7 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
         charCode = event.keyCode
 
     if charCode?
-      if process.platform is 'linux' or process.platform is 'win32'
+      if process.platform in ['linux', 'win32']
         charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
 
       if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
@@ -150,9 +152,9 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
       keystroke += '-' if keystroke
       keystroke += 'shift'
     # Only upper case alphabetic characters like 'a'
-    key = key.toUpperCase() if /^[a-z]$/.test(key)
+    key = key.toUpperCase() if LowerCaseLetterRegex.test(key)
   else
-    key = key.toLowerCase() if /^[A-Z]$/.test(key)
+    key = key.toLowerCase() if UpperCaseLetterRegex.test(key)
   if event.metaKey
     keystroke += '-' if keystroke
     keystroke += 'cmd'
@@ -174,7 +176,7 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}=
   cancelable = true
   view = null
 
-  key = key.toUpperCase() if /^[a-z]$/.test(key)
+  key = key.toUpperCase() if LowerCaseLetterRegex.test(key)
   if key.length is 1
     keyIdentifier = "U+#{key.charCodeAt(0).toString(16)}"
   else
@@ -203,6 +205,8 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}=
 
 normalizeKeystroke = (keystroke) ->
   keys = parseKeystroke(keystroke)
+  return false unless keys
+
   primaryKey = null
   modifiers = new Set
 
@@ -216,8 +220,9 @@ normalizeKeystroke = (keystroke) ->
       else
         return false
 
-  modifiers.add('shift') if /^[A-Z]$/.test(primaryKey)
-  primaryKey = primaryKey.toUpperCase() if modifiers.has('shift') and /^[a-z]$/.test(primaryKey)
+  modifiers.add('shift') if UpperCaseLetterRegex.test(primaryKey)
+  if modifiers.has('shift') and LowerCaseLetterRegex.test(primaryKey)
+    primaryKey = primaryKey.toUpperCase()
 
   keystroke = []
   keystroke.push('ctrl') if modifiers.has('ctrl')
@@ -228,17 +233,17 @@ normalizeKeystroke = (keystroke) ->
   keystroke.join('-')
 
 parseKeystroke = (keystroke) ->
-  unless parser?
-    try
-      parser = require './keystroke'
-    catch e
-      fs ?= require 'fs'
-      loophole ?= require 'loophole'
-      pegjs ?= require 'pegjs'
-      keystrokeGrammar = fs.readFileSync(require.resolve('./keystroke.pegjs'), 'utf8')
-      loophole.allowUnsafeEval => parser = pegjs.buildParser(keystrokeGrammar)
+  keys = []
+  keyStart = 0
+  for character, index in keystroke when character is '-'
+    if index > keyStart
+      keys.push(keystroke.substring(keyStart, index))
+      keyStart = index + 1
 
-  parser.parse(keystroke)
+      # The keystroke has a trailing - and is invalid
+      return false if keyStart is keystroke.length
+  keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
+  keys
 
 charCodeFromKeyIdentifier = (keyIdentifier) ->
   parseInt(keyIdentifier[2..], 16) if keyIdentifier.indexOf('U+') is 0

@@ -38,13 +38,7 @@ module.exports = (grunt) ->
           stderr: true
           failOnError: true
 
-    peg:
-      keystroke:
-        src: 'src/keystroke.pegjs'
-        dest: 'lib/keystroke.js'
-
   grunt.loadNpmTasks('grunt-contrib-coffee')
-  grunt.loadNpmTasks('grunt-peg')
   grunt.loadNpmTasks('grunt-shell')
   grunt.loadNpmTasks('grunt-coffeelint')
   grunt.loadNpmTasks('grunt-atomdoc')
@@ -54,6 +48,6 @@ module.exports = (grunt) ->
     require('rimraf').sync('api.json')
 
   grunt.registerTask('lint', ['coffeelint'])
-  grunt.registerTask('default', ['lint', 'coffee', 'peg'])
+  grunt.registerTask('default', ['lint', 'coffee'])
   grunt.registerTask('test', ['coffee', 'lint', 'shell:test'])
-  grunt.registerTask('prepublish', ['clean', 'lint', 'coffee', 'peg', 'shell:update-atomdoc', 'atomdoc'])
+  grunt.registerTask('prepublish', ['clean', 'lint', 'coffee', 'shell:update-atomdoc', 'atomdoc'])
