@@ -374,6 +374,15 @@ describe "KeymapManager", ->
       keymapManager.handleKeyboardEvent(event)
       expect(event.defaultPrevented).toBe false
 
+    it "rejects bindings with an invalid selector and logs a warning to the console", ->
+      spyOn(console, 'warn')
+      expect(keymapManager.addKeymap('test', '<>': 'shift-a': 'a')).toBeUndefined()
+      expect(console.warn).toHaveBeenCalled()
+
+      event = buildKeydownEvent('A', shift: true, target: document.body)
+      keymapManager.handleKeyboardEvent(event)
+      expect(event.defaultPrevented).toBe false
+
     it "returns a disposable allowing the added bindings to be removed", ->
       disposable1 = keymapManager.addKeymap 'foo',
         '.a':
