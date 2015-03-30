@@ -66,8 +66,6 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 # again.
 module.exports =
 class KeymapManager
-  EmitterMixin.includeInto(this)
-
   ###
   Section: Class Methods
   ###
@@ -85,10 +83,6 @@ class KeymapManager
   #     the docs for KeyboardEvent for more information.
   #   * `target` The target element of the event.
   @buildKeydownEvent: (key, options) -> keydownEvent(key, options)
-
-  @keydownEvent: (key, options) ->
-    Grim.deprecate("Use .buildKeydownEvent instead.")
-    keydownEvent(key, options)
 
   ###
   Section: Properties
@@ -218,23 +212,6 @@ class KeymapManager
   onDidFailToReadFile: (callback) ->
     @emitter.on 'did-fail-to-read-file', callback
 
-  on: (eventName) ->
-    switch eventName
-      when 'matched'
-        Grim.deprecate("Call KeymapManager::onDidMatchBinding instead")
-      when 'matched-partially'
-        Grim.deprecate("Call KeymapManager::onDidPartiallyMatchBinding instead")
-      when 'match-failed'
-        Grim.deprecate("Call KeymapManager::onDidFailToMatchBinding instead")
-      when 'reloaded-key-bindings'
-        Grim.deprecate("Call KeymapManager::onDidReloadKeymap instead")
-      when 'unloaded-key-bindings'
-        Grim.deprecate("Call KeymapManager::onDidUnloadKeymap instead")
-      else
-        Grim.deprecate("Use explicit event subscription methods instead")
-
-    EmitterMixin::on.apply(this, arguments)
-
   ###
   Section: Adding and Removing Bindings
   ###
@@ -266,10 +243,6 @@ class KeymapManager
         index = @keyBindings.indexOf(keyBinding)
         @keyBindings.splice(index, 1) unless index is -1
       return
-
-  remove: (source) ->
-    Grim.deprecate("Call .dispose() on the Disposable returned from KeymapManager::add instead")
-    @removeBindingsFromSource(source)
 
   removeBindingsFromSource: (source) ->
     @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
@@ -339,7 +312,7 @@ class KeymapManager
         if @filePathMatchesPlatform(filePath)
           @loadKeymap(filePath, checkIfDirectory: false)
     else
-      @addKeymap(bindingsPath, @readKeymap(bindingsPath, options?.suppressErrors))
+      @add(bindingsPath, @readKeymap(bindingsPath, options?.suppressErrors))
       @watchKeymap(bindingsPath) if options?.watch
 
     undefined
@@ -370,12 +343,12 @@ class KeymapManager
     if fs.isFileSync(filePath)
       if bindings = @readKeymap(filePath, true)
         @removeBindingsFromSource(filePath)
-        @addKeymap(filePath, bindings)
-        @emit 'reloaded-key-bindings', filePath
+        @add(filePath, bindings)
+        @emit 'reloaded-key-bindings', filePath if Grim.includeDeprecatedAPIs
         @emitter.emit 'did-reload-keymap', {path: filePath}
     else
       @removeBindingsFromSource(filePath)
-      @emit 'unloaded-key-bindings', filePath
+      @emit 'unloaded-key-bindings', filePath if Grim.includeDeprecatedAPIs
       @emitter.emit 'did-unload-keymap', {path: filePath}
 
   readKeymap: (filePath, suppressErrors) ->
@@ -474,7 +447,7 @@ class KeymapManager
           @cancelPendingState()
           if @dispatchCommandEvent(exactMatch.command, target, event)
             event = {keystrokes, binding: exactMatch, keyboardEventTarget: target}
-            @emit 'matched', event
+            @emit 'matched', event if Grim.includeDeprecatedAPIs
             @emitter.emit 'did-match-binding', event
             return
         currentTarget = currentTarget.parentElement
@@ -489,11 +462,11 @@ class KeymapManager
       enableTimeout = foundMatch ? @pendingStateTimeoutHandle?
       @enterPendingState(partialMatches, enableTimeout)
       event = {keystrokes, partiallyMatchedBindings: partialMatches, keyboardEventTarget: target}
-      @emit 'matched-partially', event
+      @emit 'matched-partially', event if Grim.includeDeprecatedAPIs
       @emitter.emit 'did-partially-match-binding', event
     else
       event = {keystrokes, keyboardEventTarget: target}
-      @emit 'match-failed', event
+      @emit 'match-failed', event if Grim.includeDeprecatedAPIs
       @emitter.emit 'did-fail-to-match-binding', event
       @terminatePendingState()
 
@@ -642,62 +615,74 @@ class KeymapManager
       currentTarget = currentTarget.parentNode ? window
     return
 
-  # Deprecated: Use {::add} instead.
-  addKeymap: (source, bindings) ->
-    # Grim.deprecate("Use KeymapManager::add instead.")
-    @add(source, bindings)
+if Grim.includeDeprecatedAPIs
+  KeymapManager.keydownEvent = (key, options) ->
+    Grim.deprecate("Use .buildKeydownEvent instead.")
+    keydownEvent(key, options)
 
-  # Deprecated: Use {::remove} instead.
-  removeKeymap: (source) ->
-    # Grim.deprecate("Use KeymapManager::remove instead.")
-    @remove(source)
-
-  # Deprecated: Handle a jQuery keyboard event. Use {::handleKeyboardEvent} with
-  # a raw keyboard event instead.
-  handleKeyEvent: (event) ->
+  KeymapManager::handleKeyEvent = (event) ->
     Grim.deprecate("Use KeymapManager::handleKeyboardEvent instead.")
     originalEvent = event.originalEvent ? event
     Object.defineProperty(originalEvent, 'target', get: -> event.target) unless originalEvent.target?
     @handleKeyboardEvent(originalEvent)
     not originalEvent.defaultPrevented
 
-  # Deprecated: Translate a jQuery keyboard event to a keystroke string. Use
-  # {::keystrokeForKeyboardEvent} with a raw KeyboardEvent instead.
-  keystrokeStringForEvent: (event) ->
+  KeymapManager::remove = (source) ->
+    Grim.deprecate("Call .dispose() on the Disposable returned from KeymapManager::add instead")
+    @removeBindingsFromSource(source)
+
+  KeymapManager::addKeymap = (source, bindings) ->
+    Grim.deprecate("Use KeymapManager::add instead.")
+    @add(source, bindings)
+
+  KeymapManager::removeKeymap = (source) ->
+    Grim.deprecate("Use KeymapManager::remove instead.")
+    @remove(source)
+
+  KeymapManager::keystrokeStringForEvent = (event) ->
     Grim.deprecate("Use KeymapManager::keystrokeForKeyboardEvent instead.")
     @keystrokeForKeyboardEvent(event.originalEvent ? event)
 
-  # Deprecated: Use {::addKeymap} with a map from selectors to key
-  # bindings.
-  bindKeys: (source, selector, keyBindings) ->
+  KeymapManager::bindKeys = (source, selector, keyBindings) ->
     Grim.deprecate("Use KeymapManager::addKeymap instead.")
     keyBindingsBySelector = {}
     keyBindingsBySelector[selector] = keyBindings
-    @addKeymap(source, keyBindingsBySelector)
+    @add(source, keyBindingsBySelector)
 
-  # Deprecated: Use {::findKeyBindings} with the 'command' param.
-  keyBindingsForCommand: (command) ->
+  KeymapManager::keyBindingsForCommand = (command) ->
     Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({command})
 
-  # Deprecated: Use {::findKeyBindings} with the 'keystrokes' param.
-  keyBindingsForKeystroke: (keystroke) ->
+  KeymapManager::keyBindingsForKeystroke = (keystroke) ->
     Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({keystrokes: keystroke})
 
-  # Deprecated: Use {::findKeyBindings} with the 'target' param.
-  keyBindingsMatchingElement: (target, keyBindings) ->
+  KeymapManager::keyBindingsMatchingElement = (target, keyBindings) ->
     Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({target: target[0] ? target, keyBindings})
 
-  # Deprecated: Use {::findKeyBindings} with the 'command' and 'target'
-  # params
-  keyBindingsForCommandMatchingElement: (command, target) ->
+  KeymapManager::keyBindingsForCommandMatchingElement = (command, target) ->
     Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({command, target: target[0] ? target})
 
-  # Deprecated: Use {::findKeyBindings} with the 'keystrokes' and 'target'
-  # params
-  keyBindingsForKeystrokeMatchingElement: (keystrokes, target) ->
+  KeymapManager::keyBindingsForKeystrokeMatchingElement = (keystrokes, target) ->
     Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({keystrokes, target: target[0] ? target})
+
+  EmitterMixin.includeInto(KeymapManager)
+  on: (eventName) ->
+    switch eventName
+      when 'matched'
+        Grim.deprecate("Call KeymapManager::onDidMatchBinding instead")
+      when 'matched-partially'
+        Grim.deprecate("Call KeymapManager::onDidPartiallyMatchBinding instead")
+      when 'match-failed'
+        Grim.deprecate("Call KeymapManager::onDidFailToMatchBinding instead")
+      when 'reloaded-key-bindings'
+        Grim.deprecate("Call KeymapManager::onDidReloadKeymap instead")
+      when 'unloaded-key-bindings'
+        Grim.deprecate("Call KeymapManager::onDidUnloadKeymap instead")
+      else
+        Grim.deprecate("Use explicit event subscription methods instead")
+
+    EmitterMixin::on.apply(this, arguments)

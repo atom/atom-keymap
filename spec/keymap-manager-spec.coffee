@@ -35,7 +35,7 @@ describe "KeymapManager", ->
         elementA.addEventListener 'x-command', (e) -> events.push(e)
         elementA.addEventListener 'y-command', (e) -> events.push(e)
 
-        keymapManager.addKeymap "test",
+        keymapManager.add "test",
           ".a":
             "ctrl-x": "x-command"
             "ctrl-y": "y-command"
@@ -90,7 +90,7 @@ describe "KeymapManager", ->
       describe "if the matching binding's command is 'native!'", ->
         it "terminates without preventing the browser's default action", ->
           elementA.addEventListener 'native!', (e) -> events.push(e)
-          keymapManager.addKeymap "test",
+          keymapManager.add "test",
             ".b":
               "ctrl-y": "native!"
 
@@ -102,7 +102,7 @@ describe "KeymapManager", ->
       describe "if the matching binding's command is 'unset!'", ->
         it "continues searching for a matching binding on the parent element", ->
           elementA.addEventListener 'unset!', (e) -> events.push(e)
-          keymapManager.addKeymap "test",
+          keymapManager.add "test",
             ".a":
               "ctrl-y": "x-command"
             ".b":
@@ -117,7 +117,7 @@ describe "KeymapManager", ->
       describe "if the matching binding's command is 'abort!'", ->
         it "stops searching for a matching binding immediately and emits no command event", ->
           elementA.addEventListener 'abort!', (e) -> events.push(e)
-          keymapManager.addKeymap "test",
+          keymapManager.add "test",
             ".a":
               "ctrl-y": "y-command"
               "ctrl-x": "x-command"
@@ -147,7 +147,7 @@ describe "KeymapManager", ->
 
       describe "when the bindings have selectors with different specificity", ->
         beforeEach ->
-          keymapManager.addKeymap "test",
+          keymapManager.add "test",
             ".b.c":
               "ctrl-x": "command-1"
             ".b":
@@ -161,7 +161,7 @@ describe "KeymapManager", ->
 
       describe "when the bindings have selectors with the same specificity", ->
         beforeEach ->
-          keymapManager.addKeymap "test",
+          keymapManager.add "test",
             ".b.c":
               "ctrl-x": "command-1"
             ".c.d":
@@ -182,7 +182,7 @@ describe "KeymapManager", ->
             @div class: 'editor'
         editor = workspace.firstChild
 
-        keymapManager.addKeymap 'test',
+        keymapManager.add 'test',
           '.workspace':
             'd o g': 'dog'
             'v i v a': 'viva!'
@@ -248,7 +248,7 @@ describe "KeymapManager", ->
           expect(events).toEqual ['viv']
 
         it "does not enter a pending state or prevent the default action if the matching binding's command is 'native!'", ->
-          keymapManager.addKeymap 'test', '.workspace': 'v': 'native!'
+          keymapManager.add 'test', '.workspace': 'v': 'native!'
           event = buildKeydownEvent('v', target: editor)
           keymapManager.handleKeyboardEvent(event)
           expect(event.defaultPrevented).toBe false
@@ -269,7 +269,7 @@ describe "KeymapManager", ->
 
       describe "when the partially matching bindings all map to the 'unset!' directive", ->
         it "ignores the 'unset!' bindings and invokes the command associated with the matching binding as normal", ->
-          keymapManager.addKeymap 'test-2',
+          keymapManager.add 'test-2',
             '.workspace':
               'v i v a': 'unset!'
               'v i v': 'unset!'
@@ -280,7 +280,7 @@ describe "KeymapManager", ->
 
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
-      keymapManager.addKeymap 'test',
+      keymapManager.add 'test',
         '.a':
           'ctrl-alt-a': 'command-a'
           'ctrl-a': 'command-b'
@@ -294,7 +294,7 @@ describe "KeymapManager", ->
 
     it "does not enqueue keydown events consisting only of modifier keys", ->
       element = $$ -> @div class: 'a'
-      keymapManager.addKeymap 'test', '.a': 'ctrl-a ctrl-alt-b': 'command'
+      keymapManager.add 'test', '.a': 'ctrl-a ctrl-alt-b': 'command'
       events = []
       element.addEventListener 'command', -> events.push('command')
 
@@ -310,7 +310,7 @@ describe "KeymapManager", ->
 
     it "allows solo modifier-keys to be bound", ->
       element = $$ -> @div class: 'a'
-      keymapManager.addKeymap 'test', '.a': 'ctrl': 'command'
+      keymapManager.add 'test', '.a': 'ctrl': 'command'
       events = []
       element.addEventListener 'command', -> events.push('command')
 
@@ -325,7 +325,7 @@ describe "KeymapManager", ->
       elementB = elementA.firstChild
       elementC = elementB.firstChild
 
-      keymapManager.addKeymap 'test', '.c': 'x': 'command'
+      keymapManager.add 'test', '.c': 'x': 'command'
 
       events = []
       elementA.addEventListener 'command', -> events.push('a')
@@ -347,18 +347,18 @@ describe "KeymapManager", ->
 
   describe "::add(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->
-      keymapManager.addKeymap 'test', '*': 'ctrl-shift-l': 'a'
-      keymapManager.addKeymap 'test', '*': 'ctrl-shift-L': 'b'
-      keymapManager.addKeymap 'test', '*': 'ctrl-L': 'c'
+      keymapManager.add 'test', '*': 'ctrl-shift-l': 'a'
+      keymapManager.add 'test', '*': 'ctrl-shift-L': 'b'
+      keymapManager.add 'test', '*': 'ctrl-L': 'c'
       expect(keymapManager.findKeyBindings(command: 'a')[0].keystrokes).toBe 'ctrl-shift-L'
       expect(keymapManager.findKeyBindings(command: 'b')[0].keystrokes).toBe 'ctrl-shift-L'
       expect(keymapManager.findKeyBindings(command: 'c')[0].keystrokes).toBe 'ctrl-shift-L'
 
     it "normalizes the order of modifier keys based on the Apple interface guidelines", ->
-      keymapManager.addKeymap 'test', '*': 'alt-cmd-ctrl-shift-l': 'a'
-      keymapManager.addKeymap 'test', '*': 'shift-ctrl-l': 'b'
-      keymapManager.addKeymap 'test', '*': 'alt-ctrl-l': 'c'
-      keymapManager.addKeymap 'test', '*': 'ctrl-alt--': 'd'
+      keymapManager.add 'test', '*': 'alt-cmd-ctrl-shift-l': 'a'
+      keymapManager.add 'test', '*': 'shift-ctrl-l': 'b'
+      keymapManager.add 'test', '*': 'alt-ctrl-l': 'c'
+      keymapManager.add 'test', '*': 'ctrl-alt--': 'd'
 
       expect(keymapManager.findKeyBindings(command: 'a')[0].keystrokes).toBe 'ctrl-alt-shift-cmd-L'
       expect(keymapManager.findKeyBindings(command: 'b')[0].keystrokes).toBe 'ctrl-shift-L'
@@ -367,7 +367,7 @@ describe "KeymapManager", ->
 
     it "rejects bindings with unknown modifier keys and logs a warning to the console", ->
       spyOn(console, 'warn')
-      keymapManager.addKeymap 'test', '*': 'meta-shift-A': 'a'
+      keymapManager.add 'test', '*': 'meta-shift-A': 'a'
       expect(console.warn).toHaveBeenCalled()
 
       event = buildKeydownEvent('A', shift: true, target: document.body)
@@ -376,7 +376,7 @@ describe "KeymapManager", ->
 
     it "rejects bindings with an invalid selector and logs a warning to the console", ->
       spyOn(console, 'warn')
-      expect(keymapManager.addKeymap('test', '<>': 'shift-a': 'a')).toBeUndefined()
+      expect(keymapManager.add('test', '<>': 'shift-a': 'a')).toBeUndefined()
       expect(console.warn).toHaveBeenCalled()
 
       event = buildKeydownEvent('A', shift: true, target: document.body)
@@ -384,13 +384,13 @@ describe "KeymapManager", ->
       expect(event.defaultPrevented).toBe false
 
     it "returns a disposable allowing the added bindings to be removed", ->
-      disposable1 = keymapManager.addKeymap 'foo',
+      disposable1 = keymapManager.add 'foo',
         '.a':
           'ctrl-a': 'x'
         '.b':
           'ctrl-b': 'y'
 
-      disposable2 = keymapManager.addKeymap 'bar',
+      disposable2 = keymapManager.add 'bar',
         '.c':
           'ctrl-c': 'z'
 
@@ -529,7 +529,7 @@ describe "KeymapManager", ->
           @div class: 'd'
       elementB = elementA.querySelector('.b.c')
 
-      keymapManager.addKeymap 'test',
+      keymapManager.add 'test',
         '.a':
           'ctrl-a': 'x'
           'ctrl-b': 'y'
@@ -675,7 +675,7 @@ describe "KeymapManager", ->
     it "emits `matched` when a key binding matches an event", ->
       handler = jasmine.createSpy('matched')
       keymapManager.onDidMatchBinding handler
-      keymapManager.addKeymap "test",
+      keymapManager.add "test",
         "body":
           "ctrl-x": "used-command"
         "*":
@@ -694,7 +694,7 @@ describe "KeymapManager", ->
     it "emits `matched-partially` when a key binding partially matches an event", ->
       handler = jasmine.createSpy('matched-partially handler')
       keymapManager.onDidPartiallyMatchBindings handler
-      keymapManager.addKeymap "test",
+      keymapManager.add "test",
         "body":
           "ctrl-x 1": "command-1"
           "ctrl-x 2": "command-2"
@@ -711,7 +711,7 @@ describe "KeymapManager", ->
     it "emits `match-failed` when no key bindings match the event", ->
       handler = jasmine.createSpy('match-failed handler')
       keymapManager.onDidFailToMatchBinding handler
-      keymapManager.addKeymap "test",
+      keymapManager.add "test",
         "body":
           "ctrl-x": "command"
 
