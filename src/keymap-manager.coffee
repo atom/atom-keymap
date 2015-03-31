@@ -1,4 +1,3 @@
-_ = require "underscore-plus"
 CSON = require 'season'
 Grim = require 'grim'
 fs = require 'fs-plus'

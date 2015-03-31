@@ -30,8 +30,7 @@
     "keyboard-layout": "^0.10.0",
     "pathwatcher": "^4.2",
     "property-accessors": "^1",
-    "season": "^5.0.2",
-    "underscore-plus": "^1.0.0"
+    "season": "^5.0.2"
   },
   "devDependencies": {
     "coffee-script": "^1.7.0",
