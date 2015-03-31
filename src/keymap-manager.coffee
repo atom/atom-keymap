@@ -4,7 +4,6 @@ Grim = require 'grim'
 fs = require 'fs-plus'
 {observeCurrentKeyboardLayout} = require 'keyboard-layout'
 path = require 'path'
-EmitterMixin = require('emissary').Emitter
 {File} = require 'pathwatcher'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
@@ -669,6 +668,7 @@ if Grim.includeDeprecatedAPIs
     Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
     @findKeyBindings({keystrokes, target: target[0] ? target})
 
+  EmitterMixin = require('emissary').Emitter
   EmitterMixin.includeInto(KeymapManager)
   on: (eventName) ->
     switch eventName
