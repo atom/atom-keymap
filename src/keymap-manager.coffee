@@ -669,7 +669,7 @@ if Grim.includeDeprecatedAPIs
 
   EmitterMixin = require('emissary').Emitter
   EmitterMixin.includeInto(KeymapManager)
-  on: (eventName) ->
+  KeymapManager::on = (eventName) ->
     switch eventName
       when 'matched'
         Grim.deprecate("Call KeymapManager::onDidMatchBinding instead")
