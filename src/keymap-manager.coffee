@@ -529,7 +529,7 @@ class KeymapManager
   # used by {::handleKeyboardEvent} to find a matching binding when there are no
   # partially-matching bindings.
   findExactMatches: (exactMatchCandidates, target) ->
-    exactMatches = exactMatchCandidates
+    exactMatchCandidates
       .filter (binding) -> target.webkitMatchesSelector(binding.selector)
       .sort (a, b) -> a.compare(b)
 
