@@ -6,3 +6,5 @@ beforeEach ->
 exports.appendContent = (element) ->
   document.querySelector('#jasmine-content').appendChild(element)
   element
+
+require('grim').includeDeprecatedAPIs = false
