@@ -22,7 +22,7 @@
     }
   ],
   "dependencies": {
-    "clear-cut": "^0.4.0",
+    "clear-cut": "^1",
     "emissary": "^1.1.0",
     "event-kit": "^1.0.0",
     "fs-plus": "^2.0.4",

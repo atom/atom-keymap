@@ -1,6 +1,7 @@
 CSON = require 'season'
 Grim = require 'grim'
 fs = require 'fs-plus'
+{isValidSelector} = require 'clear-cut'
 {observeCurrentKeyboardLayout} = require 'keyboard-layout'
 path = require 'path'
 {File} = require 'pathwatcher'
@@ -113,17 +114,11 @@ class KeymapManager
     @watchSubscriptions = {}
     @enableDvorakQwertyWorkaroundIfNeeded()
 
-    @testSelectorElement = document.createElement('div')
-    @selectorCache = {}
-
   # Public: Unwatch all watched paths.
   destroy: ->
     @keyboardLayoutSubscription.dispose()
     for filePath, subscription of @watchSubscriptions
       subscription.dispose()
-
-    @testSelectorElement = null
-    @selectorCache = null
 
     return
 
@@ -224,7 +219,7 @@ class KeymapManager
     addedKeyBindings = []
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
-      unless @isValidSelector(selector.replace(/!important/g, ''))
+      unless isValidSelector(selector.replace(/!important/g, ''))
         console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
         return
 
@@ -587,18 +582,6 @@ class KeymapManager
     {keyBindingAborted} = commandEvent
     keyboardEvent.preventDefault() unless keyBindingAborted
     not keyBindingAborted
-
-  isValidSelector: (selector) ->
-    cachedValue = @selectorCache[selector]
-    return cachedValue if cachedValue?
-
-    try
-      @testSelectorElement.querySelector(selector)
-      @selectorCache[selector] = true
-      true
-    catch error
-      @selectorCache[selector] = false
-      false
 
   # Chromium does not bubble events dispatched on detached targets, which makes
   # testing a pain in the ass. This method simulates bubbling manually.

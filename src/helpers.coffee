@@ -11,8 +11,6 @@ UpperCaseLetterRegex = /^[A-Z]$/
 KeyboardEventModifiers = new Set
 KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
 
-SpecificityCache = {}
-
 WindowsAndLinuxKeyIdentifierTranslations =
   'U+00A0': 'Shift'
   'U+00A1': 'Shift'
@@ -164,8 +162,7 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
 
   keystroke
 
-exports.calculateSpecificity = (selector) ->
-  SpecificityCache[selector] ?= specificity(selector)
+exports.calculateSpecificity = specificity
 
 exports.isAtomModifier = (keystroke) ->
   AtomModifiers.has(keystroke) or AtomModifierRegex.test(keystroke)
