@@ -1,7 +1,7 @@
 CSON = require 'season'
 Grim = require 'grim'
 fs = require 'fs-plus'
-{isValidSelector} = require 'clear-cut'
+{isSelectorValid} = require 'clear-cut'
 {observeCurrentKeyboardLayout} = require 'keyboard-layout'
 path = require 'path'
 {File} = require 'pathwatcher'
@@ -219,7 +219,7 @@ class KeymapManager
     addedKeyBindings = []
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
-      unless isValidSelector(selector.replace(/!important/g, ''))
+      unless isSelectorValid(selector.replace(/!important/g, ''))
         console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
         return
 

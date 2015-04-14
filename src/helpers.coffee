@@ -1,4 +1,4 @@
-{specificity} = require 'clear-cut'
+{calculateSpecificity} = require 'clear-cut'
 
 AtomModifiers = new Set
 AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
@@ -162,7 +162,7 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
 
   keystroke
 
-exports.calculateSpecificity = specificity
+exports.calculateSpecificity = calculateSpecificity
 
 exports.isAtomModifier = (keystroke) ->
   AtomModifiers.has(keystroke) or AtomModifierRegex.test(keystroke)
