@@ -595,6 +595,31 @@ describe "KeymapManager", ->
               expect(keymapManager.findKeyBindings(command: 'y').length).toBe 1
               expect(keymapManager.findKeyBindings(command: 'z').length).toBe 1
 
+          it "reloads the file's key bindings and notifies ::onDidReloadKeymap observers with the keymap path even if the file is empty", ->
+            fs.writeFileSync keymapFilePath, ""
+
+            waitsFor 300, (done) ->
+              keymapManager.onDidReloadKeymap (event) ->
+                expect(event.path).toBe keymapFilePath
+                done()
+
+            runs ->
+              expect(keymapManager.getKeyBindings().length).toBe 0
+
+          it "reloads the file's key bindings and notifies ::onDidReloadKeymap observers with the keymap path even if the file has only comments", ->
+            fs.writeFileSync keymapFilePath, """
+            #  '.a': 'ctrl-a': 'y'
+            #  '.b': 'ctrl-b': 'z'
+            """
+
+            waitsFor 300, (done) ->
+              keymapManager.onDidReloadKeymap (event) ->
+                expect(event.path).toBe keymapFilePath
+                done()
+
+            runs ->
+              expect(keymapManager.getKeyBindings().length).toBe 0
+
           it "emits an event, logs a warning and does not reload if there is a problem reloading the file", ->
             didFailSpy = jasmine.createSpy()
             keymapManager.onDidFailToReadFile(didFailSpy)
