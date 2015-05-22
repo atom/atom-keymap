@@ -334,7 +334,9 @@ class KeymapManager
   # we can't read the file cleanly, we don't proceed with the reload.
   reloadKeymap: (filePath) ->
     if fs.isFileSync(filePath)
-      if bindings = @readKeymap(filePath, true)
+      bindings = @readKeymap(filePath, true)
+
+      if typeof bindings isnt "undefined"
         @removeBindingsFromSource(filePath)
         @add(filePath, bindings)
         @emit 'reloaded-key-bindings', filePath if Grim.includeDeprecatedAPIs
