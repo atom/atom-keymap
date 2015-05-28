@@ -434,7 +434,6 @@ class KeymapManager
             return
 
           if exactMatch.command is 'unset!'
-            event.preventDefault()
             break
 
           foundMatch = true
