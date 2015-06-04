@@ -598,6 +598,48 @@ class KeymapManager
       currentTarget = currentTarget.parentNode ? window
     return
 
+  # Public: Simulate keypresses on a DOM node.
+  #
+  # This can be useful in tests, when you want to simulate keyboard input that is
+  # not bound to a command in the CommandRegistry.
+  #
+  # * `target` The DOM node at which to start bubbling the key events
+  # * `key` {String} indicating the key to press.
+  # * `modifierKeys` {Object} indicating which modifier keys are pressed. Possible
+  #    keys are `ctrl`, `shift`, `alt`, `meta`
+  KeymapManager::dispatch = (target, key, modifiers={}) ->
+    {ctrl, shift, alt, meta} = modifiers
+    key = "U+#{key.charCodeAt(0).toString(16)}" unless key is 'escape' or key is 'enter'
+    target ||= document.activeElement
+    eventArgs = [
+      true, # bubbles
+      true, # cancelable
+      null, # view
+      key,  # key
+      0,    # location
+      ctrl, alt, shift, meta
+    ]
+
+    dispatchKeyboardEvent = (target, eventArgs...) ->
+      e = document.createEvent('KeyboardEvent')
+      e.initKeyboardEvent(eventArgs...)
+
+      # Sending '\r' (as vim-mode does) wasn't working for me here. It doesn't seem
+      # too bad to special case it - we can add a map of humanized names to keycodes
+      # if we run into more keys like this
+      if eventArgs[4] is 'enter'
+        Object.defineProperty(e, 'keyCode', get: -> 13)
+
+      # 0 is the default, and it's valid ASCII, but it's wrong.
+      Object.defineProperty(e, 'keyCode', get: -> undefined) if e.keyCode is 0
+      target.dispatchEvent e
+
+    # If we find in the future that we need to check if this keydown is
+    # cancelled, we can check `not` its return value
+    dispatchKeyboardEvent(target, 'keydown', eventArgs...)
+    dispatchKeyboardEvent(target, 'keypress', eventArgs...)
+    dispatchKeyboardEvent(target, 'keyup', eventArgs...)
+
 if Grim.includeDeprecatedAPIs
   KeymapManager.keydownEvent = (key, options) ->
     Grim.deprecate("Use .buildKeydownEvent instead.")

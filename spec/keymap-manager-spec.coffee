@@ -696,6 +696,33 @@ describe "KeymapManager", ->
         expect(keymapManager.findKeyBindings(command: 'X').length).toBe 0
         expect(keymapManager.findKeyBindings(command: 'Y').length).toBe 0
 
+  describe "::dispatch(target, key {ctrl, shift, alt, meta})", ->
+    it "dispatches key events", ->
+      [keydown, keypress, keyup, key, which] = [false, false, false, 'j', 74]
+      elt = document.createElement('div')
+      elt.addEventListener 'keydown', (e) ->
+        keydown = true if e.which = which
+      elt.addEventListener 'keypress', (e) ->
+        keypress = true if e.which = which
+      elt.addEventListener 'keyup', (e) ->
+        keyup = true if e.which = which
+
+      keymapManager.dispatch(elt, 'j')
+      expect([keydown, keypress, keyup]).toEqual([true, true, true])
+
+    it "dispatches key events with modifiers", ->
+      [keydown, keypress, keyup, key, which] = [false, false, false, 'j', 74]
+      elt = document.createElement('div')
+      elt.addEventListener 'keydown', (e) ->
+        keydown = true if e.which = which and e.shiftKey
+      elt.addEventListener 'keypress', (e) ->
+        keypress = true if e.which = which and e.shiftKey
+      elt.addEventListener 'keyup', (e) ->
+        keyup = true if e.which = which and e.shiftKey
+
+      keymapManager.dispatch(elt, 'j', shift: true)
+      expect([keydown, keypress, keyup]).toEqual([true, true, true])
+
   describe "events", ->
     it "emits `matched` when a key binding matches an event", ->
       handler = jasmine.createSpy('matched')
