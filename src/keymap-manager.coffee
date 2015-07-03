@@ -8,7 +8,6 @@ path = require 'path'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
-ModifierStateHandler = require './modifier-state-handler'
 {normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
@@ -109,7 +108,6 @@ class KeymapManager
   constructor: (options={}) ->
     @[key] = value for key, value of options
     @emitter = new Emitter
-    @modifierStateHandler = new ModifierStateHandler
     @keyBindings = []
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
@@ -395,7 +393,6 @@ class KeymapManager
   #
   # * `event` A `KeyboardEvent` of type 'keydown'
   handleKeyboardEvent: (event, replaying) ->
-    @modifierStateHandler.handleKeyEvent(event)
     keystroke = @keystrokeForKeyboardEvent(event)
 
     if @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)

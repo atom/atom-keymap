@@ -1,4 +1,7 @@
 {calculateSpecificity} = require 'clear-cut'
+ModifierStateHandler = require './modifier-state-handler'
+
+modifierStateHandler = new ModifierStateHandler
 
 AtomModifiers = new Set
 AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'altgr', 'shift', 'cmd']
@@ -112,6 +115,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
+  modifierStateHandler.handleKeyEvent(event)
   keyIdentifier = event.keyIdentifier
   if process.platform in ['linux', 'win32']
     keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
@@ -139,7 +143,7 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
       key = keyIdentifier.toLowerCase()
 
   # get modifier state from ModifierStateHandler instead of keyevent
-  modifierState = atom.keymaps.modifierStateHandler.getState()
+  modifierState = modifierStateHandler.getState()
 
   keystroke = ''
   if modifierState.ctrl
