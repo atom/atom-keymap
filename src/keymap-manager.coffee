@@ -124,7 +124,7 @@ class KeymapManager
 
   enableDvorakQwertyWorkaroundIfNeeded: ->
     @keyboardLayoutSubscription = observeCurrentKeyboardLayout (layoutId) =>
-      @dvorakQwertyWorkaroundEnabled = layoutId is 'com.apple.keylayout.DVORAK-QWERTYCMD'
+      @dvorakQwertyWorkaroundEnabled = (layoutId.indexOf('DVORAK-QWERTYCMD') > -1)
 
   ###
   Section: Event Subscription
