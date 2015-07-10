@@ -15,7 +15,7 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 
 # Extended: Allows commands to be associated with keystrokes in a
 # context-sensitive way. In Atom, you can access a global instance of this
-# object via `atom.keymap`.
+# object via `atom.keymaps`.
 #
 # Key bindings are plain JavaScript objects containing **CSS selectors** as
 # their top level keys, then **keystroke patterns** mapped to commands.
