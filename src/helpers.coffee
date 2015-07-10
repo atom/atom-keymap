@@ -1,15 +1,18 @@
 {calculateSpecificity} = require 'clear-cut'
+ModifierStateHandler = require './modifier-state-handler'
+
+modifierStateHandler = new ModifierStateHandler
 
 AtomModifiers = new Set
-AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
+AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'altgr', 'shift', 'cmd']
 
-AtomModifierRegex = /(ctrl|alt|shift|cmd)$/
+AtomModifierRegex = /(ctrl|alt|altgr|shift|cmd)$/
 WhitespaceRegex = /\s+/
 LowerCaseLetterRegex = /^[a-z]$/
 UpperCaseLetterRegex = /^[A-Z]$/
 
 KeyboardEventModifiers = new Set
-KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
+KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'AltGr', 'Shift', 'Meta']
 
 WindowsAndLinuxKeyIdentifierTranslations =
   'U+00A0': 'Shift'
@@ -112,6 +115,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
+  modifierStateHandler.handleKeyEvent(event)
   keyIdentifier = event.keyIdentifier
   if process.platform in ['linux', 'win32']
     keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
@@ -138,12 +142,18 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
     else
       key = keyIdentifier.toLowerCase()
 
+  # get modifier state from ModifierStateHandler instead of keyevent
+  modifierState = modifierStateHandler.getState()
+
   keystroke = ''
-  if event.ctrlKey
+  if modifierState.ctrl
     keystroke += 'ctrl'
-  if event.altKey
+  if modifierState.alt
     keystroke += '-' if keystroke
     keystroke += 'alt'
+  if modifierState.altgr
+    keystroke += '-' if keystroke
+    keystroke += 'altgr'
   if event.shiftKey
     # Don't push 'shift' when modifying symbolic characters like '{'
     unless /^[^A-Za-z]$/.test(key)
@@ -224,6 +234,7 @@ normalizeKeystroke = (keystroke) ->
   keystroke = []
   keystroke.push('ctrl') if modifiers.has('ctrl')
   keystroke.push('alt') if modifiers.has('alt')
+  keystroke.push('altgr') if modifiers.has('altgr')
   keystroke.push('shift') if modifiers.has('shift')
   keystroke.push('cmd') if modifiers.has('cmd')
   keystroke.push(primaryKey) if primaryKey?
