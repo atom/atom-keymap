@@ -2,7 +2,7 @@
   "name": "atom-keymap",
   "version": "5.1.6",
   "description": "Atom's DOM-aware keymap module",
-  "main": "./lib/keymap-manager",
+  "main": "./src/keymap-manager",
   "scripts": {
     "prepublish": "grunt prepublish",
     "test": "grunt test",

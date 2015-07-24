@@ -7,7 +7,7 @@ path = require 'path'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
-{normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent} = require './helpers'
+{normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent, characterForKeyboardEvent} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -465,7 +465,17 @@ class KeymapManager
         keystrokes,
         keyboardEventTarget: target
       }
-      @terminatePendingState()
+      if @pendingPartialMatches?
+        @terminatePendingState()
+      else
+        # Some of the queued keyboard events might have inserted characters had
+        # we not prevented their default action. If we're replaying a keystroke
+        # whose default action was prevented and no binding is matched, we'll
+        # simulate the text input event that was previously prevented to insert
+        # the missing characters.
+        @simulateTextInput(event) if event.defaultPrevented
+
+        @clearQueuedKeystrokes()
 
   # Public: Translate a keydown event to a keystroke string.
   #
@@ -485,6 +495,12 @@ class KeymapManager
   ###
   Section: Private
   ###
+
+  simulateTextInput: (keydownEvent) ->
+    if character = characterForKeyboardEvent(keydownEvent, @dvorakQwertyWorkaroundEnabled)
+      textInputEvent = document.createEvent("TextEvent")
+      textInputEvent.initTextEvent("textInput", true, true, window, character)
+      keydownEvent.path[0].dispatchEvent(textInputEvent)
 
   # For testing purposes
   getOtherPlatforms: -> OtherPlatforms
@@ -553,10 +569,6 @@ class KeymapManager
   # replays the queued keyboard events to allow any bindings with shorter
   # keystroke sequences to be matched unambiguously.
   terminatePendingState: ->
-    unless @pendingPartialMatches?
-      @clearQueuedKeystrokes()
-      return
-
     bindingsToDisable = @pendingPartialMatches
     eventsToReplay = @queuedKeyboardEvents
 

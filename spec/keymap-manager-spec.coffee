@@ -225,6 +225,26 @@ describe "KeymapManager", ->
           expect(events).toEqual ['enter-visual-mode']
           expect(clearTimeout).toHaveBeenCalled()
 
+        it "dispatches a text-input event for any replayed keyboard events that would have inserted characters", ->
+          textInputCharacters = []
+          editor.addEventListener 'textInput', (event) -> textInputCharacters.push(event.data)
+
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(lastEvent = buildKeydownEvent('k', target: editor))
+
+          expect(textInputCharacters).toEqual ['i']
+          expect(lastEvent.defaultPrevented).toBe false # inserted as normal
+
+          textInputCharacters = []
+
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
+          keymapManager.handleKeyboardEvent(lastEvent = buildKeydownEvent('q', target: editor))
+
+          expect(textInputCharacters).toEqual ['d', 'o']
+          expect(lastEvent.defaultPrevented).toBe false # inserted as normal
+
       describe "when the currently queued keystrokes exactly match at least one binding", ->
         it "disables partially-matching bindings and replays the queued keystrokes if the ::partialMatchTimeout expires", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
