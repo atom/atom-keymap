@@ -1,4 +1,3 @@
-Grim = require 'grim'
 {calculateSpecificity} = require './helpers'
 
 module.exports =
@@ -25,16 +24,3 @@ class KeyBinding
       keyBinding.index - @index
     else
       keyBinding.specificity - @specificity
-
-if Grim.includeDeprecatedAPIs
-  PropertyAccessors = require 'property-accessors'
-  PropertyAccessors.includeInto(KeyBinding)
-
-  KeyBinding::accessor 'keystroke',
-    get: ->
-      Grim.deprecate('Use KeyBinding.keystrokes instead')
-      @keystrokes
-
-    set: (value) ->
-      Grim.deprecate('Use KeyBinding.keystrokes instead')
-      @keystrokes = value

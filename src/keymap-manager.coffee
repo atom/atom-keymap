@@ -1,5 +1,4 @@
 CSON = require 'season'
-Grim = require 'grim'
 fs = require 'fs-plus'
 {isSelectorValid} = require 'clear-cut'
 {observeCurrentKeyboardLayout} = require 'keyboard-layout'
@@ -8,7 +7,7 @@ path = require 'path'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
-{normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent} = require './helpers'
+{normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent, characterForKeyboardEvent} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -339,11 +338,9 @@ class KeymapManager
       if typeof bindings isnt "undefined"
         @removeBindingsFromSource(filePath)
         @add(filePath, bindings)
-        @emit 'reloaded-key-bindings', filePath if Grim.includeDeprecatedAPIs
         @emitter.emit 'did-reload-keymap', {path: filePath}
     else
       @removeBindingsFromSource(filePath)
-      @emit 'unloaded-key-bindings', filePath if Grim.includeDeprecatedAPIs
       @emitter.emit 'did-unload-keymap', {path: filePath}
 
   readKeymap: (filePath, suppressErrors) ->
@@ -392,7 +389,7 @@ class KeymapManager
   # target is `.defaultTarget` if that property is assigned on the keymap.
   #
   # * `event` A `KeyboardEvent` of type 'keydown'
-  handleKeyboardEvent: (event, replaying) ->
+  handleKeyboardEvent: (event) ->
     keystroke = @keystrokeForKeyboardEvent(event)
 
     if @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
@@ -441,9 +438,11 @@ class KeymapManager
           @clearQueuedKeystrokes()
           @cancelPendingState()
           if @dispatchCommandEvent(exactMatch.command, target, event)
-            event = {keystrokes, binding: exactMatch, keyboardEventTarget: target}
-            @emit 'matched', event if Grim.includeDeprecatedAPIs
-            @emitter.emit 'did-match-binding', event
+            @emitter.emit 'did-match-binding', {
+              keystrokes,
+              binding: exactMatch,
+              keyboardEventTarget: target
+            }
             return
         currentTarget = currentTarget.parentElement
 
@@ -454,16 +453,34 @@ class KeymapManager
     # keystroke.
     if partialMatches.length > 0
       event.preventDefault()
-      enableTimeout = foundMatch ? @pendingStateTimeoutHandle?
+      enableTimeout = (
+        @pendingStateTimeoutHandle? or
+        foundMatch or
+        characterForKeyboardEvent(@queuedKeyboardEvents[0])?
+      )
+
       @enterPendingState(partialMatches, enableTimeout)
-      event = {keystrokes, partiallyMatchedBindings: partialMatches, keyboardEventTarget: target}
-      @emit 'matched-partially', event if Grim.includeDeprecatedAPIs
-      @emitter.emit 'did-partially-match-binding', event
+      @emitter.emit 'did-partially-match-binding', {
+        keystrokes,
+        partiallyMatchedBindings: partialMatches,
+        keyboardEventTarget: target
+      }
     else
-      event = {keystrokes, keyboardEventTarget: target}
-      @emit 'match-failed', event if Grim.includeDeprecatedAPIs
-      @emitter.emit 'did-fail-to-match-binding', event
-      @terminatePendingState()
+      @emitter.emit 'did-fail-to-match-binding', {
+        keystrokes,
+        keyboardEventTarget: target
+      }
+      if @pendingPartialMatches?
+        @terminatePendingState()
+      else
+        # Some of the queued keyboard events might have inserted characters had
+        # we not prevented their default action. If we're replaying a keystroke
+        # whose default action was prevented and no binding is matched, we'll
+        # simulate the text input event that was previously prevented to insert
+        # the missing characters.
+        @simulateTextInput(event) if event.defaultPrevented
+
+        @clearQueuedKeystrokes()
 
   # Public: Translate a keydown event to a keystroke string.
   #
@@ -483,6 +500,12 @@ class KeymapManager
   ###
   Section: Private
   ###
+
+  simulateTextInput: (keydownEvent) ->
+    if character = characterForKeyboardEvent(keydownEvent, @dvorakQwertyWorkaroundEnabled)
+      textInputEvent = document.createEvent("TextEvent")
+      textInputEvent.initTextEvent("textInput", true, true, window, character)
+      keydownEvent.path[0].dispatchEvent(textInputEvent)
 
   # For testing purposes
   getOtherPlatforms: -> OtherPlatforms
@@ -538,7 +561,7 @@ class KeymapManager
     @cancelPendingState() if @pendingStateTimeoutHandle?
     @pendingPartialMatches = pendingPartialMatches
     if enableTimeout
-      @pendingStateTimeoutHandle = setTimeout(@terminatePendingState.bind(this), @partialMatchTimeout)
+      @pendingStateTimeoutHandle = setTimeout(@terminatePendingState.bind(this, true), @partialMatchTimeout)
 
   cancelPendingState: ->
     clearTimeout(@pendingStateTimeoutHandle)
@@ -550,11 +573,7 @@ class KeymapManager
   # It disables the longest of the pending partially matching bindings, then
   # replays the queued keyboard events to allow any bindings with shorter
   # keystroke sequences to be matched unambiguously.
-  terminatePendingState: ->
-    unless @pendingPartialMatches?
-      @clearQueuedKeystrokes()
-      return
-
+  terminatePendingState: (timeout) ->
     bindingsToDisable = @pendingPartialMatches
     eventsToReplay = @queuedKeyboardEvents
 
@@ -562,8 +581,18 @@ class KeymapManager
     @clearQueuedKeystrokes()
 
     binding.enabled = false for binding in bindingsToDisable
-    @handleKeyboardEvent(event, true) for event in eventsToReplay
-    binding.enabled = true for binding in bindingsToDisable
+
+    for event in eventsToReplay
+      @handleKeyboardEvent(event)
+      if bindingsToDisable? and not @pendingPartialMatches?
+        binding.enabled = true for binding in bindingsToDisable
+        bindingsToDisable = null
+
+    atom?.assert(not bindingsToDisable?, "Invalid keymap state")
+
+    if timeout and @pendingPartialMatches?
+      @terminatePendingState(true)
+
     return
 
   # After we match a binding, we call this method to dispatch a custom event
@@ -597,76 +626,3 @@ class KeymapManager
       break if currentTarget is window
       currentTarget = currentTarget.parentNode ? window
     return
-
-if Grim.includeDeprecatedAPIs
-  KeymapManager.keydownEvent = (key, options) ->
-    Grim.deprecate("Use .buildKeydownEvent instead.")
-    keydownEvent(key, options)
-
-  KeymapManager::handleKeyEvent = (event) ->
-    Grim.deprecate("Use KeymapManager::handleKeyboardEvent instead.")
-    originalEvent = event.originalEvent ? event
-    Object.defineProperty(originalEvent, 'target', get: -> event.target) unless originalEvent.target?
-    @handleKeyboardEvent(originalEvent)
-    not originalEvent.defaultPrevented
-
-  KeymapManager::remove = (source) ->
-    Grim.deprecate("Call .dispose() on the Disposable returned from KeymapManager::add instead")
-    @removeBindingsFromSource(source)
-
-  KeymapManager::addKeymap = (source, bindings) ->
-    Grim.deprecate("Use KeymapManager::add instead.")
-    @add(source, bindings)
-
-  KeymapManager::removeKeymap = (source) ->
-    Grim.deprecate("Use KeymapManager::remove instead.")
-    @remove(source)
-
-  KeymapManager::keystrokeStringForEvent = (event) ->
-    Grim.deprecate("Use KeymapManager::keystrokeForKeyboardEvent instead.")
-    @keystrokeForKeyboardEvent(event.originalEvent ? event)
-
-  KeymapManager::bindKeys = (source, selector, keyBindings) ->
-    Grim.deprecate("Use KeymapManager::addKeymap instead.")
-    keyBindingsBySelector = {}
-    keyBindingsBySelector[selector] = keyBindings
-    @add(source, keyBindingsBySelector)
-
-  KeymapManager::keyBindingsForCommand = (command) ->
-    Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
-    @findKeyBindings({command})
-
-  KeymapManager::keyBindingsForKeystroke = (keystroke) ->
-    Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
-    @findKeyBindings({keystrokes: keystroke})
-
-  KeymapManager::keyBindingsMatchingElement = (target, keyBindings) ->
-    Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
-    @findKeyBindings({target: target[0] ? target, keyBindings})
-
-  KeymapManager::keyBindingsForCommandMatchingElement = (command, target) ->
-    Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
-    @findKeyBindings({command, target: target[0] ? target})
-
-  KeymapManager::keyBindingsForKeystrokeMatchingElement = (keystrokes, target) ->
-    Grim.deprecate("Use KeymapManager::findKeyBindings instead.")
-    @findKeyBindings({keystrokes, target: target[0] ? target})
-
-  EmitterMixin = require('emissary').Emitter
-  EmitterMixin.includeInto(KeymapManager)
-  KeymapManager::on = (eventName) ->
-    switch eventName
-      when 'matched'
-        Grim.deprecate("Call KeymapManager::onDidMatchBinding instead")
-      when 'matched-partially'
-        Grim.deprecate("Call KeymapManager::onDidPartiallyMatchBinding instead")
-      when 'match-failed'
-        Grim.deprecate("Call KeymapManager::onDidFailToMatchBinding instead")
-      when 'reloaded-key-bindings'
-        Grim.deprecate("Call KeymapManager::onDidReloadKeymap instead")
-      when 'unloaded-key-bindings'
-        Grim.deprecate("Call KeymapManager::onDidUnloadKeymap instead")
-      else
-        Grim.deprecate("Use explicit event subscription methods instead")
-
-    EmitterMixin::on.apply(this, arguments)

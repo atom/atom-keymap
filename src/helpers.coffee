@@ -112,31 +112,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
-  keyIdentifier = event.keyIdentifier
-  if process.platform in ['linux', 'win32']
-    keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
-
-  unless KeyboardEventModifiers.has(keyIdentifier)
-    charCode = charCodeFromKeyIdentifier(keyIdentifier)
-
-    if dvorakQwertyWorkaroundEnabled and typeof charCode is 'number'
-      if event.keyCode is 46 # key code for 'delete'
-        charCode = 127 # ASCII character code for 'delete'
-      else
-        charCode = event.keyCode
-
-    if charCode?
-      if process.platform in ['linux', 'win32']
-        charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
-
-      if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
-        # This is a numpad number
-        charCode = numpadToASCII(charCode)
-
-      charCode = event.which if not isASCII(charCode) and isASCII(event.keyCode)
-      key = keyFromCharCode(charCode)
-    else
-      key = keyIdentifier.toLowerCase()
+  key = keyForKeyboardEvent(event, dvorakQwertyWorkaroundEnabled)
 
   keystroke = ''
   if event.ctrlKey
@@ -149,10 +125,6 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
     unless /^[^A-Za-z]$/.test(key)
       keystroke += '-' if keystroke
       keystroke += 'shift'
-    # Only upper case alphabetic characters like 'a'
-    key = key.toUpperCase() if LowerCaseLetterRegex.test(key)
-  else
-    key = key.toLowerCase() if UpperCaseLetterRegex.test(key)
   if event.metaKey
     keystroke += '-' if keystroke
     keystroke += 'cmd'
@@ -161,6 +133,11 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
     keystroke += key
 
   keystroke
+
+exports.characterForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
+  unless event.ctrlKey or event.altKey or event.metaKey
+    if key = keyForKeyboardEvent(event, dvorakQwertyWorkaroundEnabled)
+      key if key.length is 1
 
 exports.calculateSpecificity = calculateSpecificity
 
@@ -195,7 +172,9 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}=
 
   location ?= KeyboardEvent.DOM_KEY_LOCATION_STANDARD
   event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
-  Object.defineProperty(event, 'target', get: -> target) if target?
+  if target?
+    Object.defineProperty(event, 'target', get: -> target)
+    Object.defineProperty(event, 'path', get: -> [target])
   Object.defineProperty(event, 'keyCode', get: -> keyCode)
   Object.defineProperty(event, 'which', get: -> keyCode)
   event
@@ -241,6 +220,42 @@ parseKeystroke = (keystroke) ->
       return false if keyStart is keystroke.length
   keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
   keys
+
+keyForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
+  keyIdentifier = event.keyIdentifier
+  if process.platform in ['linux', 'win32']
+    keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
+
+  return null if KeyboardEventModifiers.has(keyIdentifier)
+
+  charCode = charCodeFromKeyIdentifier(keyIdentifier)
+
+  if dvorakQwertyWorkaroundEnabled and typeof charCode is 'number'
+    if event.keyCode is 46 # key code for 'delete'
+      charCode = 127 # ASCII character code for 'delete'
+    else
+      charCode = event.keyCode
+
+  if charCode?
+    if process.platform in ['linux', 'win32']
+      charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
+
+    if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
+      # This is a numpad number
+      charCode = numpadToASCII(charCode)
+
+    charCode = event.which if not isASCII(charCode) and isASCII(event.keyCode)
+    key = keyFromCharCode(charCode)
+  else
+    key = keyIdentifier.toLowerCase()
+
+  # Only upper case alphabetic characters like 'a'
+  if event.shiftKey
+    key = key.toUpperCase() if LowerCaseLetterRegex.test(key)
+  else
+    key = key.toLowerCase() if UpperCaseLetterRegex.test(key)
+
+  key
 
 charCodeFromKeyIdentifier = (keyIdentifier) ->
   parseInt(keyIdentifier[2..], 16) if keyIdentifier.indexOf('U+') is 0
