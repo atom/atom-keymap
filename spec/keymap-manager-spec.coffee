@@ -191,6 +191,7 @@ describe "KeymapManager", ->
           '.editor.visual-mode': 'i w': 'select-inside-word'
 
         events = []
+        editor.addEventListener 'textInput', (event) -> events.push("input:#{event.data}")
         workspace.addEventListener 'dog', -> events.push('dog')
         workspace.addEventListener 'viva!', -> events.push('viva!')
         workspace.addEventListener 'viv', -> events.push('viv')
@@ -222,27 +223,15 @@ describe "KeymapManager", ->
           expect(vEvent.defaultPrevented).toBe true
           expect(iEvent.defaultPrevented).toBe true
           expect(kEvent.defaultPrevented).toBe false
-          expect(events).toEqual ['enter-visual-mode']
+          expect(events).toEqual ['enter-visual-mode', 'input:i']
           expect(clearTimeout).toHaveBeenCalled()
 
         it "dispatches a text-input event for any replayed keyboard events that would have inserted characters", ->
-          textInputCharacters = []
-          editor.addEventListener 'textInput', (event) -> textInputCharacters.push(event.data)
-
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(lastEvent = buildKeydownEvent('k', target: editor))
-
-          expect(textInputCharacters).toEqual ['i']
-          expect(lastEvent.defaultPrevented).toBe false # inserted as normal
-
-          textInputCharacters = []
-
           keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
           keymapManager.handleKeyboardEvent(lastEvent = buildKeydownEvent('q', target: editor))
 
-          expect(textInputCharacters).toEqual ['d', 'o']
+          expect(events).toEqual ['input:d', 'input:o']
           expect(lastEvent.defaultPrevented).toBe false # inserted as normal
 
       describe "when the currently queued keystrokes exactly match at least one binding", ->
@@ -257,7 +246,7 @@ describe "KeymapManager", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
           expect(events).toEqual []
           advanceClock(keymapManager.getPartialMatchTimeout())
-          expect(events).toEqual ['enter-visual-mode']
+          expect(events).toEqual ['enter-visual-mode', 'input:i']
 
           events = []
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
@@ -275,9 +264,23 @@ describe "KeymapManager", ->
           expect(global.setTimeout).not.toHaveBeenCalled()
           expect(keymapManager.queuedKeyboardEvents.length).toBe 0
 
+      describe "when the first queued keystroke corresponds to a character insertion", ->
+        it "disables partially-matching bindings and replays the queued keystrokes if the ::partialMatchTimeout expires", ->
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
+          advanceClock(keymapManager.getPartialMatchTimeout())
+
+          expect(events).toEqual ['input:d', 'input:o']
+
       describe "when the currently queued keystrokes don't exactly match any bindings", ->
         it "never times out of the pending state", ->
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
+          keymapManager.add 'test',
+            '.workspace':
+              'ctrl-d o g': 'control-dog'
+
+          workspace.addEventListener 'control-dog', -> events.push('control-dog')
+
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl-d', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
 
           advanceClock(keymapManager.getPartialMatchTimeout())
@@ -285,7 +288,7 @@ describe "KeymapManager", ->
 
           expect(events).toEqual []
           keymapManager.handleKeyboardEvent(buildKeydownEvent('g', target: editor))
-          expect(events).toEqual ['dog']
+          expect(events).toEqual ['control-dog']
 
       describe "when the partially matching bindings all map to the 'unset!' directive", ->
         it "ignores the 'unset!' bindings and invokes the command associated with the matching binding as normal", ->
@@ -297,6 +300,16 @@ describe "KeymapManager", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
 
           expect(events).toEqual ['enter-visual-mode']
+
+      describe "when a subsequent keystroke begins a new match of an already pending binding", ->
+        it "recognizes the match", ->
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('g', target: editor))
+
+          expect(events).toEqual ['input:d', 'input:o', 'dog']
 
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'

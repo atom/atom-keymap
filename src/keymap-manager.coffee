@@ -389,7 +389,7 @@ class KeymapManager
   # target is `.defaultTarget` if that property is assigned on the keymap.
   #
   # * `event` A `KeyboardEvent` of type 'keydown'
-  handleKeyboardEvent: (event, replaying) ->
+  handleKeyboardEvent: (event) ->
     keystroke = @keystrokeForKeyboardEvent(event)
 
     if @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
@@ -453,7 +453,12 @@ class KeymapManager
     # keystroke.
     if partialMatches.length > 0
       event.preventDefault()
-      enableTimeout = foundMatch ? @pendingStateTimeoutHandle?
+      enableTimeout = (
+        @pendingStateTimeoutHandle? or
+        foundMatch or
+        characterForKeyboardEvent(@queuedKeyboardEvents[0])?
+      )
+
       @enterPendingState(partialMatches, enableTimeout)
       @emitter.emit 'did-partially-match-binding', {
         keystrokes,
@@ -556,7 +561,7 @@ class KeymapManager
     @cancelPendingState() if @pendingStateTimeoutHandle?
     @pendingPartialMatches = pendingPartialMatches
     if enableTimeout
-      @pendingStateTimeoutHandle = setTimeout(@terminatePendingState.bind(this), @partialMatchTimeout)
+      @pendingStateTimeoutHandle = setTimeout(@terminatePendingState.bind(this, true), @partialMatchTimeout)
 
   cancelPendingState: ->
     clearTimeout(@pendingStateTimeoutHandle)
@@ -568,7 +573,7 @@ class KeymapManager
   # It disables the longest of the pending partially matching bindings, then
   # replays the queued keyboard events to allow any bindings with shorter
   # keystroke sequences to be matched unambiguously.
-  terminatePendingState: ->
+  terminatePendingState: (timeout) ->
     bindingsToDisable = @pendingPartialMatches
     eventsToReplay = @queuedKeyboardEvents
 
@@ -576,8 +581,18 @@ class KeymapManager
     @clearQueuedKeystrokes()
 
     binding.enabled = false for binding in bindingsToDisable
-    @handleKeyboardEvent(event, true) for event in eventsToReplay
-    binding.enabled = true for binding in bindingsToDisable
+
+    for event in eventsToReplay
+      @handleKeyboardEvent(event)
+      if bindingsToDisable? and not @pendingPartialMatches?
+        binding.enabled = true for binding in bindingsToDisable
+        bindingsToDisable = null
+
+    atom?.assert(not bindingsToDisable?, "Invalid keymap state")
+
+    if timeout and @pendingPartialMatches?
+      @terminatePendingState(true)
+
     return
 
   # After we match a binding, we call this method to dispatch a custom event
