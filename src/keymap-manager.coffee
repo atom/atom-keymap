@@ -532,11 +532,13 @@ class KeymapManager
     partialMatches = []
     ignoreKeystrokes = new Set
 
+    partialMatchCandidates.forEach (binding) ->
+      if binding.command is 'unset!'
+        ignoreKeystrokes.add(binding.keystrokes)
+
     while partialMatchCandidates.length > 0 and target? and target isnt document
       partialMatchCandidates = partialMatchCandidates.filter (binding) ->
-        if binding.command is 'unset!'
-          ignoreKeystrokes.add(binding.keystrokes)
-        else if not ignoreKeystrokes.has(binding.keystrokes) and target.webkitMatchesSelector(binding.selector)
+        if not ignoreKeystrokes.has(binding.keystrokes) and target.webkitMatchesSelector(binding.selector)
           partialMatches.push(binding)
           false
         else

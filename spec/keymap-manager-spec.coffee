@@ -114,6 +114,18 @@ describe "KeymapManager", ->
           expect(events[0].type).toBe 'x-command'
           expect(event.defaultPrevented).toBe true
 
+      describe "if the matching binding's command is 'unset!' and there is another match", ->
+        it "immediately matches the other match", ->
+          elementA.addEventListener 'unset!', (e) -> events.push(e)
+          keymapManager.add "test",
+            ".a":
+              "ctrl-y": "x-command"
+              "ctrl-y ctrl-y": "unset!"
+          event = buildKeydownEvent('y', ctrl: true, target: elementA)
+          keymapManager.handleKeyboardEvent(event)
+          expect(events.length).toBe 1
+          expect(events[0].type).toBe 'x-command'
+
       describe "if the matching binding's command is 'abort!'", ->
         it "stops searching for a matching binding immediately and emits no command event", ->
           elementA.addEventListener 'abort!', (e) -> events.push(e)
