@@ -123,7 +123,7 @@ class KeymapManager
 
   enableDvorakQwertyWorkaroundIfNeeded: ->
     @keyboardLayoutSubscription = observeCurrentKeyboardLayout (layoutId) =>
-      @dvorakQwertyWorkaroundEnabled = (layoutId.indexOf('DVORAK-QWERTYCMD') > -1)
+      @dvorakQwertyWorkaroundEnabled = (layoutId?.indexOf('DVORAK-QWERTYCMD') > -1)
 
   ###
   Section: Event Subscription
