@@ -3,7 +3,8 @@
 Atom's DOM-aware keymap module
 
 ```js
-var KeymapManager = require('atom-keymap')
+var KeymapManager, keymaps;
+KeymapManager = require('atom-keymap')
 
 keymaps = new KeymapManager
 keymaps.defaultTarget = document.body
