@@ -24,7 +24,7 @@ keymaps.add('/key/for/these/keymaps', {
   }
 })
 
-// When a keybinding is triggered, it will dispatch it on the node was focused
+// When a keybinding is triggered, it will dispatch it on the node that was focused
 window.addEventListener('core:move-up', (event) => console.log('up', event))
 window.addEventListener('core:move-down', (event) => console.log('down', event))
 ```
