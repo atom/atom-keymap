@@ -628,3 +628,8 @@ class KeymapManager
       break if currentTarget is window
       currentTarget = currentTarget.parentNode ? window
     return
+
+  # Public: Returns whether a given keystroke is a modifier (or a combination of modifiers, such as `shift-ctrl`).
+  #
+  # * `keystroke` A {String} of keystrokes in a key binding matching event.
+  isAtomModifier: isAtomModifier
