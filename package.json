@@ -27,8 +27,8 @@
     "event-kit": "^1.0.0",
     "fs-plus": "^2.0.4",
     "grim": "^1.2.1",
-    "keyboard-layout": "^0.10.0",
-    "pathwatcher": "^5.0.0",
+    "keyboard-layout": "^1.0",
+    "pathwatcher": "^6.2",
     "property-accessors": "^1",
     "season": "^5.0.2"
   },
