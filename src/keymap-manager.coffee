@@ -106,12 +106,17 @@ class KeymapManager
   #     is `document.body` to allow for a catch-all element when nothing is focused.
   constructor: (options={}) ->
     @[key] = value for key, value of options
+    @watchSubscriptions = {}
+    @clear()
+    @enableDvorakQwertyWorkaroundIfNeeded()
+
+  # Public: Clear all registered key bindings and enqueued keystrokes. For use
+  # in tests.
+  clear: ->
     @emitter = new Emitter
     @keyBindings = []
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
-    @watchSubscriptions = {}
-    @enableDvorakQwertyWorkaroundIfNeeded()
 
   # Public: Unwatch all watched paths.
   destroy: ->
