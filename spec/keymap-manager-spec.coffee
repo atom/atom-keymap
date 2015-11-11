@@ -428,6 +428,24 @@ describe "KeymapManager", ->
       keymapManager.handleKeyboardEvent(event)
       expect(event.defaultPrevented).toBe false
 
+    it "rejects bindings with an empty command and logs a warning to the console", ->
+      spyOn(console, 'warn')
+      expect(keymapManager.add('test', 'body': 'shift-a': '')).toBeUndefined()
+      expect(console.warn).toHaveBeenCalled()
+
+      event = buildKeydownEvent('A', shift: true, target: document.body)
+      keymapManager.handleKeyboardEvent(event)
+      expect(event.defaultPrevented).toBe false
+
+    it "rejects bindings without a command and logs a warning to the console", ->
+      spyOn(console, 'warn')
+      expect(keymapManager.add('test', 'body': 'shift-a': null)).toBeUndefined()
+      expect(console.warn).toHaveBeenCalled()
+
+      event = buildKeydownEvent('A', shift: true, target: document.body)
+      keymapManager.handleKeyboardEvent(event)
+      expect(event.defaultPrevented).toBe false
+
     it "returns a disposable allowing the added bindings to be removed", ->
       disposable1 = keymapManager.add 'foo',
         '.a':
