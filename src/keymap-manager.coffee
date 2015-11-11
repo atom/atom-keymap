@@ -234,7 +234,6 @@ class KeymapManager
           console.warn "Empty command for binding: `#{selector}` `#{keystrokes}` in #{source}"
           return
 
-        console.log 'adding', keystrokes, command
         if normalizedKeystrokes = normalizeKeystrokes(keystrokes)
           keyBinding = new KeyBinding(source, command, normalizedKeystrokes, selector)
           addedKeyBindings.push(keyBinding)
