@@ -231,7 +231,7 @@ class KeymapManager
         command = command?.toString() ? ''
 
         if command.length is 0
-          console.warn "Empty command for binding: `#{keystrokes}` in #{source}"
+          console.warn "Empty command for binding: `#{selector}` `#{keystrokes}` in #{source}"
           return
 
         console.log 'adding', keystrokes, command
