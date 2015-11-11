@@ -15,12 +15,7 @@
   "bugs": {
     "url": "https://github.com/atom/atom-keymap/issues"
   },
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "http://github.com/atom/atom-keymap/raw/master/LICENSE.md"
-    }
-  ],
+  "license": "MIT",
   "dependencies": {
     "clear-cut": "^2",
     "emissary": "^1.1.0",
