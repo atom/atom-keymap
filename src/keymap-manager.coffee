@@ -228,7 +228,7 @@ class KeymapManager
         return
 
       for keystrokes, command of keyBindings
-        command = command?.toString() ? ''
+        command = command?.toString?() ? ''
 
         if command.length is 0
           console.warn "Empty command for binding: `#{selector}` `#{keystrokes}` in #{source}"
