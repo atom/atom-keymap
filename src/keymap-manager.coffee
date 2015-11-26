@@ -220,7 +220,7 @@ class KeymapManager
   # * `bindings` An {Object} whose top-level keys point at sub-objects mapping
   #   keystroke patterns to commands.
   # * `priority` A {Number} used to sort keybindings which have the same
-  #   specificity.
+  #   specificity. Defaults to `0`.
   add: (source, keyBindingsBySelector, priority=0) ->
     addedKeyBindings = []
     for selector, keyBindings of keyBindingsBySelector
