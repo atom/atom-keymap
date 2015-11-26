@@ -332,6 +332,9 @@ class KeymapManager
   #
   # * `path` A {String} containing a path to a file or a directory. If the path is
   #   a directory, all files inside it will be loaded.
+  # * `options` An {Object} containing the following optional keys:
+  #   * `priority` A {Number} used to sort keybindings which have the same
+  #     specificity.
   watchKeymap: (filePath, options) ->
     if not @watchSubscriptions[filePath]? or @watchSubscriptions[filePath].disposed
       file = new File(filePath)
