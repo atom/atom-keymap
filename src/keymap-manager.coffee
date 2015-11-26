@@ -219,7 +219,9 @@ class KeymapManager
   #   so they can be removed later.
   # * `bindings` An {Object} whose top-level keys point at sub-objects mapping
   #   keystroke patterns to commands.
-  add: (source, keyBindingsBySelector) ->
+  # * `priority` A {Number} used to sort keybindings which have the same
+  #   specificity.
+  add: (source, keyBindingsBySelector, priority=0) ->
     addedKeyBindings = []
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
@@ -235,7 +237,7 @@ class KeymapManager
           return
 
         if normalizedKeystrokes = normalizeKeystrokes(keystrokes)
-          keyBinding = new KeyBinding(source, command, normalizedKeystrokes, selector)
+          keyBinding = new KeyBinding(source, command, normalizedKeystrokes, selector, priority)
           addedKeyBindings.push(keyBinding)
           @keyBindings.push(keyBinding)
         else
