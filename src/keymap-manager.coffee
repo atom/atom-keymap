@@ -310,6 +310,8 @@ class KeymapManager
   # * `options` An {Object} containing the following optional keys:
   #   * `watch` If `true`, the keymap will also reload the file at the given
   #     path whenever it changes. This option cannot be used with directory paths.
+  #   * `priority` A {Number} used to sort keybindings which have the same
+  #     specificity.
   loadKeymap: (bindingsPath, options) ->
     checkIfDirectory = options?.checkIfDirectory ? true
     if checkIfDirectory and fs.isDirectorySync(bindingsPath)
@@ -317,8 +319,8 @@ class KeymapManager
         if @filePathMatchesPlatform(filePath)
           @loadKeymap(filePath, checkIfDirectory: false)
     else
-      @add(bindingsPath, @readKeymap(bindingsPath, options?.suppressErrors))
-      @watchKeymap(bindingsPath) if options?.watch
+      @add(bindingsPath, @readKeymap(bindingsPath, options?.suppressErrors), options?.priority)
+      @watchKeymap(bindingsPath, options) if options?.watch
 
     undefined
 
@@ -330,10 +332,10 @@ class KeymapManager
   #
   # * `path` A {String} containing a path to a file or a directory. If the path is
   #   a directory, all files inside it will be loaded.
-  watchKeymap: (filePath) ->
+  watchKeymap: (filePath, options) ->
     if not @watchSubscriptions[filePath]? or @watchSubscriptions[filePath].disposed
       file = new File(filePath)
-      reloadKeymap = => @reloadKeymap(filePath)
+      reloadKeymap = => @reloadKeymap(filePath, options)
       @watchSubscriptions[filePath] = new CompositeDisposable(
         file.onDidChange(reloadKeymap)
         file.onDidRename(reloadKeymap)
@@ -344,13 +346,13 @@ class KeymapManager
 
   # Called by the path watcher callback to reload a file at the given path. If
   # we can't read the file cleanly, we don't proceed with the reload.
-  reloadKeymap: (filePath) ->
+  reloadKeymap: (filePath, options) ->
     if fs.isFileSync(filePath)
       bindings = @readKeymap(filePath, true)
 
       if typeof bindings isnt "undefined"
         @removeBindingsFromSource(filePath)
-        @add(filePath, bindings)
+        @add(filePath, bindings, options?.priority)
         @emitter.emit 'did-reload-keymap', {path: filePath}
     else
       @removeBindingsFromSource(filePath)
