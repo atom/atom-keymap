@@ -6,7 +6,7 @@ class KeyBinding
 
   enabled: true
 
-  constructor: (@source, @command, @keystrokes, selector) ->
+  constructor: (@source, @command, @keystrokes, selector, @priority) ->
     @keystrokeCount = @keystrokes.split(' ').length
     @selector = selector.replace(/!important/g, '')
     @specificity = calculateSpecificity(selector)
@@ -21,6 +21,9 @@ class KeyBinding
 
   compare: (keyBinding) ->
     if keyBinding.specificity is @specificity
-      keyBinding.index - @index
+      if keyBinding.priority is @priority
+        keyBinding.index - @index
+      else
+        keyBinding.priority - @priority
     else
       keyBinding.specificity - @specificity

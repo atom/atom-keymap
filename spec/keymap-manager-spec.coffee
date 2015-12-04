@@ -156,6 +156,7 @@ describe "KeymapManager", ->
         events = []
         elementA.addEventListener 'command-1', ((e) -> events.push(e)), false
         elementA.addEventListener 'command-2', ((e) -> events.push(e)), false
+        elementA.addEventListener 'command-3', ((e) -> events.push(e)), false
 
       describe "when the bindings have selectors with different specificity", ->
         beforeEach ->
@@ -172,17 +173,28 @@ describe "KeymapManager", ->
           expect(events[0].target).toBe elementB
 
       describe "when the bindings have selectors with the same specificity", ->
-        beforeEach ->
+        it "dispatches the command associated with the most recently added binding", ->
           keymapManager.add "test",
             ".b.c":
               "ctrl-x": "command-1"
             ".c.d":
               "ctrl-x": "command-2"
 
-        it "dispatches the command associated with the most recently added binding", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
+
           expect(events.length).toBe 1
           expect(events[0].type).toBe 'command-2'
+          expect(events[0].target).toBe elementB
+
+        it "dispatches the command associated with the binding which has the highest priority", ->
+          keymapManager.add "keybindings-with-super-priority", {".c.d": {"ctrl-x": "command-1"}}, 2
+          keymapManager.add "normal-keybindings", {".b.d": {"ctrl-x": "command-3"}}, 0
+          keymapManager.add "keybindings-with-priority", {".b.c": {"ctrl-x": "command-2"}}, 1
+
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
+
+          expect(events.length).toBe 1
+          expect(events[0].type).toBe 'command-1'
           expect(events[0].target).toBe elementB
 
     describe "when the keystroke partially matches bindings", ->
