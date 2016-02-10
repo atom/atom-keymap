@@ -416,9 +416,13 @@ class KeymapManager
       event.preventDefault()
       return
 
-    @queuedKeyboardEvents.push(event)
-    @queuedKeystrokes.push(keystroke)
-    keystrokes = @queuedKeystrokes.join(' ')
+    if event.type is 'keyup'
+      keystrokes = "#{@lastKeydownKeystrokes}^#{keystroke}"
+    else
+      @queuedKeyboardEvents.push(event)
+      @queuedKeystrokes.push(keystroke)
+      keystrokes = @queuedKeystrokes.join(' ')
+      @lastKeydownKeystrokes = keystrokes
 
     # If the event's target is document.body, assign it to defaultTarget instead
     # to provide a catch-all element when nothing is focused.
