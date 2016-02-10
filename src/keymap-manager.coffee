@@ -7,7 +7,7 @@ path = require 'path'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
-{normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent, characterForKeyboardEvent} = require './helpers'
+{normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent, keyupEvent, characterForKeyboardEvent} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -81,6 +81,8 @@ class KeymapManager
   #     the docs for KeyboardEvent for more information.
   #   * `target` The target element of the event.
   @buildKeydownEvent: (key, options) -> keydownEvent(key, options)
+
+  @buildKeyupEvent: (key, options) -> keyupEvent(key, options)
 
   ###
   Section: Properties
