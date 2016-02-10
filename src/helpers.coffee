@@ -144,7 +144,13 @@ exports.calculateSpecificity = calculateSpecificity
 exports.isAtomModifier = (keystroke) ->
   AtomModifiers.has(keystroke) or AtomModifierRegex.test(keystroke)
 
-exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
+exports.keydownEvent = (key, options) ->
+  return exports.keyboardEvent(key, 'keydown', options)
+
+exports.keyupEvent = (key, options) ->
+  return exports.keyboardEvent(key, 'keyup', options)
+
+exports.keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
   event = document.createEvent('KeyboardEvent')
   bubbles = true
   cancelable = true
@@ -171,7 +177,7 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}=
         keyIdentifier = key[0].toUpperCase() + key[1..]
 
   location ?= KeyboardEvent.DOM_KEY_LOCATION_STANDARD
-  event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
+  event.initKeyboardEvent(eventType, bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
   if target?
     Object.defineProperty(event, 'target', get: -> target)
     Object.defineProperty(event, 'path', get: -> [target])
