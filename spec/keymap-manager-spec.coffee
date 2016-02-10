@@ -4,7 +4,7 @@ temp = require 'temp'
 {$$} = require 'space-pencil'
 {appendContent} = require './spec-helper'
 KeymapManager = require '../src/keymap-manager'
-{buildKeydownEvent} = KeymapManager
+{buildKeydownEvent, buildKeyupEvent} = KeymapManager
 
 describe "KeymapManager", ->
   keymapManager = null
@@ -334,6 +334,48 @@ describe "KeymapManager", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('g', target: editor))
 
           expect(events).toEqual ['input:d', 'input:o', 'dog']
+
+    describe "when the a binding specifies a keyup handler", ->
+      [events, elementA] = []
+
+      beforeEach ->
+        elementA = appendContent $$ ->
+          @div class: 'a'
+
+        events = []
+        elementA.addEventListener 'y-command', (e) -> events.push('y-keydown')
+        elementA.addEventListener 'y-command-up', (e) -> events.push('y-keyup')
+
+        keymapManager.add "test",
+          ".a":
+            "ctrl-y": "y-command"
+            "ctrl-y^ctrl": "y-command-up"
+
+      it "dispatches the y-keyup command when a matching keystroke precedes it", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
+
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown', 'y-keydown']
+
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown', 'y-keydown']
+
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        expect(events).toEqual ['y-keydown', 'y-keydown', 'y-keyup']
+
+      it "doesn't dispatch the y-keyup command when a non-matching keystroke precedes it", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
+
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown', 'y-keydown']
+
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown', 'y-keydown']
+
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        expect(events).toEqual ['y-keydown', 'y-keydown']
 
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
