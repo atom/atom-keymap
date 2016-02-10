@@ -115,20 +115,20 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
   key = keyForKeyboardEvent(event, dvorakQwertyWorkaroundEnabled)
 
   keystroke = ''
-  if event.ctrlKey
+  if event.ctrlKey or key is 'Control'
     keystroke += 'ctrl'
-  if event.altKey
+  if event.altKey or key is 'Alt'
     keystroke += '-' if keystroke
     keystroke += 'alt'
-  if event.shiftKey
+  if event.shiftKey or key is 'Shift'
     # Don't push 'shift' when modifying symbolic characters like '{'
     unless /^[^A-Za-z]$/.test(key)
       keystroke += '-' if keystroke
       keystroke += 'shift'
-  if event.metaKey
+  if event.metaKey or key is 'Meta'
     keystroke += '-' if keystroke
     keystroke += 'cmd'
-  if key?
+  if key? and not KeyboardEventModifiers.has(key)
     keystroke += '-' if keystroke
     keystroke += key
 
@@ -163,16 +163,16 @@ exports.keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target
     switch key
       when 'ctrl'
         keyIdentifier = 'Control'
-        ctrl = true
+        ctrl = true if eventType isnt 'keyup'
       when 'alt'
         keyIdentifier = 'Alt'
-        alt = true
+        alt = true if eventType isnt 'keyup'
       when 'shift'
         keyIdentifier = 'Shift'
-        shift = true
+        shift = true if eventType isnt 'keyup'
       when 'cmd'
         keyIdentifier = 'Meta'
-        cmd = true
+        cmd = true if eventType isnt 'keyup'
       else
         keyIdentifier = key[0].toUpperCase() + key[1..]
 
@@ -232,7 +232,7 @@ keyForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
   if process.platform in ['linux', 'win32']
     keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
 
-  return null if KeyboardEventModifiers.has(keyIdentifier)
+  return keyIdentifier if KeyboardEventModifiers.has(keyIdentifier)
 
   charCode = charCodeFromKeyIdentifier(keyIdentifier)
 
