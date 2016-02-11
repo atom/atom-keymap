@@ -225,9 +225,13 @@ describe "KeymapManager", ->
       describe "when subsequent keystrokes yield an exact match", ->
         it "dispatches the command associated with the matched multi-keystroke binding", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('i', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: editor))
           expect(events).toEqual ['viva!']
 
       describe "when subsequent keystrokes yield no matches", ->
