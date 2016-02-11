@@ -214,6 +214,8 @@ exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
   ExactMatch
 
 normalizeKeystroke = (keystroke) ->
+  if isKeyup = keystroke.startsWith('^')
+    keystroke = keystroke.slice(1)
   keys = parseKeystroke(keystroke)
   return false unless keys
 
@@ -240,7 +242,9 @@ normalizeKeystroke = (keystroke) ->
   keystroke.push('shift') if modifiers.has('shift')
   keystroke.push('cmd') if modifiers.has('cmd')
   keystroke.push(primaryKey) if primaryKey?
-  keystroke.join('-')
+  keystroke = keystroke.join('-')
+  keystroke = "^#{keystroke}" if isKeyup
+  keystroke
 
 parseKeystroke = (keystroke) ->
   keys = []

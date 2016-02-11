@@ -16,6 +16,11 @@ describe ".normalizeKeystrokes(keystrokes)", ->
     expect(normalizeKeystrokes('cmd-shift-a')).toBe 'shift-cmd-A'
     expect(normalizeKeystrokes('cmd-ctrl-alt--')).toBe 'ctrl-alt-cmd--'
 
+    expect(normalizeKeystrokes('ctrl-y   ^y')).toBe 'ctrl-y ^y'
+    expect(normalizeKeystrokes('ctrl-y ^ctrl-y')).toBe 'ctrl-y ^ctrl-y'
+    expect(normalizeKeystrokes('cmd-shift-y ^cmd-shift-y')).toBe 'shift-cmd-Y ^shift-cmd-Y'
+    expect(normalizeKeystrokes('ctrl-y ^ctrl-y ^ctrl')).toBe 'ctrl-y ^ctrl-y ^ctrl'
+
     expect(normalizeKeystrokes('a-b')).toBe false
     expect(normalizeKeystrokes('---')).toBe false
     expect(normalizeKeystrokes('cmd-a-b')).toBe false
