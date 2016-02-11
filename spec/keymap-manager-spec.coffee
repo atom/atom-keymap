@@ -348,38 +348,43 @@ describe "KeymapManager", ->
 
         events = []
         elementA.addEventListener 'y-command', (e) -> events.push('y-keydown')
-        elementA.addEventListener 'y-command-up', (e) -> events.push('y-keyup')
+        elementA.addEventListener 'y-command-ctrl-up', (e) -> events.push('y-ctrl-keyup')
+        elementA.addEventListener 'x-command-ctrl-up', (e) -> events.push('x-ctrl-keyup')
+        elementA.addEventListener 'y-command-y-up-ctrl-up', (e) -> events.push('y-up-ctrl-keyup')
 
         keymapManager.add "test",
           ".a":
             "ctrl-y": "y-command"
-            "ctrl-y^ctrl": "y-command-up"
+            "ctrl-y ^ctrl": "y-command-ctrl-up"
+            "ctrl-x ^ctrl": "x-command-ctrl-up"
+            "ctrl-y ^ctrl-y ^ctrl": "y-command-y-up-ctrl-up"
 
-      it "dispatches the y-keyup command when a matching keystroke precedes it", ->
+      it "dispatches the command when a matching keystroke precedes it", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
-        expect(events).toEqual ['y-keydown']
-
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
-        expect(events).toEqual ['y-keydown', 'y-keydown']
-
         keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, target: elementA))
-        expect(events).toEqual ['y-keydown', 'y-keydown']
-
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
-        expect(events).toEqual ['y-keydown', 'y-keydown', 'y-keyup']
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['y-up-ctrl-keyup']
 
-      it "doesn't dispatch the y-keyup command when a non-matching keystroke precedes it", ->
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
-        expect(events).toEqual ['y-keydown']
-
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
-        expect(events).toEqual ['y-keydown', 'y-keydown']
-
+      it "dispatches a command when the keybinding does not specify all key up events", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementA))
-        expect(events).toEqual ['y-keydown', 'y-keydown']
-
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('x', ctrl: true, target: elementA))
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
-        expect(events).toEqual ['y-keydown', 'y-keydown']
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['x-ctrl-keyup']
+
+      it "dispatches the y-up-ctrl-keyup command when a matching keystroke precedes it", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['y-ctrl-keyup']
+
+      it "doesn't dispatch the y-up-ctrl-keyup command when a non-matching keystroke precedes it", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('z', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['y-keydown']
 
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
