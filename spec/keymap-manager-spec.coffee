@@ -373,13 +373,13 @@ describe "KeymapManager", ->
         advanceClock(keymapManager.getPartialMatchTimeout())
         expect(events).toEqual ['x-ctrl-keyup']
 
-      it "dispatches the y-up-ctrl-keyup command when a matching keystroke precedes it", ->
+      it "dispatches a command when modifier is lifted before the character", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
         advanceClock(keymapManager.getPartialMatchTimeout())
         expect(events).toEqual ['y-ctrl-keyup']
 
-      it "doesn't dispatch the y-up-ctrl-keyup command when a non-matching keystroke precedes it", ->
+      it "does not dispatch the keyup command when a non-matching keydown event is made between matching keystrokes", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
         keymapManager.handleKeyboardEvent(buildKeydownEvent('z', ctrl: true, target: elementA))
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
