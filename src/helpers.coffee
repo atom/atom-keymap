@@ -7,6 +7,8 @@ AtomModifierRegex = /(ctrl|alt|shift|cmd)$/
 WhitespaceRegex = /\s+/
 LowerCaseLetterRegex = /^[a-z]$/
 UpperCaseLetterRegex = /^[A-Z]$/
+ExactMatch = 'exact'
+PartialMatch = 'partial'
 
 KeyboardEventModifiers = new Set
 KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
@@ -184,6 +186,32 @@ exports.keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target
   Object.defineProperty(event, 'keyCode', get: -> keyCode)
   Object.defineProperty(event, 'which', get: -> keyCode)
   event
+
+# bindingKeystrokes and userKeystrokes are arrays of keystrokes
+exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
+  userKeystrokeIndex = -1
+  matchesNextStroke = (stroke) ->
+    while userKeystrokeIndex < userKeystrokes.length - 1
+      userKeystrokeIndex += 1
+      userKeystroke = userKeystrokes[userKeystrokeIndex]
+      if stroke is userKeystroke
+        return true
+      else unless userKeystroke.startsWith('^')
+        return false
+    null
+
+  for bindingKeystroke in bindingKeystrokes
+    doesMatch = matchesNextStroke(bindingKeystroke)
+    if doesMatch is false
+      return false
+    else if doesMatch is null
+      return PartialMatch
+
+  while userKeystrokeIndex < userKeystrokes.length - 1
+    userKeystrokeIndex += 1
+    return false unless userKeystrokes[userKeystrokeIndex].startsWith('^')
+
+  ExactMatch
 
 normalizeKeystroke = (keystroke) ->
   keys = parseKeystroke(keystroke)
