@@ -351,6 +351,7 @@ describe "KeymapManager", ->
         elementA.addEventListener 'y-command-ctrl-up', (e) -> events.push('y-ctrl-keyup')
         elementA.addEventListener 'x-command-ctrl-up', (e) -> events.push('x-ctrl-keyup')
         elementA.addEventListener 'y-command-y-up-ctrl-up', (e) -> events.push('y-up-ctrl-keyup')
+        elementA.addEventListener 'abc-secret-code-command', (e) -> events.push('abc-secret-code')
 
         keymapManager.add "test",
           ".a":
@@ -358,6 +359,7 @@ describe "KeymapManager", ->
             "ctrl-y ^ctrl": "y-command-ctrl-up"
             "ctrl-x ^ctrl": "x-command-ctrl-up"
             "ctrl-y ^ctrl-y ^ctrl": "y-command-y-up-ctrl-up"
+            "a b c ^b ^a ^c": "abc-secret-code-command"
 
       it "dispatches the command when a matching keystroke precedes it", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
@@ -385,6 +387,25 @@ describe "KeymapManager", ->
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
         advanceClock(keymapManager.getPartialMatchTimeout())
         expect(events).toEqual ['y-keydown']
+
+      it "dispatches commands with multiple keyup keystrokes specified", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('c', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual []
+
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('c', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['abc-secret-code']
 
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
