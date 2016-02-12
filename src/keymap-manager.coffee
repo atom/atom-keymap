@@ -460,6 +460,7 @@ class KeymapManager
           if @dispatchCommandEvent(exactMatch.command, target, event)
             @emitter.emit 'did-match-binding', {
               keystrokes,
+              eventType: event.type,
               binding: exactMatch,
               keyboardEventTarget: target
             }
@@ -482,12 +483,14 @@ class KeymapManager
       @enterPendingState(partialMatches, enableTimeout)
       @emitter.emit 'did-partially-match-binding', {
         keystrokes,
+        eventType: event.type,
         partiallyMatchedBindings: partialMatches,
         keyboardEventTarget: target
       }
     else
       @emitter.emit 'did-fail-to-match-binding', {
         keystrokes,
+        eventType: event.type,
         keyboardEventTarget: target
       }
       if @pendingPartialMatches?
