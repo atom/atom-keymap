@@ -189,32 +189,34 @@ exports.keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target
   event
 
 # bindingKeystrokes and userKeystrokes are arrays of keystrokes
+# e.g. ['crtl-y', 'ctrl-x', '^x']
 exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
   userKeystrokeIndex = -1
   userKeystrokesHasKeydownEvent = false
-  matchesNextStroke = (stroke) ->
+  matchesNextUserKeystroke = (bindingKeystroke) ->
     while userKeystrokeIndex < userKeystrokes.length - 1
       userKeystrokeIndex += 1
       userKeystroke = userKeystrokes[userKeystrokeIndex]
       isKeydownEvent = not userKeystroke.startsWith('^')
       userKeystrokesHasKeydownEvent = true if isKeydownEvent
-      if stroke is userKeystroke
+      if bindingKeystroke is userKeystroke
         return true
       else if isKeydownEvent
         return false
     null
 
   for bindingKeystroke in bindingKeystrokes
-    doesMatch = matchesNextStroke(bindingKeystroke)
+    doesMatch = matchesNextUserKeystroke(bindingKeystroke)
     if doesMatch is false
       return false
     else if doesMatch is null
-      # If there are only keyup events, it will partial match everything :/
+      # Make userKeystrokes with only keyup events doesn't match everything
       if userKeystrokesHasKeydownEvent
         return PartialMatch
       else
         return false
 
+  # Prevent binding of ['a'] from exact matching a user pattern of ['a', '^a', 'b', '^b']
   while userKeystrokeIndex < userKeystrokes.length - 1
     userKeystrokeIndex += 1
     return false unless userKeystrokes[userKeystrokeIndex].startsWith('^')
