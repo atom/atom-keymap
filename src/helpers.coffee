@@ -210,7 +210,7 @@ exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
     if doesMatch is false
       return false
     else if doesMatch is null
-      # Make userKeystrokes with only keyup events doesn't match everything
+      # Make sure userKeystrokes with only keyup events doesn't match everything
       if userKeystrokesHasKeydownEvent
         return PartialMatch
       else
