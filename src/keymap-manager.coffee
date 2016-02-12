@@ -7,7 +7,7 @@ path = require 'path'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
-{normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch} = require './helpers'
+{normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent, characterForKeyboardEvent} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -81,8 +81,6 @@ class KeymapManager
   #     the docs for KeyboardEvent for more information.
   #   * `target` The target element of the event.
   @buildKeydownEvent: (key, options) -> keydownEvent(key, options)
-
-  @buildKeyupEvent: (key, options) -> keyupEvent(key, options)
 
   ###
   Section: Properties
@@ -412,7 +410,7 @@ class KeymapManager
   handleKeyboardEvent: (event) ->
     keystroke = @keystrokeForKeyboardEvent(event)
 
-    if event.type isnt 'keyup' and @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
+    if @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
       event.preventDefault()
       return
 
@@ -428,7 +426,7 @@ class KeymapManager
     # First screen for any bindings that match the current keystrokes,
     # regardless of their current selector. Matching strings is cheaper than
     # matching selectors.
-    {partialMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes)
+    {partialMatchCandidates, exactMatchCandidates} = @findMatchCandidates(keystrokes)
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
     # Determine if the current keystrokes match any bindings *exactly*. If we
@@ -460,7 +458,6 @@ class KeymapManager
           if @dispatchCommandEvent(exactMatch.command, target, event)
             @emitter.emit 'did-match-binding', {
               keystrokes,
-              eventType: event.type,
               binding: exactMatch,
               keyboardEventTarget: target
             }
@@ -483,14 +480,12 @@ class KeymapManager
       @enterPendingState(partialMatches, enableTimeout)
       @emitter.emit 'did-partially-match-binding', {
         keystrokes,
-        eventType: event.type,
         partiallyMatchedBindings: partialMatches,
         keyboardEventTarget: target
       }
     else
       @emitter.emit 'did-fail-to-match-binding', {
         keystrokes,
-        eventType: event.type,
         keyboardEventTarget: target
       }
       if @pendingPartialMatches?
@@ -535,15 +530,16 @@ class KeymapManager
 
   # Finds all key bindings whose keystrokes match the given keystrokes. Returns
   # both partial and exact matches.
-  findMatchCandidates: (keystrokeArray) ->
+  findMatchCandidates: (keystrokes) ->
     partialMatchCandidates = []
     exactMatchCandidates = []
 
+    keystrokesWithSpace = keystrokes + ' '
+
     for binding in @keyBindings when binding.enabled
-      doesMatch = keystrokesMatch(binding.keystrokeArray, keystrokeArray)
-      if doesMatch is 'exact'
+      if binding.keystrokes is keystrokes
         exactMatchCandidates.push(binding)
-      else if doesMatch is 'partial'
+      else if binding.keystrokes.indexOf(keystrokesWithSpace) is 0
         partialMatchCandidates.push(binding)
     {partialMatchCandidates, exactMatchCandidates}
 
