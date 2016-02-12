@@ -7,7 +7,8 @@ class KeyBinding
   enabled: true
 
   constructor: (@source, @command, @keystrokes, selector, @priority) ->
-    @keystrokeCount = @keystrokes.split(' ').length
+    @keystrokeArray = @keystrokes.split(' ')
+    @keystrokeCount = @keystrokeArray.length
     @selector = selector.replace(/!important/g, '')
     @specificity = calculateSpecificity(selector)
     @index = @constructor.currentIndex++

@@ -7,6 +7,8 @@ AtomModifierRegex = /(ctrl|alt|shift|cmd)$/
 WhitespaceRegex = /\s+/
 LowerCaseLetterRegex = /^[a-z]$/
 UpperCaseLetterRegex = /^[A-Z]$/
+ExactMatch = 'exact'
+PartialMatch = 'partial'
 
 KeyboardEventModifiers = new Set
 KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
@@ -115,23 +117,24 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
   key = keyForKeyboardEvent(event, dvorakQwertyWorkaroundEnabled)
 
   keystroke = ''
-  if event.ctrlKey
+  if event.ctrlKey or key is 'Control'
     keystroke += 'ctrl'
-  if event.altKey
+  if event.altKey or key is 'Alt'
     keystroke += '-' if keystroke
     keystroke += 'alt'
-  if event.shiftKey
+  if event.shiftKey or key is 'Shift'
     # Don't push 'shift' when modifying symbolic characters like '{'
     unless /^[^A-Za-z]$/.test(key)
       keystroke += '-' if keystroke
       keystroke += 'shift'
-  if event.metaKey
+  if event.metaKey or key is 'Meta'
     keystroke += '-' if keystroke
     keystroke += 'cmd'
-  if key?
+  if key? and not KeyboardEventModifiers.has(key)
     keystroke += '-' if keystroke
     keystroke += key
 
+  keystroke = normalizeKeystroke("^#{keystroke}") if event.type is 'keyup'
   keystroke
 
 exports.characterForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
@@ -144,7 +147,13 @@ exports.calculateSpecificity = calculateSpecificity
 exports.isAtomModifier = (keystroke) ->
   AtomModifiers.has(keystroke) or AtomModifierRegex.test(keystroke)
 
-exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
+exports.keydownEvent = (key, options) ->
+  return keyboardEvent(key, 'keydown', options)
+
+exports.keyupEvent = (key, options) ->
+  return keyboardEvent(key, 'keyup', options)
+
+keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
   event = document.createEvent('KeyboardEvent')
   bubbles = true
   cancelable = true
@@ -157,21 +166,21 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}=
     switch key
       when 'ctrl'
         keyIdentifier = 'Control'
-        ctrl = true
+        ctrl = true if eventType isnt 'keyup'
       when 'alt'
         keyIdentifier = 'Alt'
-        alt = true
+        alt = true if eventType isnt 'keyup'
       when 'shift'
         keyIdentifier = 'Shift'
-        shift = true
+        shift = true if eventType isnt 'keyup'
       when 'cmd'
         keyIdentifier = 'Meta'
-        cmd = true
+        cmd = true if eventType isnt 'keyup'
       else
         keyIdentifier = key[0].toUpperCase() + key[1..]
 
   location ?= KeyboardEvent.DOM_KEY_LOCATION_STANDARD
-  event.initKeyboardEvent('keydown', bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
+  event.initKeyboardEvent(eventType, bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
   if target?
     Object.defineProperty(event, 'target', get: -> target)
     Object.defineProperty(event, 'path', get: -> [target])
@@ -179,7 +188,44 @@ exports.keydownEvent = (key, {ctrl, shift, alt, cmd, keyCode, target, location}=
   Object.defineProperty(event, 'which', get: -> keyCode)
   event
 
+# bindingKeystrokes and userKeystrokes are arrays of keystrokes
+# e.g. ['ctrl-y', 'ctrl-x', '^x']
+exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
+  userKeystrokeIndex = -1
+  userKeystrokesHasKeydownEvent = false
+  matchesNextUserKeystroke = (bindingKeystroke) ->
+    while userKeystrokeIndex < userKeystrokes.length - 1
+      userKeystrokeIndex += 1
+      userKeystroke = userKeystrokes[userKeystrokeIndex]
+      isKeydownEvent = not userKeystroke.startsWith('^')
+      userKeystrokesHasKeydownEvent = true if isKeydownEvent
+      if bindingKeystroke is userKeystroke
+        return true
+      else if isKeydownEvent
+        return false
+    null
+
+  for bindingKeystroke in bindingKeystrokes
+    doesMatch = matchesNextUserKeystroke(bindingKeystroke)
+    if doesMatch is false
+      return false
+    else if doesMatch is null
+      # Make sure userKeystrokes with only keyup events doesn't match everything
+      if userKeystrokesHasKeydownEvent
+        return PartialMatch
+      else
+        return false
+
+  # Prevent binding of ['a'] from exact matching a user pattern of ['a', '^a', 'b', '^b']
+  while userKeystrokeIndex < userKeystrokes.length - 1
+    userKeystrokeIndex += 1
+    return false unless userKeystrokes[userKeystrokeIndex].startsWith('^')
+
+  ExactMatch
+
 normalizeKeystroke = (keystroke) ->
+  if isKeyup = keystroke.startsWith('^')
+    keystroke = keystroke.slice(1)
   keys = parseKeystroke(keystroke)
   return false unless keys
 
@@ -196,17 +242,23 @@ normalizeKeystroke = (keystroke) ->
       else
         return false
 
-  modifiers.add('shift') if UpperCaseLetterRegex.test(primaryKey)
-  if modifiers.has('shift') and LowerCaseLetterRegex.test(primaryKey)
-    primaryKey = primaryKey.toUpperCase()
+  if isKeyup
+    primaryKey = primaryKey.toLowerCase() if primaryKey?
+  else
+    modifiers.add('shift') if UpperCaseLetterRegex.test(primaryKey)
+    if modifiers.has('shift') and LowerCaseLetterRegex.test(primaryKey)
+      primaryKey = primaryKey.toUpperCase()
 
   keystroke = []
-  keystroke.push('ctrl') if modifiers.has('ctrl')
-  keystroke.push('alt') if modifiers.has('alt')
-  keystroke.push('shift') if modifiers.has('shift')
-  keystroke.push('cmd') if modifiers.has('cmd')
+  if not isKeyup or (isKeyup and not primaryKey?)
+    keystroke.push('ctrl') if modifiers.has('ctrl')
+    keystroke.push('alt') if modifiers.has('alt')
+    keystroke.push('shift') if modifiers.has('shift')
+    keystroke.push('cmd') if modifiers.has('cmd')
   keystroke.push(primaryKey) if primaryKey?
-  keystroke.join('-')
+  keystroke = keystroke.join('-')
+  keystroke = "^#{keystroke}" if isKeyup
+  keystroke
 
 parseKeystroke = (keystroke) ->
   keys = []
@@ -226,7 +278,7 @@ keyForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
   if process.platform in ['linux', 'win32']
     keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
 
-  return null if KeyboardEventModifiers.has(keyIdentifier)
+  return keyIdentifier if KeyboardEventModifiers.has(keyIdentifier)
 
   charCode = charCodeFromKeyIdentifier(keyIdentifier)
 

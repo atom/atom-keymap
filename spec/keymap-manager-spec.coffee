@@ -4,7 +4,7 @@ temp = require 'temp'
 {$$} = require 'space-pencil'
 {appendContent} = require './spec-helper'
 KeymapManager = require '../src/keymap-manager'
-{buildKeydownEvent} = KeymapManager
+{buildKeydownEvent, buildKeyupEvent} = KeymapManager
 
 describe "KeymapManager", ->
   keymapManager = null
@@ -225,9 +225,13 @@ describe "KeymapManager", ->
       describe "when subsequent keystrokes yield an exact match", ->
         it "dispatches the command associated with the matched multi-keystroke binding", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('i', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: editor))
           expect(events).toEqual ['viva!']
 
       describe "when subsequent keystrokes yield no matches", ->
@@ -335,6 +339,74 @@ describe "KeymapManager", ->
 
           expect(events).toEqual ['input:d', 'input:o', 'dog']
 
+    describe "when the binding specifies a keyup handler", ->
+      [events, elementA] = []
+
+      beforeEach ->
+        elementA = appendContent $$ ->
+          @div class: 'a'
+
+        events = []
+        elementA.addEventListener 'y-command', (e) -> events.push('y-keydown')
+        elementA.addEventListener 'y-command-ctrl-up', (e) -> events.push('y-ctrl-keyup')
+        elementA.addEventListener 'x-command-ctrl-up', (e) -> events.push('x-ctrl-keyup')
+        elementA.addEventListener 'y-command-y-up-ctrl-up', (e) -> events.push('y-up-ctrl-keyup')
+        elementA.addEventListener 'abc-secret-code-command', (e) -> events.push('abc-secret-code')
+
+        keymapManager.add "test",
+          ".a":
+            "ctrl-y": "y-command"
+            "ctrl-y ^ctrl": "y-command-ctrl-up"
+            "ctrl-x ^ctrl": "x-command-ctrl-up"
+            "ctrl-y ^y ^ctrl": "y-command-y-up-ctrl-up"
+            "a b c ^b ^a ^c": "abc-secret-code-command"
+
+      it "dispatches the command when a matching keystroke precedes it", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, cmd: true, shift: true, alt: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['y-up-ctrl-keyup']
+
+      it "dispatches the command when modifier is lifted before the character", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['y-ctrl-keyup']
+
+      it "dispatches the command when extra user-generated keyup events are not specified in the binding", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('x', ctrl: true, target: elementA)) # not specified in binding
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['x-ctrl-keyup']
+
+      it "does _not_ dispatch the command when extra user-generated keydown events are not specified in the binding", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('z', ctrl: true, target: elementA)) # not specified in binding
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['y-keydown']
+
+      it "dispatches the command when multiple keyup keystrokes are specified", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('c', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual []
+
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('c', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['abc-secret-code']
+
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
       keymapManager.add 'test',
@@ -357,9 +429,9 @@ describe "KeymapManager", ->
 
       # Simulate keydown events for the modifier key being pressed on its own
       # prior to the key it is modifying.
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', ctrl: true, target: element))
       keymapManager.handleKeyboardEvent(buildKeydownEvent('a', ctrl: true, target: element))
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', ctrl: true, target: element))
       keymapManager.handleKeyboardEvent(buildKeydownEvent('alt', ctrl: true, target: element))
       keymapManager.handleKeyboardEvent(buildKeydownEvent('b', ctrl: true, alt: true, target: element))
 
@@ -798,6 +870,7 @@ describe "KeymapManager", ->
         "body":
           "ctrl-x 1": "command-1"
           "ctrl-x 2": "command-2"
+          "a c ^c ^a": "command-3"
 
       keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
@@ -806,6 +879,36 @@ describe "KeymapManager", ->
       expect(keystrokes).toBe 'ctrl-x'
       expect(partiallyMatchedBindings).toHaveLength 2
       expect(partiallyMatchedBindings.map ({command}) -> command).toEqual ['command-1', 'command-2']
+      expect(keyboardEventTarget).toBe document.body
+
+    it "emits `matched-partially` when a key binding that contains keyup keystrokes partially matches an event", ->
+      handler = jasmine.createSpy('matched-partially handler')
+      keymapManager.onDidPartiallyMatchBindings handler
+      keymapManager.add "test",
+        "body":
+          "a c ^c ^a": "command-1"
+
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('c', target: document.body))
+      expect(handler).toHaveBeenCalled()
+
+      {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.argsForCall[0][0]
+      expect(keystrokes).toBe 'a'
+
+      {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.argsForCall[1][0]
+      expect(keystrokes).toBe 'a c'
+      expect(partiallyMatchedBindings).toHaveLength 1
+      expect(partiallyMatchedBindings.map ({command}) -> command).toEqual ['command-1']
+      expect(keyboardEventTarget).toBe document.body
+
+      handler.reset()
+      keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: document.body))
+      expect(handler).toHaveBeenCalled()
+
+      {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.argsForCall[0][0]
+      expect(keystrokes).toBe 'a c ^c'
+      expect(partiallyMatchedBindings).toHaveLength 1
+      expect(partiallyMatchedBindings.map ({command}) -> command).toEqual ['command-1']
       expect(keyboardEventTarget).toBe document.body
 
     it "emits `match-failed` when no key bindings match the event", ->
