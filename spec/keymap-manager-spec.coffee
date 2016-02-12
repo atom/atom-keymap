@@ -870,6 +870,7 @@ describe "KeymapManager", ->
         "body":
           "ctrl-x 1": "command-1"
           "ctrl-x 2": "command-2"
+          "a c ^c ^a": "command-3"
 
       keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: document.body))
       expect(handler).toHaveBeenCalled()
@@ -878,6 +879,36 @@ describe "KeymapManager", ->
       expect(keystrokes).toBe 'ctrl-x'
       expect(partiallyMatchedBindings).toHaveLength 2
       expect(partiallyMatchedBindings.map ({command}) -> command).toEqual ['command-1', 'command-2']
+      expect(keyboardEventTarget).toBe document.body
+
+    fit "emits `matched-partially` when a key binding partially matches an event for key bindings that have keyup events", ->
+      handler = jasmine.createSpy('matched-partially handler')
+      keymapManager.onDidPartiallyMatchBindings handler
+      keymapManager.add "test",
+        "body":
+          "a c ^c ^a": "command-1"
+
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('c', target: document.body))
+      expect(handler).toHaveBeenCalled()
+
+      {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.argsForCall[0][0]
+      expect(keystrokes).toBe 'a'
+
+      {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.argsForCall[1][0]
+      expect(keystrokes).toBe 'a c'
+      expect(partiallyMatchedBindings).toHaveLength 1
+      expect(partiallyMatchedBindings.map ({command}) -> command).toEqual ['command-1']
+      expect(keyboardEventTarget).toBe document.body
+
+      handler.reset()
+      keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: document.body))
+      expect(handler).toHaveBeenCalled()
+
+      {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.argsForCall[0][0]
+      expect(keystrokes).toBe 'a c ^c'
+      expect(partiallyMatchedBindings).toHaveLength 1
+      expect(partiallyMatchedBindings.map ({command}) -> command).toEqual ['command-1']
       expect(keyboardEventTarget).toBe document.body
 
     it "emits `match-failed` when no key bindings match the event", ->
