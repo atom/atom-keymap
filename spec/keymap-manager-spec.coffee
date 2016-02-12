@@ -429,9 +429,9 @@ describe "KeymapManager", ->
 
       # Simulate keydown events for the modifier key being pressed on its own
       # prior to the key it is modifying.
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', ctrl: true, target: element))
       keymapManager.handleKeyboardEvent(buildKeydownEvent('a', ctrl: true, target: element))
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', ctrl: true, target: element))
       keymapManager.handleKeyboardEvent(buildKeydownEvent('alt', ctrl: true, target: element))
       keymapManager.handleKeyboardEvent(buildKeydownEvent('b', ctrl: true, alt: true, target: element))
 
