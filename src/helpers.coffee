@@ -153,7 +153,7 @@ exports.keydownEvent = (key, options) ->
 exports.keyupEvent = (key, options) ->
   return exports.keyboardEvent(key, 'keyup', options)
 
-exports.keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
+keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
   event = document.createEvent('KeyboardEvent')
   bubbles = true
   cancelable = true
