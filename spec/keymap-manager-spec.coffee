@@ -358,7 +358,7 @@ describe "KeymapManager", ->
             "ctrl-y": "y-command"
             "ctrl-y ^ctrl": "y-command-ctrl-up"
             "ctrl-x ^ctrl": "x-command-ctrl-up"
-            "ctrl-y ^ctrl-y ^ctrl": "y-command-y-up-ctrl-up"
+            "ctrl-y ^y ^ctrl": "y-command-y-up-ctrl-up"
             "a b c ^b ^a ^c": "abc-secret-code-command"
 
       it "dispatches the command when a matching keystroke precedes it", ->

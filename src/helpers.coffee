@@ -134,6 +134,7 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
     keystroke += '-' if keystroke
     keystroke += key
 
+  keystroke = normalizeKeystroke("^#{keystroke}") if event.type is 'keyup'
   keystroke
 
 exports.characterForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
@@ -233,14 +234,15 @@ normalizeKeystroke = (keystroke) ->
         return false
 
   modifiers.add('shift') if UpperCaseLetterRegex.test(primaryKey)
-  if modifiers.has('shift') and LowerCaseLetterRegex.test(primaryKey)
+  if not isKeyup and modifiers.has('shift') and LowerCaseLetterRegex.test(primaryKey)
     primaryKey = primaryKey.toUpperCase()
 
   keystroke = []
-  keystroke.push('ctrl') if modifiers.has('ctrl')
-  keystroke.push('alt') if modifiers.has('alt')
-  keystroke.push('shift') if modifiers.has('shift')
-  keystroke.push('cmd') if modifiers.has('cmd')
+  if not isKeyup or (isKeyup and not primaryKey?)
+    keystroke.push('ctrl') if modifiers.has('ctrl')
+    keystroke.push('alt') if modifiers.has('alt')
+    keystroke.push('shift') if modifiers.has('shift')
+    keystroke.push('cmd') if modifiers.has('cmd')
   keystroke.push(primaryKey) if primaryKey?
   keystroke = keystroke.join('-')
   keystroke = "^#{keystroke}" if isKeyup

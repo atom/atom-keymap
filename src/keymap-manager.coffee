@@ -411,7 +411,6 @@ class KeymapManager
   # * `event` A `KeyboardEvent` of type 'keydown'
   handleKeyboardEvent: (event) ->
     keystroke = @keystrokeForKeyboardEvent(event)
-    keystroke = "^#{keystroke}" if event.type is 'keyup'
 
     if event.type isnt 'keyup' and @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
       event.preventDefault()
