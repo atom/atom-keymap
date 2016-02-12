@@ -881,7 +881,7 @@ describe "KeymapManager", ->
       expect(partiallyMatchedBindings.map ({command}) -> command).toEqual ['command-1', 'command-2']
       expect(keyboardEventTarget).toBe document.body
 
-    fit "emits `matched-partially` when a key binding partially matches an event for key bindings that have keyup events", ->
+    it "emits `matched-partially` when a key binding partially matches an event for key bindings that have keyup events", ->
       handler = jasmine.createSpy('matched-partially handler')
       keymapManager.onDidPartiallyMatchBindings handler
       keymapManager.add "test",
