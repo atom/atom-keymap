@@ -189,7 +189,7 @@ keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, locati
   event
 
 # bindingKeystrokes and userKeystrokes are arrays of keystrokes
-# e.g. ['crtl-y', 'ctrl-x', '^x']
+# e.g. ['ctrl-y', 'ctrl-x', '^x']
 exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
   userKeystrokeIndex = -1
   userKeystrokesHasKeydownEvent = false
