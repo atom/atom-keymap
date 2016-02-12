@@ -148,10 +148,10 @@ exports.isAtomModifier = (keystroke) ->
   AtomModifiers.has(keystroke) or AtomModifierRegex.test(keystroke)
 
 exports.keydownEvent = (key, options) ->
-  return exports.keyboardEvent(key, 'keydown', options)
+  return keyboardEvent(key, 'keydown', options)
 
 exports.keyupEvent = (key, options) ->
-  return exports.keyboardEvent(key, 'keyup', options)
+  return keyboardEvent(key, 'keyup', options)
 
 keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
   event = document.createEvent('KeyboardEvent')
