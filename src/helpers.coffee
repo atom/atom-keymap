@@ -191,13 +191,16 @@ exports.keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target
 # bindingKeystrokes and userKeystrokes are arrays of keystrokes
 exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
   userKeystrokeIndex = -1
+  userKeystrokesHasKeydownEvent = false
   matchesNextStroke = (stroke) ->
     while userKeystrokeIndex < userKeystrokes.length - 1
       userKeystrokeIndex += 1
       userKeystroke = userKeystrokes[userKeystrokeIndex]
+      isKeydownEvent = not userKeystroke.startsWith('^')
+      userKeystrokesHasKeydownEvent = true if isKeydownEvent
       if stroke is userKeystroke
         return true
-      else unless userKeystroke.startsWith('^')
+      else if isKeydownEvent
         return false
     null
 
@@ -206,7 +209,11 @@ exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
     if doesMatch is false
       return false
     else if doesMatch is null
-      return PartialMatch
+      # If there are only keyup events, it will partial match everything :/
+      if userKeystrokesHasKeydownEvent
+        return PartialMatch
+      else
+        return false
 
   while userKeystrokeIndex < userKeystrokes.length - 1
     userKeystrokeIndex += 1

@@ -46,6 +46,7 @@ describe ".keystrokesMatch(bindingKeystrokes, userKeystrokes)", ->
     expect(keystrokesMatch(['a', 'c'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
     expect(keystrokesMatch(['a', 'b', '^d'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
     expect(keystrokesMatch(['a', 'd', '^d'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
+    expect(keystrokesMatch(['a', 'd', '^d'], ['^c'])).toBe false
 
   it "returns 'partial' for partial matches", ->
     expect(keystrokesMatch(['a', 'b', 'c'], ['a'])).toBe 'partial'
