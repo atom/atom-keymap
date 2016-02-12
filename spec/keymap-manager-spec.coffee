@@ -363,7 +363,7 @@ describe "KeymapManager", ->
 
       it "dispatches the command when a matching keystroke precedes it", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, cmd: true, shift: true, alt: true, target: elementA))
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
         advanceClock(keymapManager.getPartialMatchTimeout())
         expect(events).toEqual ['y-up-ctrl-keyup']
