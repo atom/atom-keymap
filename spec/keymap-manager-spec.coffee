@@ -359,20 +359,39 @@ describe "KeymapManager", ->
             "ctrl-y ^ctrl": "y-command-ctrl-up"
             "ctrl-x ^ctrl": "x-command-ctrl-up"
             "ctrl-y ^y ^ctrl": "y-command-y-up-ctrl-up"
+            "a": "a-command"
             "a b c ^b ^a ^c": "abc-secret-code-command"
+
+      it "dispatches the command for a binding containing only keydown events immediately even when there is a corresponding multi-stroke binding that contains only other keyup events", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
 
       it "dispatches the command when a matching keystroke precedes it", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, cmd: true, shift: true, alt: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
         advanceClock(keymapManager.getPartialMatchTimeout())
-        expect(events).toEqual ['y-up-ctrl-keyup']
+        expect(events).toEqual ['y-keydown', 'y-up-ctrl-keyup']
+
+      it "dispatches the command multiple times when keydown is pressed", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown', 'y-keydown']
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['y-keydown', 'y-keydown']
 
       it "dispatches the command when modifier is lifted before the character", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        expect(events).toEqual ['y-keydown', 'y-ctrl-keyup']
         advanceClock(keymapManager.getPartialMatchTimeout())
-        expect(events).toEqual ['y-ctrl-keyup']
+        expect(events).toEqual ['y-keydown', 'y-ctrl-keyup']
 
       it "dispatches the command when extra user-generated keyup events are not specified in the binding", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementA))
@@ -383,7 +402,9 @@ describe "KeymapManager", ->
 
       it "does _not_ dispatch the command when extra user-generated keydown events are not specified in the binding", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeydownEvent('z', ctrl: true, target: elementA)) # not specified in binding
+        expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
         advanceClock(keymapManager.getPartialMatchTimeout())
         expect(events).toEqual ['y-keydown']
@@ -406,6 +427,15 @@ describe "KeymapManager", ->
         keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: elementA))
         advanceClock(keymapManager.getPartialMatchTimeout())
         expect(events).toEqual ['abc-secret-code']
+
+      it "dispatches the command when multiple keyup keystrokes are specified", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: elementA))
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual []
 
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
