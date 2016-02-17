@@ -409,26 +409,50 @@ class KeymapManager
   # target is `.defaultTarget` if that property is assigned on the keymap.
   #
   # * `event` A `KeyboardEvent` of type 'keydown'
-  handleKeyboardEvent: (event) ->
+  handleKeyboardEvent: (event, isReplay) ->
+    eventResult = @_handleKeyboardEvent(event, @queuedKeystrokes)
+    return unless eventResult?
+    {keystroke, queuedKeystrokes, exactMatch, partialMatches} = eventResult
+
+    hasPartialMatches = partialMatches? and partialMatches.length > 0
+
+    @queuedKeystrokes.push(keystroke)
+    @queuedKeyboardEvents.push(event)
+
+    if queuedKeystrokes?
+      if hasPartialMatches
+        enableTimeout = (
+          @pendingStateTimeoutHandle? or
+          exactMatch? or
+          characterForKeyboardEvent(@queuedKeyboardEvents[0])?
+        )
+        enableTimeout = false if isReplay
+        @enterPendingState(partialMatches, enableTimeout)
+    else if not exactMatch? and not hasPartialMatches and @pendingPartialMatches?
+      @terminatePendingState()
+    else
+      @clearQueuedKeystrokes()
+
+  _handleKeyboardEvent: (event, queuedKeystrokes=[]) ->
     keystroke = @keystrokeForKeyboardEvent(event)
 
-    if event.type isnt 'keyup' and @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
+    if event.type isnt 'keyup' and queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
       event.preventDefault()
       return
-
-    @queuedKeyboardEvents.push(event)
-    @queuedKeystrokes.push(keystroke)
-    keystrokes = @queuedKeystrokes.join(' ')
 
     # If the event's target is document.body, assign it to defaultTarget instead
     # to provide a catch-all element when nothing is focused.
     target = event.target
     target = @defaultTarget if event.target is document.body and @defaultTarget?
 
+    queuedKeystrokes = queuedKeystrokes.concat([keystroke])
+    keystrokes = queuedKeystrokes.join(' ')
+
     # First screen for any bindings that match the current keystrokes,
     # regardless of their current selector. Matching strings is cheaper than
     # matching selectors.
-    {partialMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes)
+    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(queuedKeystrokes)
+    exactMatch = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
     # Determine if the current keystrokes match any bindings *exactly*. If we
@@ -438,33 +462,39 @@ class KeymapManager
     # state with a timeout.
     if exactMatchCandidates.length > 0
       currentTarget = target
-      while currentTarget? and currentTarget isnt document
+      while not event.handled and currentTarget? and currentTarget isnt document
         exactMatches = @findExactMatches(exactMatchCandidates, currentTarget)
-        for exactMatch in exactMatches
-          if exactMatch.command is 'native!'
-            @clearQueuedKeystrokes()
-            return
+        for exactMatchCandidate in exactMatches
+          if exactMatchCandidate.command is 'native!'
+            return {keystroke, queuedKeystrokes: null}
 
-          if exactMatch.command is 'abort!'
-            @clearQueuedKeystrokes()
+          if exactMatchCandidate.command is 'abort!'
             event.preventDefault()
-            return
+            return {keystroke, queuedKeystrokes: null}
 
-          if exactMatch.command is 'unset!'
+          if exactMatchCandidate.command is 'unset!'
             break
 
-          foundMatch = true
-          break if partialMatches.length > 0
-          @clearQueuedKeystrokes()
-          @cancelPendingState()
-          if @dispatchCommandEvent(exactMatch.command, target, event)
+          exactMatch = exactMatchCandidate
+          if partialMatches.length > 0
+            allPartialMatchesContainKeyupRemainder = true
+            for partialMatch in partialMatches
+              if keydownExactMatchCandidates.indexOf(partialMatch) < 0
+                allPartialMatchesContainKeyupRemainder = false
+            break if allPartialMatchesContainKeyupRemainder is false
+          else
+            queuedKeystrokes = null
+
+          if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
+            console.log '..dispatching', keystrokes
             @emitter.emit 'did-match-binding', {
               keystrokes,
               eventType: event.type,
-              binding: exactMatch,
+              binding: exactMatchCandidate,
               keyboardEventTarget: target
             }
-            return
+            event.handled = true
+            break
         currentTarget = currentTarget.parentElement
 
     # If we're at this point in the method, we either found no matches for the
@@ -474,36 +504,30 @@ class KeymapManager
     # keystroke.
     if partialMatches.length > 0
       event.preventDefault()
-      enableTimeout = (
-        @pendingStateTimeoutHandle? or
-        foundMatch or
-        characterForKeyboardEvent(@queuedKeyboardEvents[0])?
-      )
-
-      @enterPendingState(partialMatches, enableTimeout)
       @emitter.emit 'did-partially-match-binding', {
         keystrokes,
         eventType: event.type,
         partiallyMatchedBindings: partialMatches,
         keyboardEventTarget: target
       }
-    else
+    else if exactMatch is null
       @emitter.emit 'did-fail-to-match-binding', {
         keystrokes,
         eventType: event.type,
         keyboardEventTarget: target
       }
-      if @pendingPartialMatches?
-        @terminatePendingState()
-      else
-        # Some of the queued keyboard events might have inserted characters had
-        # we not prevented their default action. If we're replaying a keystroke
-        # whose default action was prevented and no binding is matched, we'll
-        # simulate the text input event that was previously prevented to insert
-        # the missing characters.
-        @simulateTextInput(event) if event.defaultPrevented
+      # Some of the queued keyboard events might have inserted characters had
+      # we not prevented their default action. If we're replaying a keystroke
+      # whose default action was prevented and no binding is matched, we'll
+      # simulate the text input event that was previously prevented to insert
+      # the missing characters.
+      if event.defaultPrevented
+        @simulateTextInput(event)
+        console.log 'simulate', keystroke
+      queuedKeystrokes = null
 
-        @clearQueuedKeystrokes()
+    return {keystroke, exactMatch, partialMatches, queuedKeystrokes}
+
 
   # Public: Translate a keydown event to a keystroke string.
   #
@@ -538,6 +562,7 @@ class KeymapManager
   findMatchCandidates: (keystrokeArray) ->
     partialMatchCandidates = []
     exactMatchCandidates = []
+    keydownExactMatchCandidates = []
 
     for binding in @keyBindings when binding.enabled
       doesMatch = keystrokesMatch(binding.keystrokeArray, keystrokeArray)
@@ -545,7 +570,10 @@ class KeymapManager
         exactMatchCandidates.push(binding)
       else if doesMatch is 'partial'
         partialMatchCandidates.push(binding)
-    {partialMatchCandidates, exactMatchCandidates}
+      else if doesMatch is 'keydownExact'
+        partialMatchCandidates.push(binding)
+        keydownExactMatchCandidates.push(binding)
+    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates}
 
   # Determine which of the given bindings have selectors matching the target or
   # one of its ancestors. This is used by {::handleKeyboardEvent} to determine
