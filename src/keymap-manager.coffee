@@ -419,15 +419,14 @@ class KeymapManager
     @queuedKeystrokes.push(keystroke)
     @queuedKeyboardEvents.push(event)
 
-    if queuedKeystrokes?
-      if hasPartialMatches
-        enableTimeout = (
-          @pendingStateTimeoutHandle? or
-          exactMatch? or
-          characterForKeyboardEvent(@queuedKeyboardEvents[0])?
-        )
-        enableTimeout = false if isReplay
-        @enterPendingState(partialMatches, enableTimeout)
+    if queuedKeystrokes? and hasPartialMatches
+      enableTimeout = (
+        @pendingStateTimeoutHandle? or
+        exactMatch? or
+        characterForKeyboardEvent(@queuedKeyboardEvents[0])?
+      )
+      enableTimeout = false if isReplay
+      @enterPendingState(partialMatches, enableTimeout)
     else if not exactMatch? and not hasPartialMatches and @pendingPartialMatches?
       @terminatePendingState()
     else
