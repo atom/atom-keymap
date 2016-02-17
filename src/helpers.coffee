@@ -224,10 +224,7 @@ exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
     if isPartialMatch
       bindingRemainderContainsOnlyKeyups = false unless bindingKeystroke.startsWith('^')
 
-  # Prevent binding of ['a'] from exact matching a user pattern of ['a', '^a', 'b', '^b']
-  while userKeystrokeIndex < userKeystrokes.length - 1
-    userKeystrokeIndex += 1
-    return false unless userKeystrokes[userKeystrokeIndex].startsWith('^')
+  return false if userKeystrokeIndex < userKeystrokes.length - 1
 
   if isPartialMatch and bindingRemainderContainsOnlyKeyups
     KeydownExactMatch
