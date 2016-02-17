@@ -478,6 +478,9 @@ class KeymapManager
 
           exactMatch = exactMatchCandidate
           if partialMatches.length > 0
+            # When there is a set of bindings like `'ctrl-y', 'ctrl-y ^ctrl'`,
+            # and a `ctrl-y` comes in, this will allow the `ctrl-y` command to be
+            # dispatched without waiting for any other keystrokes
             allPartialMatchesContainKeyupRemainder = true
             for partialMatch in partialMatches
               if keydownExactMatchCandidates.indexOf(partialMatch) < 0
@@ -493,7 +496,7 @@ class KeymapManager
               binding: exactMatchCandidate,
               keyboardEventTarget: target
             }
-            event.handled = true
+            event.handled = true # Kicks it out of the parent loop
             break
         currentTarget = currentTarget.parentElement
 
