@@ -54,3 +54,6 @@ describe ".keystrokesMatch(bindingKeystrokes, userKeystrokes)", ->
     expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b'])).toBe 'partial'
     expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b'])).toBe 'partial'
     expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'd', '^d'])).toBe false
+
+  it "returns 'keydownExact' for bindings that match and contain a remainder of only keyup events", ->
+    expect(keystrokesMatch(['a', 'b', '^b'], ['a', 'b'])).toBe 'keydownExact'
