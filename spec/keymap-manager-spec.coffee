@@ -271,14 +271,18 @@ describe "KeymapManager", ->
 
           events = []
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('i', target: editor))
           expect(events).toEqual []
           advanceClock(keymapManager.getPartialMatchTimeout())
           expect(events).toEqual ['enter-visual-mode', 'input:i']
 
           events = []
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('i', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
           expect(events).toEqual []
           advanceClock(keymapManager.getPartialMatchTimeout())

@@ -519,7 +519,7 @@ class KeymapManager
       # whose default action was prevented and no binding is matched, we'll
       # simulate the text input event that was previously prevented to insert
       # the missing characters.
-      @simulateTextInput(event) if event.defaultPrevented
+      @simulateTextInput(event) if event.defaultPrevented and event.type is 'keydown'
       queuedKeystrokes = null
 
     return {keystroke, exactMatch, partialMatches, queuedKeystrokes}
