@@ -527,7 +527,7 @@ class KeymapManager
       @simulateTextInput(event) if event.defaultPrevented and event.type is 'keydown'
       queuedKeystrokes = null
 
-    return {keystroke, exactMatch, partialMatches, queuedKeystrokes}
+    {keystroke, exactMatch, partialMatches, queuedKeystrokes}
 
 
   # Public: Translate a keydown event to a keystroke string.
