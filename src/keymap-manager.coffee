@@ -432,6 +432,8 @@ class KeymapManager
     else
       @clearQueuedKeystrokes()
 
+  # This function does not set any state. State is handled in the
+  # `handleKeyboardEvent` function.
   _handleKeyboardEvent: (event, queuedKeystrokes=[]) ->
     keystroke = @keystrokeForKeyboardEvent(event)
 
