@@ -486,7 +486,6 @@ class KeymapManager
             queuedKeystrokes = null
 
           if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
-            console.log '..dispatching', keystrokes
             @emitter.emit 'did-match-binding', {
               keystrokes,
               eventType: event.type,
@@ -523,7 +522,6 @@ class KeymapManager
       # the missing characters.
       if event.defaultPrevented
         @simulateTextInput(event)
-        console.log 'simulate', keystroke
       queuedKeystrokes = null
 
     return {keystroke, exactMatch, partialMatches, queuedKeystrokes}
