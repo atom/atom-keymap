@@ -363,7 +363,6 @@ describe "KeymapManager", ->
             "ctrl-y ^ctrl": "y-command-ctrl-up"
             "ctrl-x ^ctrl": "x-command-ctrl-up"
             "ctrl-y ^y ^ctrl": "y-command-y-up-ctrl-up"
-            "a": "a-command"
             "a b c ^b ^a ^c": "abc-secret-code-command"
 
       it "dispatches the command for a binding containing only keydown events immediately even when there is a corresponding multi-stroke binding that contains only other keyup events", ->
@@ -431,15 +430,6 @@ describe "KeymapManager", ->
         keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: elementA))
         advanceClock(keymapManager.getPartialMatchTimeout())
         expect(events).toEqual ['abc-secret-code']
-
-      it "dispatches the command when multiple keyup keystrokes are specified", ->
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: elementA))
-        advanceClock(keymapManager.getPartialMatchTimeout())
-        advanceClock(keymapManager.getPartialMatchTimeout())
-        advanceClock(keymapManager.getPartialMatchTimeout())
-        advanceClock(keymapManager.getPartialMatchTimeout())
-        expect(events).toEqual []
 
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
