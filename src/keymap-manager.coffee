@@ -626,6 +626,13 @@ class KeymapManager
   # It disables the longest of the pending partially matching bindings, then
   # replays the queued keyboard events to allow any bindings with shorter
   # keystroke sequences to be matched unambiguously.
+  #
+  # Note that replaying events has a recursive behavior. Replaying will set
+  # member state (e.g. @queuedKeyboardEvents) just like real events, and will
+  # likely result in another call this function. The replay process will
+  # potentially replay the events (or a subset of events) several times, while
+  # disabling bindings here and there. See any spec that handles multiple
+  # keystrokes failures to match a binding.
   terminatePendingState: (fromTimeout) ->
     bindingsToDisable = @pendingPartialMatches
     eventsToReplay = @queuedKeyboardEvents
