@@ -378,7 +378,7 @@ describe "KeymapManager", ->
         advanceClock(keymapManager.getPartialMatchTimeout())
         expect(events).toEqual ['y-keydown', 'y-up-ctrl-keyup']
 
-      it "dispatches the command multiple times when keydown is pressed", ->
+      it "dispatches the command multiple times when multiple keydown events for the binding come in before the binding with a keyup handler", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
         expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, target: elementA))
@@ -388,7 +388,7 @@ describe "KeymapManager", ->
         advanceClock(keymapManager.getPartialMatchTimeout())
         expect(events).toEqual ['y-keydown', 'y-keydown']
 
-      it "dispatches the command when modifier is lifted before the character", ->
+      it "dispatches the command when the modifier is lifted before the character", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
         expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
