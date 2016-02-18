@@ -640,11 +640,11 @@ class KeymapManager
     @cancelPendingState()
     @clearQueuedKeystrokes()
 
-    binding.enabled = false for binding in bindingsToDisable if bindingsToDisable?
+    binding.enabled = false for binding in bindingsToDisable
     for event in eventsToReplay
       @handleKeyboardEvent(event, true)
       if bindingsToDisable? and not @pendingPartialMatches?
-        binding.enabled = true for binding in bindingsToDisable if bindingsToDisable?
+        binding.enabled = true for binding in bindingsToDisable
         bindingsToDisable = null
 
     atom?.assert(not bindingsToDisable?, "Invalid keymap state")
