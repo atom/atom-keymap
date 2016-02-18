@@ -626,7 +626,7 @@ class KeymapManager
   # It disables the longest of the pending partially matching bindings, then
   # replays the queued keyboard events to allow any bindings with shorter
   # keystroke sequences to be matched unambiguously.
-  terminatePendingState: (timeout) ->
+  terminatePendingState: (fromTimeout) ->
     bindingsToDisable = @pendingPartialMatches
     eventsToReplay = @queuedKeyboardEvents
 
@@ -650,7 +650,7 @@ class KeymapManager
 
     atom?.assert(not bindingsToDisable?, "Invalid keymap state")
 
-    if timeout and @pendingPartialMatches?
+    if fromTimeout and @pendingPartialMatches?
       @terminatePendingState(true)
 
     return
