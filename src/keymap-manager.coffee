@@ -410,8 +410,8 @@ class KeymapManager
   # target is `.defaultTarget` if that property is assigned on the keymap.
   #
   # * `event` A `KeyboardEvent` of type 'keydown'
-  handleKeyboardEvent: (event, isReplay) ->
-    eventResult = @_handleKeyboardEvent(event, @queuedKeystrokes)
+  handleKeyboardEvent: (event, {replay, disabledBindings}={}) ->
+    eventResult = @_handleKeyboardEvent(event, @queuedKeystrokes, disabledBindings)
     return unless eventResult?
     {keystroke, dispatchedBinding, queuedKeystrokes, exactMatch, partialMatches} = eventResult
 
@@ -427,7 +427,7 @@ class KeymapManager
         exactMatch? or
         characterForKeyboardEvent(@queuedKeyboardEvents[0])?
       )
-      enableTimeout = false if isReplay
+      enableTimeout = false if replay
       @enterPendingState(partialMatches, enableTimeout)
     else if not exactMatch? and not hasPartialMatches and @pendingPartialMatches?
       @terminatePendingState()
@@ -436,7 +436,7 @@ class KeymapManager
 
   # This function does not set any state. State is handled in the
   # `handleKeyboardEvent` function.
-  _handleKeyboardEvent: (event, queuedKeystrokes=[]) ->
+  _handleKeyboardEvent: (event, queuedKeystrokes=[], disabledBindings) ->
     keystroke = @keystrokeForKeyboardEvent(event)
 
     if event.type isnt 'keyup' and queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
@@ -454,7 +454,7 @@ class KeymapManager
     # First screen for any bindings that match the current keystrokes,
     # regardless of their current selector. Matching strings is cheaper than
     # matching selectors.
-    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(queuedKeystrokes)
+    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(queuedKeystrokes, disabledBindings)
     exactMatch = null
     dispatchedBinding = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
@@ -565,12 +565,13 @@ class KeymapManager
 
   # Finds all key bindings whose keystrokes match the given keystrokes. Returns
   # both partial and exact matches.
-  findMatchCandidates: (keystrokeArray) ->
+  findMatchCandidates: (keystrokeArray, disabledBindings) ->
     partialMatchCandidates = []
     exactMatchCandidates = []
     keydownExactMatchCandidates = []
+    disabledBindingSet = new Set(disabledBindings)
 
-    for binding in @keyBindings when binding.enabled
+    for binding in @keyBindings when not disabledBindingSet.has(binding)
       doesMatch = keystrokesMatch(binding.keystrokeArray, keystrokeArray)
       if doesMatch is 'exact'
         exactMatchCandidates.push(binding)
@@ -646,14 +647,16 @@ class KeymapManager
     @cancelPendingState()
     @clearQueuedKeystrokes()
 
-    binding.enabled = false for binding in bindingsToDisable
-    for event in eventsToReplay
-      @handleKeyboardEvent(event, true)
-      if bindingsToDisable? and not @pendingPartialMatches?
-        binding.enabled = true for binding in bindingsToDisable
-        bindingsToDisable = null
+    keyEventOptions =
+      replay: true
+      disabledBindings: bindingsToDisable
 
-    binding.enabled = true for binding in bindingsToDisable if bindingsToDisable?
+    for event in eventsToReplay
+      keyEventOptions.disabledBindings = bindingsToDisable
+      @handleKeyboardEvent(event, keyEventOptions)
+
+      # We can safely re-enable the bindings when we no longer have any partial matches
+      bindingsToDisable = null if bindingsToDisable? and not @pendingPartialMatches?
 
     if fromTimeout and @pendingPartialMatches?
       @terminatePendingState(true)
