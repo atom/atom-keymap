@@ -119,6 +119,7 @@ class KeymapManager
     @keyBindings = []
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
+    @bindingsToDisable = []
 
   # Public: Unwatch all watched paths.
   destroy: ->
@@ -412,12 +413,13 @@ class KeymapManager
   handleKeyboardEvent: (event, isReplay) ->
     eventResult = @_handleKeyboardEvent(event, @queuedKeystrokes)
     return unless eventResult?
-    {keystroke, queuedKeystrokes, exactMatch, partialMatches} = eventResult
+    {keystroke, dispatchedBinding, queuedKeystrokes, exactMatch, partialMatches} = eventResult
 
     hasPartialMatches = partialMatches? and partialMatches.length > 0
 
     @queuedKeystrokes.push(keystroke)
     @queuedKeyboardEvents.push(event)
+    @bindingsToDisable.push(dispatchedBinding) if dispatchedBinding
 
     if queuedKeystrokes? and hasPartialMatches
       enableTimeout = (
@@ -454,6 +456,7 @@ class KeymapManager
     # matching selectors.
     {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(queuedKeystrokes)
     exactMatch = null
+    dispatchedBinding = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
     # Determine if the current keystrokes match any bindings *exactly*. If we
@@ -463,7 +466,8 @@ class KeymapManager
     # state with a timeout.
     if exactMatchCandidates.length > 0
       currentTarget = target
-      while not event.handled and currentTarget? and currentTarget isnt document
+      eventHandled = false
+      while not eventHandled and currentTarget? and currentTarget isnt document
         exactMatches = @findExactMatches(exactMatchCandidates, currentTarget)
         for exactMatchCandidate in exactMatches
           if exactMatchCandidate.command is 'native!'
@@ -496,7 +500,8 @@ class KeymapManager
               binding: exactMatchCandidate,
               keyboardEventTarget: target
             }
-            event.handled = true # Kicks it out of the parent loop
+            eventHandled = true # Kicks it out of the parent loop
+            dispatchedBinding = exactMatchCandidate
             break
         currentTarget = currentTarget.parentElement
 
@@ -527,7 +532,7 @@ class KeymapManager
       @simulateTextInput(event) if event.defaultPrevented and event.type is 'keydown'
       queuedKeystrokes = null
 
-    {keystroke, exactMatch, partialMatches, queuedKeystrokes}
+    {keystroke, dispatchedBinding, exactMatch, partialMatches, queuedKeystrokes}
 
 
   # Public: Translate a keydown event to a keystroke string.
@@ -609,6 +614,7 @@ class KeymapManager
   clearQueuedKeystrokes: ->
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
+    @bindingsToDisable = []
 
   enterPendingState: (pendingPartialMatches, enableTimeout) ->
     @cancelPendingState() if @pendingStateTimeoutHandle?
@@ -634,7 +640,7 @@ class KeymapManager
   # disabling bindings here and there. See any spec that handles multiple
   # keystrokes failures to match a binding.
   terminatePendingState: (fromTimeout) ->
-    bindingsToDisable = @pendingPartialMatches
+    bindingsToDisable = @pendingPartialMatches.concat(@bindingsToDisable)
     eventsToReplay = @queuedKeyboardEvents
 
     @cancelPendingState()
