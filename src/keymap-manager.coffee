@@ -647,8 +647,6 @@ class KeymapManager
         binding.enabled = true for binding in bindingsToDisable
         bindingsToDisable = null
 
-    atom?.assert(not bindingsToDisable?, "Invalid keymap state")
-
     binding.enabled = true for binding in bindingsToDisable if bindingsToDisable?
 
     if fromTimeout and @pendingPartialMatches?
