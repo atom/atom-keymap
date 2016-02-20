@@ -421,7 +421,6 @@ class KeymapManager
     @queuedKeystrokes.push(keystroke)
     @queuedKeyboardEvents.push(event)
     keystrokes = @queuedKeystrokes.join(' ')
-    shouldUsePartialMatches = true
 
     # If the event's target is document.body, assign it to defaultTarget instead
     # to provide a catch-all element when nothing is focused.
@@ -435,6 +434,7 @@ class KeymapManager
     dispatchedExactMatch = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
     hasPartialMatches = partialMatches.length > 0
+    shouldUsePartialMatches = hasPartialMatches
 
     # Determine if the current keystrokes match any bindings *exactly*. If we
     # do find and exact match, the next step depends on whether we have any
@@ -449,7 +449,8 @@ class KeymapManager
         for exactMatchCandidate in exactMatches
           if exactMatchCandidate.command is 'native!'
             shouldUsePartialMatches = false
-            eventHandled = true # Kicks it out of the parent loop
+            # `break` breaks out of this loop, `eventHandled = true` breaks out of the parent loop
+            eventHandled = true
             break
 
           if exactMatchCandidate.command is 'abort!'
@@ -473,20 +474,29 @@ class KeymapManager
             shouldUsePartialMatches = false
 
           if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
-            @emitter.emit 'did-match-binding', {
-              keystrokes,
-              eventType: event.type,
-              binding: exactMatchCandidate,
-              keyboardEventTarget: target
-            }
             dispatchedExactMatch = exactMatchCandidate
-            eventHandled = true # Kicks it out of the parent loop
+            eventHandled = true
             break
         currentTarget = currentTarget.parentElement
 
-    @bindingsToDisable.push(dispatchedExactMatch) if dispatchedExactMatch
+    # Emit events. These are done on their own for clarity.
 
-    if not dispatchedExactMatch? and not hasPartialMatches
+    if dispatchedExactMatch?
+      @emitter.emit 'did-match-binding', {
+        keystrokes,
+        eventType: event.type,
+        binding: dispatchedExactMatch,
+        keyboardEventTarget: target
+      }
+    else if hasPartialMatches and shouldUsePartialMatches
+      event.preventDefault()
+      @emitter.emit 'did-partially-match-binding', {
+        keystrokes,
+        eventType: event.type,
+        partiallyMatchedBindings: partialMatches,
+        keyboardEventTarget: target
+      }
+    else if not dispatchedExactMatch? and not hasPartialMatches
       @emitter.emit 'did-fail-to-match-binding', {
         keystrokes,
         eventType: event.type,
@@ -499,9 +509,10 @@ class KeymapManager
       # the missing characters.
       @simulateTextInput(event) if event.defaultPrevented and event.type is 'keydown'
 
-    if hasPartialMatches and shouldUsePartialMatches
-      event.preventDefault()
+    # Manage the keystroke queue state. State is updated separately for clarity.
 
+    @bindingsToDisable.push(dispatchedExactMatch) if dispatchedExactMatch
+    if hasPartialMatches and shouldUsePartialMatches
       enableTimeout = (
         @pendingStateTimeoutHandle? or
         dispatchedExactMatch? or
@@ -509,17 +520,10 @@ class KeymapManager
       )
       enableTimeout = false if replay
       @enterPendingState(partialMatches, enableTimeout)
-
-      @emitter.emit 'did-partially-match-binding', {
-        keystrokes,
-        eventType: event.type,
-        partiallyMatchedBindings: partialMatches,
-        keyboardEventTarget: target
-      }
     else if not dispatchedExactMatch? and not hasPartialMatches and @pendingPartialMatches?
       # There are partial matches from a previous event, but none from this
       # event. This means the current event has removed any hope that the queued
-      # key events will ever match anything. So we will clear the state and
+      # key events will ever match any binding. So we will clear the state and
       # start over after replaying the events in `terminatePendingState`.
       @terminatePendingState()
     else
