@@ -411,53 +411,30 @@ class KeymapManager
   #
   # * `event` A `KeyboardEvent` of type 'keydown'
   handleKeyboardEvent: (event, {replay, disabledBindings}={}) ->
-    eventResult = @_handleKeyboardEvent(event, @queuedKeystrokes, disabledBindings)
-    return unless eventResult?
-    {keystroke, dispatchedBinding, queuedKeystrokes, exactMatch, partialMatches} = eventResult
+    keystroke = @keystrokeForKeyboardEvent(event)
 
-    hasPartialMatches = partialMatches? and partialMatches.length > 0
+    # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
+    if event.type is 'keydown' and @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
+      event.preventDefault()
+      return
 
     @queuedKeystrokes.push(keystroke)
     @queuedKeyboardEvents.push(event)
-    @bindingsToDisable.push(dispatchedBinding) if dispatchedBinding
-
-    if queuedKeystrokes? and hasPartialMatches
-      enableTimeout = (
-        @pendingStateTimeoutHandle? or
-        exactMatch? or
-        characterForKeyboardEvent(@queuedKeyboardEvents[0])?
-      )
-      enableTimeout = false if replay
-      @enterPendingState(partialMatches, enableTimeout)
-    else if not exactMatch? and not hasPartialMatches and @pendingPartialMatches?
-      @terminatePendingState()
-    else
-      @clearQueuedKeystrokes()
-
-  # This function does not set any state. State is handled in the
-  # `handleKeyboardEvent` function.
-  _handleKeyboardEvent: (event, queuedKeystrokes=[], disabledBindings) ->
-    keystroke = @keystrokeForKeyboardEvent(event)
-
-    if event.type isnt 'keyup' and queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
-      event.preventDefault()
-      return
+    keystrokes = @queuedKeystrokes.join(' ')
+    shouldUsePartialMatches = true
 
     # If the event's target is document.body, assign it to defaultTarget instead
     # to provide a catch-all element when nothing is focused.
     target = event.target
     target = @defaultTarget if event.target is document.body and @defaultTarget?
 
-    queuedKeystrokes = queuedKeystrokes.concat([keystroke])
-    keystrokes = queuedKeystrokes.join(' ')
-
     # First screen for any bindings that match the current keystrokes,
     # regardless of their current selector. Matching strings is cheaper than
     # matching selectors.
-    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(queuedKeystrokes, disabledBindings)
-    exactMatch = null
-    dispatchedBinding = null
+    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, disabledBindings)
+    dispatchedExactMatch = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
+    hasPartialMatches = partialMatches.length > 0
 
     # Determine if the current keystrokes match any bindings *exactly*. If we
     # do find and exact match, the next step depends on whether we have any
@@ -471,17 +448,19 @@ class KeymapManager
         exactMatches = @findExactMatches(exactMatchCandidates, currentTarget)
         for exactMatchCandidate in exactMatches
           if exactMatchCandidate.command is 'native!'
-            return {keystroke, queuedKeystrokes: null}
+            shouldUsePartialMatches = false
+            eventHandled = true # Kicks it out of the parent loop
+            break
 
           if exactMatchCandidate.command is 'abort!'
             event.preventDefault()
-            return {keystroke, queuedKeystrokes: null}
+            eventHandled = true
+            break
 
           if exactMatchCandidate.command is 'unset!'
             break
 
-          exactMatch = exactMatchCandidate
-          if partialMatches.length > 0
+          if hasPartialMatches
             # When there is a set of bindings like `'ctrl-y', 'ctrl-y ^ctrl'`,
             # and a `ctrl-y` comes in, this will allow the `ctrl-y` command to be
             # dispatched without waiting for any other keystrokes
@@ -491,7 +470,7 @@ class KeymapManager
                 allPartialMatchesContainKeyupRemainder = false
             break if allPartialMatchesContainKeyupRemainder is false
           else
-            queuedKeystrokes = null
+            shouldUsePartialMatches = false
 
           if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
             @emitter.emit 'did-match-binding', {
@@ -500,25 +479,14 @@ class KeymapManager
               binding: exactMatchCandidate,
               keyboardEventTarget: target
             }
+            dispatchedExactMatch = exactMatchCandidate
             eventHandled = true # Kicks it out of the parent loop
-            dispatchedBinding = exactMatchCandidate
             break
         currentTarget = currentTarget.parentElement
 
-    # If we're at this point in the method, we either found no matches for the
-    # currently queued keystrokes or we found a match, but we need to enter a
-    # pending state due to partial matches. We only enable the timeout of the
-    # pending state if we found an exact match on this or a previously queued
-    # keystroke.
-    if partialMatches.length > 0
-      event.preventDefault()
-      @emitter.emit 'did-partially-match-binding', {
-        keystrokes,
-        eventType: event.type,
-        partiallyMatchedBindings: partialMatches,
-        keyboardEventTarget: target
-      }
-    else if exactMatch is null
+    @bindingsToDisable.push(dispatchedExactMatch) if dispatchedExactMatch
+
+    if not dispatchedExactMatch? and not hasPartialMatches
       @emitter.emit 'did-fail-to-match-binding', {
         keystrokes,
         eventType: event.type,
@@ -530,10 +498,32 @@ class KeymapManager
       # simulate the text input event that was previously prevented to insert
       # the missing characters.
       @simulateTextInput(event) if event.defaultPrevented and event.type is 'keydown'
-      queuedKeystrokes = null
 
-    {keystroke, dispatchedBinding, exactMatch, partialMatches, queuedKeystrokes}
+    if hasPartialMatches and shouldUsePartialMatches
+      event.preventDefault()
 
+      enableTimeout = (
+        @pendingStateTimeoutHandle? or
+        dispatchedExactMatch? or
+        characterForKeyboardEvent(@queuedKeyboardEvents[0])?
+      )
+      enableTimeout = false if replay
+      @enterPendingState(partialMatches, enableTimeout)
+
+      @emitter.emit 'did-partially-match-binding', {
+        keystrokes,
+        eventType: event.type,
+        partiallyMatchedBindings: partialMatches,
+        keyboardEventTarget: target
+      }
+    else if not dispatchedExactMatch? and not hasPartialMatches and @pendingPartialMatches?
+      # There are partial matches from a previous event, but none from this
+      # event. This means the current event has removed any hope that the queued
+      # key events will ever match anything. So we will clear the state and
+      # start over after replaying the events in `terminatePendingState`.
+      @terminatePendingState()
+    else
+      @clearQueuedKeystrokes()
 
   # Public: Translate a keydown event to a keystroke string.
   #
