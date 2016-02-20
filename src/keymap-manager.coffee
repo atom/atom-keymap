@@ -414,7 +414,7 @@ class KeymapManager
     # Handling keyboard events is complicated and very nuanced. The
     # complexity is all because of multi-stroke bindings. For example:
     #
-    # 'ctrl-a b c': 'my-sweet-command'
+    # 'ctrl-a b c': 'my-sweet-command' // This is a binding
     #
     # This example means the user can type `ctrl-a` then `b` then `c`, and after
     # all of those keys are typed, it will dispatch the `my-sweet-command`
