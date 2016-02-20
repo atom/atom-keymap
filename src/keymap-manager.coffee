@@ -435,15 +435,15 @@ class KeymapManager
     # // The binding: 'ctrl-a b c': 'my-sweet-command'
     # @queuedKeystrokes = ['ctrl-a', 'b'] // The user's keystrokes
     #
-    # When it finds partially matching bindings, it will set the keymap into a
-    # pending state via `enterPendingState`.
+    # When it finds partially matching bindings, it will set the KeymapManager
+    # into a pending state via `enterPendingState`.
     #
     # If a keystroke comes in that either matches a binding exactly, or yields
     # no partial matches, we will reset the state variables and exit pending
     # mode. If the keystroke yields no partial matches we will call
     # `terminatePendingState`
     #
-    # // Both of these will kick out of : 'ctrl-a b c': 'my-sweet-command'
+    # // Both of these will exit pending state for: 'ctrl-a b c': 'my-sweet-command'
     # @queuedKeystrokes = ['ctrl-a', 'b', 'c'] // Exact match! Just clear the state variables. Easy.
     # @queuedKeystrokes = ['ctrl-a', 'b', 'd'] // No hope of matching, terminatePendingState(). Dragons.
     #
@@ -457,7 +457,7 @@ class KeymapManager
     # 'b d': 'do-a-bd-deal'
     # 'd o g': 'wag-the-dog'
     #
-    # With these example commands, and the user's keystrokes, we should dispatch
+    # With these example bindings, and the user's keystrokes, we should dispatch
     # commands `ctrl-a-command` and `do-a-bd-deal`.
     #
     # To enable this behavior, `terminatePendingState` will _disable_ the
@@ -474,8 +474,8 @@ class KeymapManager
     # `terminatePendingState`. The 2nd call to `terminatePendingState` might
     # disable other bindings, and do another replay, which might call this
     # function again ... and on and on. It will recurse until the KeymapManager
-    # is no longer in a pending state with no partial matches on the most recent
-    # event.
+    # is no longer in a pending state with no partial matches from the most
+    # recent event.
     #
     # Godspeed.
 
