@@ -422,19 +422,18 @@ class KeymapManager
     #
     # The KeymapManager has a couple member variables to deal with multi-stroke
     # bindings: `@queuedKeystrokes` and `@queuedKeyboardEvents`. They keep track
-    # of the keystrokes the user has typed, and every call to this function will
-    # try to match the user's keystrokes against bindings loaded in this object.
-    # When populated, the state variables look something like
+    # of the keystrokes the user has typed. When populated, the state variables
+    # look something like:
     #
     # @queuedKeystrokes = ['ctrl-a', 'b', 'c']
     # @queuedKeyboardEvents = [KeyboardEvent, KeyboardEvent, KeyboardEvent]
     #
-    # Basically, this method will try to exactly match the user's keystrokes to
-    # a binding. If it cant match exactly, it looks for partial matches. A
-    # partial match might be something like:
+    # Basically, this `handleKeyboardEvent` function will try to exactly match
+    # the user's keystrokes to a binding. If it cant match exactly, it looks for
+    # partial matches. A partial match might be something like:
     #
     # // The binding: 'ctrl-a b c': 'my-sweet-command'
-    # @queuedKeystrokes = ['ctrl-a', 'b']
+    # @queuedKeystrokes = ['ctrl-a', 'b'] // The user's keystrokes
     #
     # When it finds partially matching bindings, it will set the keymap into a
     # pending state via `enterPendingState`.
@@ -445,8 +444,8 @@ class KeymapManager
     # `terminatePendingState`
     #
     # // Both of these will kick out of : 'ctrl-a b c': 'my-sweet-command'
-    # @queuedKeystrokes = ['ctrl-a', 'b', 'c'] // Exact match!
-    # @queuedKeystrokes = ['ctrl-a', 'b', 'd'] // No hope of matching, terminatePendingState()
+    # @queuedKeystrokes = ['ctrl-a', 'b', 'c'] // Exact match! Just clear the state variables. Easy.
+    # @queuedKeystrokes = ['ctrl-a', 'b', 'd'] // No hope of matching, terminatePendingState(). Dragons.
     #
     # `terminatePendingState` is where things get crazy. Let's pretend the user
     # typed `['ctrl-a', 'b', 'd']`. There are were no exact matches from this
