@@ -36,21 +36,28 @@ describe ".keystrokesMatch(bindingKeystrokes, userKeystrokes)", ->
   it "returns 'exact' for exact matches", ->
     expect(keystrokesMatch(['ctrl-tab', '^tab', '^ctrl'], ['ctrl-tab', '^tab', '^ctrl'])).toBe 'exact'
     expect(keystrokesMatch(['ctrl-tab', '^ctrl'], ['ctrl-tab', '^tab', '^ctrl'])).toBe 'exact'
-    expect(keystrokesMatch(['ctrl-tab', '^tab'], ['ctrl-tab', '^tab', '^ctrl'])).toBe 'exact'
-
-    expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe 'exact'
-    expect(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe 'exact'
+    expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c'])).toBe 'exact'
+    expect(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c'])).toBe 'exact'
 
   it "returns false for non-matches", ->
+    expect(keystrokesMatch(['ctrl-tab', '^tab'], ['ctrl-tab', '^tab', '^ctrl'])).toBe false
+    expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
+    expect(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
+
     expect(keystrokesMatch(['a'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
+    expect(keystrokesMatch(['a'], ['a', '^a'])).toBe false
     expect(keystrokesMatch(['a', 'c'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
     expect(keystrokesMatch(['a', 'b', '^d'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
     expect(keystrokesMatch(['a', 'd', '^d'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
     expect(keystrokesMatch(['a', 'd', '^d'], ['^c'])).toBe false
 
   it "returns 'partial' for partial matches", ->
+    expect(keystrokesMatch(['a', 'b', '^b'], ['a'])).toBe 'partial'
     expect(keystrokesMatch(['a', 'b', 'c'], ['a'])).toBe 'partial'
     expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a'])).toBe 'partial'
     expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b'])).toBe 'partial'
     expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b'])).toBe 'partial'
     expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'd', '^d'])).toBe false
+
+  it "returns 'keydownExact' for bindings that match and contain a remainder of only keyup events", ->
+    expect(keystrokesMatch(['a', 'b', '^b'], ['a', 'b'])).toBe 'keydownExact'

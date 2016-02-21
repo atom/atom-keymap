@@ -8,6 +8,7 @@ WhitespaceRegex = /\s+/
 LowerCaseLetterRegex = /^[a-z]$/
 UpperCaseLetterRegex = /^[A-Z]$/
 ExactMatch = 'exact'
+KeydownExactMatch = 'keydownExact'
 PartialMatch = 'partial'
 
 KeyboardEventModifiers = new Set
@@ -205,23 +206,36 @@ exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
         return false
     null
 
+  isPartialMatch = false
+  bindingRemainderContainsOnlyKeyups = true
+  bindingKeystrokeIndex = 0
   for bindingKeystroke in bindingKeystrokes
-    doesMatch = matchesNextUserKeystroke(bindingKeystroke)
-    if doesMatch is false
-      return false
-    else if doesMatch is null
-      # Make sure userKeystrokes with only keyup events doesn't match everything
-      if userKeystrokesHasKeydownEvent
-        return PartialMatch
-      else
+    unless isPartialMatch
+      doesMatch = matchesNextUserKeystroke(bindingKeystroke)
+      if doesMatch is false
         return false
+      else if doesMatch is null
+        # Make sure userKeystrokes with only keyup events doesn't match everything
+        if userKeystrokesHasKeydownEvent
+          isPartialMatch = true
+        else
+          return false
 
-  # Prevent binding of ['a'] from exact matching a user pattern of ['a', '^a', 'b', '^b']
-  while userKeystrokeIndex < userKeystrokes.length - 1
-    userKeystrokeIndex += 1
-    return false unless userKeystrokes[userKeystrokeIndex].startsWith('^')
+    if isPartialMatch
+      bindingRemainderContainsOnlyKeyups = false unless bindingKeystroke.startsWith('^')
 
-  ExactMatch
+  # Bindings that match the beginning of the user's keystrokes are not a match.
+  # e.g. This is not a match. It would have been a match on the previous keystroke:
+  # bindingKeystrokes = ['ctrl-tab', '^tab']
+  # userKeystrokes    = ['ctrl-tab', '^tab', '^ctrl']
+  return false if userKeystrokeIndex < userKeystrokes.length - 1
+
+  if isPartialMatch and bindingRemainderContainsOnlyKeyups
+    KeydownExactMatch
+  else if isPartialMatch
+    PartialMatch
+  else
+    ExactMatch
 
 normalizeKeystroke = (keystroke) ->
   if isKeyup = keystroke.startsWith('^')

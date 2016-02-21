@@ -271,14 +271,18 @@ describe "KeymapManager", ->
 
           events = []
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('i', target: editor))
           expect(events).toEqual []
           advanceClock(keymapManager.getPartialMatchTimeout())
           expect(events).toEqual ['enter-visual-mode', 'input:i']
 
           events = []
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent('i', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
           expect(events).toEqual []
           advanceClock(keymapManager.getPartialMatchTimeout())
@@ -361,18 +365,36 @@ describe "KeymapManager", ->
             "ctrl-y ^y ^ctrl": "y-command-y-up-ctrl-up"
             "a b c ^b ^a ^c": "abc-secret-code-command"
 
+      it "dispatches the command for a binding containing only keydown events immediately even when there is a corresponding multi-stroke binding that contains only other keyup events", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
+
       it "dispatches the command when a matching keystroke precedes it", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, cmd: true, shift: true, alt: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
         advanceClock(keymapManager.getPartialMatchTimeout())
-        expect(events).toEqual ['y-up-ctrl-keyup']
+        expect(events).toEqual ['y-keydown', 'y-up-ctrl-keyup']
 
-      it "dispatches the command when modifier is lifted before the character", ->
+      it "dispatches the command multiple times when multiple keydown events for the binding come in before the binding with a keyup handler", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        expect(events).toEqual ['y-keydown']
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown', 'y-keydown']
         advanceClock(keymapManager.getPartialMatchTimeout())
-        expect(events).toEqual ['y-ctrl-keyup']
+        expect(events).toEqual ['y-keydown', 'y-keydown']
+
+      it "dispatches the command when the modifier is lifted before the character", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        expect(events).toEqual ['y-keydown', 'y-ctrl-keyup']
+        advanceClock(keymapManager.getPartialMatchTimeout())
+        expect(events).toEqual ['y-keydown', 'y-ctrl-keyup']
 
       it "dispatches the command when extra user-generated keyup events are not specified in the binding", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementA))
@@ -383,7 +405,9 @@ describe "KeymapManager", ->
 
       it "does _not_ dispatch the command when extra user-generated keydown events are not specified in the binding", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeydownEvent('z', ctrl: true, target: elementA)) # not specified in binding
+        expect(events).toEqual ['y-keydown']
         keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
         advanceClock(keymapManager.getPartialMatchTimeout())
         expect(events).toEqual ['y-keydown']

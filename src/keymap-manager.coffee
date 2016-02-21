@@ -119,6 +119,7 @@ class KeymapManager
     @keyBindings = []
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
+    @bindingsToDisable = []
 
   # Public: Unwatch all watched paths.
   destroy: ->
@@ -409,15 +410,95 @@ class KeymapManager
   # target is `.defaultTarget` if that property is assigned on the keymap.
   #
   # * `event` A `KeyboardEvent` of type 'keydown'
-  handleKeyboardEvent: (event) ->
+  handleKeyboardEvent: (event, {replay, disabledBindings}={}) ->
+    # Handling keyboard events is complicated and very nuanced. The complexity
+    # is all due to supporting multi-stroke bindings. An example binding we'll
+    # use throughout this very long comment:
+    #
+    # 'ctrl-a b c': 'my-sweet-command' // This is a binding
+    #
+    # This example means the user can type `ctrl-a` then `b` then `c`, and after
+    # all of those keys are typed, it will dispatch the `my-sweet-command`
+    # command.
+    #
+    # The KeymapManager has a couple member variables to deal with multi-stroke
+    # bindings: `@queuedKeystrokes` and `@queuedKeyboardEvents`. They keep track
+    # of the keystrokes the user has typed. When populated, the state variables
+    # look something like:
+    #
+    # @queuedKeystrokes = ['ctrl-a', 'b', 'c']
+    # @queuedKeyboardEvents = [KeyboardEvent, KeyboardEvent, KeyboardEvent]
+    #
+    # Basically, this `handleKeyboardEvent` function will try to exactly match
+    # the user's keystrokes to a binding. If it cant match exactly, it looks for
+    # partial matches. So say, a user typed `ctrl-a` then `b`, but not `c` yet.
+    # The `ctrl-a b c` binding would be partially matched:
+    #
+    # // The original binding: 'ctrl-a b c': 'my-sweet-command'
+    # @queuedKeystrokes = ['ctrl-a', 'b'] // The user's keystrokes
+    # @queuedKeyboardEvents = [KeyboardEvent, KeyboardEvent]
+    #
+    # When it finds partially matching bindings, it will put the KeymapManager
+    # into a pending state via `enterPendingState` indicating that it is waiting
+    # for either a timeout or more keystrokes to exactly match the partial
+    # matches. In our example, it is waiting for the user to type `c` to
+    # complete the partially matched `ctrl-a b c` binding.
+    #
+    # If a keystroke comes in that either matches a binding exactly, or yields
+    # no partial matches, we will reset the state variables and exit pending
+    # mode. If the keystroke yields no partial matches we will call
+    # `terminatePendingState`. An extension of our last example:
+    #
+    # // Both of these will exit pending state for: 'ctrl-a b c': 'my-sweet-command'
+    # @queuedKeystrokes = ['ctrl-a', 'b', 'c'] // User typed `c`. Exact match! Dispatch the command and clear state variables. Easy.
+    # @queuedKeystrokes = ['ctrl-a', 'b', 'd'] // User typed `d`. No hope of matching, terminatePendingState(). Dragons.
+    #
+    # `terminatePendingState` is where things get crazy. Let's pretend the user
+    # typed 3 total keystrokes: `ctrl-a`, `b`, then `d`. There are no exact
+    # matches with these keystrokes given the original `'ctrl-a b c'` binding,
+    # but other bindings might match a subset of the user's typed keystrokes.
+    # Let's pretend we had more bindings defined:
+    #
+    # // The original binding; no match for ['ctrl-a', 'b', 'd']:
+    # 'ctrl-a b c': 'my-sweet-command'
+    #
+    # // Bindings that all match a subset of ['ctrl-a', 'b', 'd']:
+    # 'ctrl-a': 'ctrl-a-command'
+    # 'b d': 'do-a-bd-deal'
+    # 'd o g': 'wag-the-dog'
+    #
+    # With these example bindings, and the user's `['ctrl-a', 'b', 'd']`
+    # keystrokes, we should dispatch commands `ctrl-a-command` and
+    # `do-a-bd-deal`.
+    #
+    # After `['ctrl-a', 'b', 'd']` is typed by the user, `terminatePendingState`
+    # is called, which will _disable_ the original unmatched `ctrl-a b c`
+    # binding, empty the keystroke state variables, and _replay_ the key events
+    # by running them through this `handleKeyboardEvent` function again. The
+    # replay acts exactly as if a user were typing the keys, but with a disabled
+    # binding. Because the original binding is disabled, the replayed keystrokes
+    # will match other, shorter bindings, and in this case, dispatch commands
+    # for our `ctrl-a` and then our `b d` bindings.
+    #
+    # Because the replay is calling this `handleKeyboardEvent` function again,
+    # it can get into another pending state, and again call
+    # `terminatePendingState`. The 2nd call to `terminatePendingState` might
+    # disable other bindings, and do another replay, which might call this
+    # function again ... and on and on. It will recurse until the KeymapManager
+    # is no longer in a pending state with no partial matches from the most
+    # recent event.
+    #
+    # Godspeed.
+
     keystroke = @keystrokeForKeyboardEvent(event)
 
-    if event.type isnt 'keyup' and @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
+    # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
+    if event.type is 'keydown' and @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
       event.preventDefault()
       return
 
-    @queuedKeyboardEvents.push(event)
     @queuedKeystrokes.push(keystroke)
+    @queuedKeyboardEvents.push(event)
     keystrokes = @queuedKeystrokes.join(' ')
 
     # If the event's target is document.body, assign it to defaultTarget instead
@@ -428,8 +509,11 @@ class KeymapManager
     # First screen for any bindings that match the current keystrokes,
     # regardless of their current selector. Matching strings is cheaper than
     # matching selectors.
-    {partialMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes)
+    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, disabledBindings)
+    dispatchedExactMatch = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
+    hasPartialMatches = partialMatches.length > 0
+    shouldUsePartialMatches = hasPartialMatches
 
     # Determine if the current keystrokes match any bindings *exactly*. If we
     # do find and exact match, the next step depends on whether we have any
@@ -438,72 +522,91 @@ class KeymapManager
     # state with a timeout.
     if exactMatchCandidates.length > 0
       currentTarget = target
-      while currentTarget? and currentTarget isnt document
+      eventHandled = false
+      while not eventHandled and currentTarget? and currentTarget isnt document
         exactMatches = @findExactMatches(exactMatchCandidates, currentTarget)
-        for exactMatch in exactMatches
-          if exactMatch.command is 'native!'
-            @clearQueuedKeystrokes()
-            return
-
-          if exactMatch.command is 'abort!'
-            @clearQueuedKeystrokes()
-            event.preventDefault()
-            return
-
-          if exactMatch.command is 'unset!'
+        for exactMatchCandidate in exactMatches
+          if exactMatchCandidate.command is 'native!'
+            shouldUsePartialMatches = false
+            # `break` breaks out of this loop, `eventHandled = true` breaks out of the parent loop
+            eventHandled = true
             break
 
-          foundMatch = true
-          break if partialMatches.length > 0
-          @clearQueuedKeystrokes()
-          @cancelPendingState()
-          if @dispatchCommandEvent(exactMatch.command, target, event)
-            @emitter.emit 'did-match-binding', {
-              keystrokes,
-              eventType: event.type,
-              binding: exactMatch,
-              keyboardEventTarget: target
-            }
-            return
+          if exactMatchCandidate.command is 'abort!'
+            event.preventDefault()
+            eventHandled = true
+            break
+
+          if exactMatchCandidate.command is 'unset!'
+            break
+
+          if hasPartialMatches
+            # When there is a set of bindings like `'ctrl-y', 'ctrl-y ^ctrl'`,
+            # and a `ctrl-y` comes in, this will allow the `ctrl-y` command to be
+            # dispatched without waiting for any other keystrokes
+            allPartialMatchesContainKeyupRemainder = true
+            for partialMatch in partialMatches
+              if keydownExactMatchCandidates.indexOf(partialMatch) < 0
+                allPartialMatchesContainKeyupRemainder = false
+            break if allPartialMatchesContainKeyupRemainder is false
+          else
+            shouldUsePartialMatches = false
+
+          if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
+            dispatchedExactMatch = exactMatchCandidate
+            eventHandled = true
+            break
         currentTarget = currentTarget.parentElement
 
-    # If we're at this point in the method, we either found no matches for the
-    # currently queued keystrokes or we found a match, but we need to enter a
-    # pending state due to partial matches. We only enable the timeout of the
-    # pending state if we found an exact match on this or a previously queued
-    # keystroke.
-    if partialMatches.length > 0
-      event.preventDefault()
-      enableTimeout = (
-        @pendingStateTimeoutHandle? or
-        foundMatch or
-        characterForKeyboardEvent(@queuedKeyboardEvents[0])?
-      )
+    # Emit events. These are done on their own for clarity.
 
-      @enterPendingState(partialMatches, enableTimeout)
+    if dispatchedExactMatch?
+      @emitter.emit 'did-match-binding', {
+        keystrokes,
+        eventType: event.type,
+        binding: dispatchedExactMatch,
+        keyboardEventTarget: target
+      }
+    else if hasPartialMatches and shouldUsePartialMatches
+      event.preventDefault()
       @emitter.emit 'did-partially-match-binding', {
         keystrokes,
         eventType: event.type,
         partiallyMatchedBindings: partialMatches,
         keyboardEventTarget: target
       }
-    else
+    else if not dispatchedExactMatch? and not hasPartialMatches
       @emitter.emit 'did-fail-to-match-binding', {
         keystrokes,
         eventType: event.type,
         keyboardEventTarget: target
       }
-      if @pendingPartialMatches?
-        @terminatePendingState()
-      else
-        # Some of the queued keyboard events might have inserted characters had
-        # we not prevented their default action. If we're replaying a keystroke
-        # whose default action was prevented and no binding is matched, we'll
-        # simulate the text input event that was previously prevented to insert
-        # the missing characters.
-        @simulateTextInput(event) if event.defaultPrevented
+      # Some of the queued keyboard events might have inserted characters had
+      # we not prevented their default action. If we're replaying a keystroke
+      # whose default action was prevented and no binding is matched, we'll
+      # simulate the text input event that was previously prevented to insert
+      # the missing characters.
+      @simulateTextInput(event) if event.defaultPrevented and event.type is 'keydown'
 
-        @clearQueuedKeystrokes()
+    # Manage the keystroke queue state. State is updated separately for clarity.
+
+    @bindingsToDisable.push(dispatchedExactMatch) if dispatchedExactMatch
+    if hasPartialMatches and shouldUsePartialMatches
+      enableTimeout = (
+        @pendingStateTimeoutHandle? or
+        dispatchedExactMatch? or
+        characterForKeyboardEvent(@queuedKeyboardEvents[0])?
+      )
+      enableTimeout = false if replay
+      @enterPendingState(partialMatches, enableTimeout)
+    else if not dispatchedExactMatch? and not hasPartialMatches and @pendingPartialMatches?
+      # There are partial matches from a previous event, but none from this
+      # event. This means the current event has removed any hope that the queued
+      # key events will ever match any binding. So we will clear the state and
+      # start over after replaying the events in `terminatePendingState`.
+      @terminatePendingState()
+    else
+      @clearQueuedKeystrokes()
 
   # Public: Translate a keydown event to a keystroke string.
   #
@@ -535,17 +638,22 @@ class KeymapManager
 
   # Finds all key bindings whose keystrokes match the given keystrokes. Returns
   # both partial and exact matches.
-  findMatchCandidates: (keystrokeArray) ->
+  findMatchCandidates: (keystrokeArray, disabledBindings) ->
     partialMatchCandidates = []
     exactMatchCandidates = []
+    keydownExactMatchCandidates = []
+    disabledBindingSet = new Set(disabledBindings)
 
-    for binding in @keyBindings when binding.enabled
+    for binding in @keyBindings when not disabledBindingSet.has(binding)
       doesMatch = keystrokesMatch(binding.keystrokeArray, keystrokeArray)
       if doesMatch is 'exact'
         exactMatchCandidates.push(binding)
       else if doesMatch is 'partial'
         partialMatchCandidates.push(binding)
-    {partialMatchCandidates, exactMatchCandidates}
+      else if doesMatch is 'keydownExact'
+        partialMatchCandidates.push(binding)
+        keydownExactMatchCandidates.push(binding)
+    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates}
 
   # Determine which of the given bindings have selectors matching the target or
   # one of its ancestors. This is used by {::handleKeyboardEvent} to determine
@@ -580,6 +688,7 @@ class KeymapManager
   clearQueuedKeystrokes: ->
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
+    @bindingsToDisable = []
 
   enterPendingState: (pendingPartialMatches, enableTimeout) ->
     @cancelPendingState() if @pendingStateTimeoutHandle?
@@ -597,24 +706,32 @@ class KeymapManager
   # It disables the longest of the pending partially matching bindings, then
   # replays the queued keyboard events to allow any bindings with shorter
   # keystroke sequences to be matched unambiguously.
-  terminatePendingState: (timeout) ->
-    bindingsToDisable = @pendingPartialMatches
+  #
+  # Note that replaying events has a recursive behavior. Replaying will set
+  # member state (e.g. @queuedKeyboardEvents) just like real events, and will
+  # likely result in another call this function. The replay process will
+  # potentially replay the events (or a subset of events) several times, while
+  # disabling bindings here and there. See any spec that handles multiple
+  # keystrokes failures to match a binding.
+  terminatePendingState: (fromTimeout) ->
+    bindingsToDisable = @pendingPartialMatches.concat(@bindingsToDisable)
     eventsToReplay = @queuedKeyboardEvents
 
     @cancelPendingState()
     @clearQueuedKeystrokes()
 
-    binding.enabled = false for binding in bindingsToDisable
+    keyEventOptions =
+      replay: true
+      disabledBindings: bindingsToDisable
 
     for event in eventsToReplay
-      @handleKeyboardEvent(event)
-      if bindingsToDisable? and not @pendingPartialMatches?
-        binding.enabled = true for binding in bindingsToDisable
-        bindingsToDisable = null
+      keyEventOptions.disabledBindings = bindingsToDisable
+      @handleKeyboardEvent(event, keyEventOptions)
 
-    atom?.assert(not bindingsToDisable?, "Invalid keymap state")
+      # We can safely re-enable the bindings when we no longer have any partial matches
+      bindingsToDisable = null if bindingsToDisable? and not @pendingPartialMatches?
 
-    if timeout and @pendingPartialMatches?
+    if fromTimeout and @pendingPartialMatches?
       @terminatePendingState(true)
 
     return
