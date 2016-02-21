@@ -411,8 +411,9 @@ class KeymapManager
   #
   # * `event` A `KeyboardEvent` of type 'keydown'
   handleKeyboardEvent: (event, {replay, disabledBindings}={}) ->
-    # Handling keyboard events is complicated and very nuanced. The
-    # complexity is all because of multi-stroke bindings. For example:
+    # Handling keyboard events is complicated and very nuanced. The complexity
+    # is all due to supporting multi-stroke bindings. An example binding we'll
+    # use throughout this very long comment:
     #
     # 'ctrl-a b c': 'my-sweet-command' // This is a binding
     #
@@ -430,44 +431,54 @@ class KeymapManager
     #
     # Basically, this `handleKeyboardEvent` function will try to exactly match
     # the user's keystrokes to a binding. If it cant match exactly, it looks for
-    # partial matches. A partial match might be something like:
+    # partial matches. So say, a user typed `ctrl-a` then `b`, but not `c` yet.
+    # The `ctrl-a b c` binding would be partially matched:
     #
-    # // The binding: 'ctrl-a b c': 'my-sweet-command'
+    # // The original binding: 'ctrl-a b c': 'my-sweet-command'
     # @queuedKeystrokes = ['ctrl-a', 'b'] // The user's keystrokes
+    # @queuedKeyboardEvents = [KeyboardEvent, KeyboardEvent]
     #
-    # When it finds partially matching bindings, it will set the KeymapManager
-    # into a pending state via `enterPendingState`.
+    # When it finds partially matching bindings, it will put the KeymapManager
+    # into a pending state via `enterPendingState` indicating that it is waiting
+    # for either a timeout or more keystrokes to exactly match the partial
+    # matches. In our example, it is waiting for the user to type `c` to
+    # complete the partially matched `ctrl-a b c` binding.
     #
     # If a keystroke comes in that either matches a binding exactly, or yields
     # no partial matches, we will reset the state variables and exit pending
     # mode. If the keystroke yields no partial matches we will call
-    # `terminatePendingState`
+    # `terminatePendingState`. An extension of our last example:
     #
     # // Both of these will exit pending state for: 'ctrl-a b c': 'my-sweet-command'
-    # @queuedKeystrokes = ['ctrl-a', 'b', 'c'] // Exact match! Just clear the state variables. Easy.
-    # @queuedKeystrokes = ['ctrl-a', 'b', 'd'] // No hope of matching, terminatePendingState(). Dragons.
+    # @queuedKeystrokes = ['ctrl-a', 'b', 'c'] // User typed `c`. Exact match! Dispatch the command and clear state variables. Easy.
+    # @queuedKeystrokes = ['ctrl-a', 'b', 'd'] // User typed `d`. No hope of matching, terminatePendingState(). Dragons.
     #
     # `terminatePendingState` is where things get crazy. Let's pretend the user
-    # typed `['ctrl-a', 'b', 'd']`. There are were no exact matches from this
-    # list of keystrokes, but there might be matches in a subset of the
-    # keystrokes. e.g.
+    # typed 3 total keystrokes: `ctrl-a`, `b`, then `d`. There are no exact
+    # matches with these keystrokes given the original `'ctrl-a b c'` binding,
+    # but other bindings might match a subset of the user's typed keystrokes.
+    # Let's pretend we had more bindings defined:
     #
-    # // These bindings all match a subset of ['ctrl-a', 'b', 'd']:
+    # // The original binding; no match for ['ctrl-a', 'b', 'd']:
+    # 'ctrl-a b c': 'my-sweet-command'
+    #
+    # // Bindings that all match a subset of ['ctrl-a', 'b', 'd']:
     # 'ctrl-a': 'ctrl-a-command'
     # 'b d': 'do-a-bd-deal'
     # 'd o g': 'wag-the-dog'
     #
-    # With these example bindings, and the user's keystrokes, we should dispatch
-    # commands `ctrl-a-command` and `do-a-bd-deal`.
+    # With these example bindings, and the user's `['ctrl-a', 'b', 'd']`
+    # keystrokes, we should dispatch commands `ctrl-a-command` and
+    # `do-a-bd-deal`.
     #
-    # To enable this behavior, `terminatePendingState` will _disable_ the
-    # original unmatched `ctrl-a b c` binding, empty the keystroke state
-    # variables, and _replay_ the events by running them through this
-    # `handleKeyboardEvent` function again. The replay acts exactly as if a user
-    # were typing the keys, but with a disabled binding. Because the original
-    # binding is disabled, the replayed keystrokes will match other, shorter
-    # bindings, and in this case, dispatch commands for our `ctrl-a` and then
-    # our `b d` bindings.
+    # After `['ctrl-a', 'b', 'd']` is typed by the user, `terminatePendingState`
+    # is called, which will _disable_ the original unmatched `ctrl-a b c`
+    # binding, empty the keystroke state variables, and _replay_ the key events
+    # by running them through this `handleKeyboardEvent` function again. The
+    # replay acts exactly as if a user were typing the keys, but with a disabled
+    # binding. Because the original binding is disabled, the replayed keystrokes
+    # will match other, shorter bindings, and in this case, dispatch commands
+    # for our `ctrl-a` and then our `b d` bindings.
     #
     # Because the replay is calling this `handleKeyboardEvent` function again,
     # it can get into another pending state, and again call
