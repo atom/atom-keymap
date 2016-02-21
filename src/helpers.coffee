@@ -224,6 +224,10 @@ exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
     if isPartialMatch
       bindingRemainderContainsOnlyKeyups = false unless bindingKeystroke.startsWith('^')
 
+  # Bindings that match the beginning of the user's keystrokes are not a match.
+  # e.g. This is not a match. It would have been a match on the previous keystroke:
+  # bindingKeystrokes = ['ctrl-tab', '^tab']
+  # userKeystrokes    = ['ctrl-tab', '^tab', '^ctrl']
   return false if userKeystrokeIndex < userKeystrokes.length - 1
 
   if isPartialMatch and bindingRemainderContainsOnlyKeyups
