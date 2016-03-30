@@ -209,6 +209,7 @@ describe "KeymapManager", ->
         keymapManager.add 'test',
           '.workspace':
             'd o g': 'dog'
+            'd p': 'dp'
             'v i v a': 'viva!'
             'v i v': 'viv'
           '.editor': 'v': 'enter-visual-mode'
@@ -217,6 +218,7 @@ describe "KeymapManager", ->
         events = []
         editor.addEventListener 'textInput', (event) -> events.push("input:#{event.data}")
         workspace.addEventListener 'dog', -> events.push('dog')
+        workspace.addEventListener 'dp', -> events.push('dp')
         workspace.addEventListener 'viva!', -> events.push('viva!')
         workspace.addEventListener 'viv', -> events.push('viv')
         workspace.addEventListener 'select-inside-word', -> events.push('select-inside-word')
