@@ -512,6 +512,15 @@ class KeymapManager
     {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, disabledBindings)
     dispatchedExactMatch = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
+
+    # If any partial match *was* pending but has now failed to match, add it to
+    # the list of bindings to disable so we don't attempt to match it again
+    # during a subsequent event replay by `terminatePendingState`.
+    if @pendingPartialMatches?
+      liveMatches = new Set(partialMatches.concat(exactMatchCandidates))
+      for binding in @pendingPartialMatches
+        @bindingsToDisable.push(binding) unless liveMatches.has(binding)
+
     hasPartialMatches = partialMatches.length > 0
     shouldUsePartialMatches = hasPartialMatches
 
