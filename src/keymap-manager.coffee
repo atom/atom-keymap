@@ -410,7 +410,7 @@ class KeymapManager
   # target is `.defaultTarget` if that property is assigned on the keymap.
   #
   # * `event` A `KeyboardEvent` of type 'keydown'
-  handleKeyboardEvent: (event, {replay, disabledBindings}={}) ->
+  handleKeyboardEvent: (event, {replay}={}) ->
     # Handling keyboard events is complicated and very nuanced. The complexity
     # is all due to supporting multi-stroke bindings. An example binding we'll
     # use throughout this very long comment:
@@ -509,7 +509,7 @@ class KeymapManager
     # First screen for any bindings that match the current keystrokes,
     # regardless of their current selector. Matching strings is cheaper than
     # matching selectors.
-    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, disabledBindings)
+    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, @bindingsToDisable)
     dispatchedExactMatch = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
     hasPartialMatches = partialMatches.length > 0
@@ -607,6 +607,7 @@ class KeymapManager
       @terminatePendingState()
     else
       @clearQueuedKeystrokes()
+      @clearDisabledBindings()
 
   # Public: Translate a keydown event to a keystroke string.
   #
@@ -688,6 +689,8 @@ class KeymapManager
   clearQueuedKeystrokes: ->
     @queuedKeyboardEvents = []
     @queuedKeystrokes = []
+
+  clearDisabledBindings: ->
     @bindingsToDisable = []
 
   enterPendingState: (pendingPartialMatches, enableTimeout) ->
@@ -714,7 +717,7 @@ class KeymapManager
   # disabling bindings here and there. See any spec that handles multiple
   # keystrokes failures to match a binding.
   terminatePendingState: (fromTimeout) ->
-    bindingsToDisable = @pendingPartialMatches.concat(@bindingsToDisable)
+    @bindingsToDisable = @pendingPartialMatches.concat(@bindingsToDisable)
     eventsToReplay = @queuedKeyboardEvents
 
     @cancelPendingState()
@@ -722,10 +725,8 @@ class KeymapManager
 
     keyEventOptions =
       replay: true
-      disabledBindings: bindingsToDisable
 
     for event in eventsToReplay
-      keyEventOptions.disabledBindings = bindingsToDisable
       @handleKeyboardEvent(event, keyEventOptions)
 
       # We can safely re-enable the bindings when we no longer have any partial matches

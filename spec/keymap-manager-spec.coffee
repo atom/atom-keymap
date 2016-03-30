@@ -228,9 +228,7 @@ describe "KeymapManager", ->
       describe "when keystrokes match a series of commands", ->
         it "matches the correct actions", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('space', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeyupEvent('space', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('r', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeyupEvent('r', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: editor))
           # expect this to not raise a gnarly stack level too deep exception
 
