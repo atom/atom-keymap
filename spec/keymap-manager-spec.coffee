@@ -213,12 +213,8 @@ describe "KeymapManager", ->
             'v i v': 'viv'
           '.editor':
             'v': 'enter-visual-mode'
-            'space': 'move-right'
             'space r r': 'command1'
-            'space r p': 'something-else'
-            'space a': 'something-else'
-            'r': 'vim-mode-replace'
-
+            'space b': 'something-else'
           '.editor.visual-mode': 'i w': 'select-inside-word'
 
         events = []
@@ -228,9 +224,6 @@ describe "KeymapManager", ->
         workspace.addEventListener 'viv', -> events.push('viv')
         workspace.addEventListener 'select-inside-word', -> events.push('select-inside-word')
         workspace.addEventListener 'enter-visual-mode', -> events.push('enter-visual-mode'); editor.classList.add('visual-mode')
-        workspace.addEventListener 'vim-mode-replace', -> events.push('vim-mode-replace');
-        workspace.addEventListener 'move-right', -> events.push('move-right');
-        workspace.addEventListener 'command1', -> events.push('command1');
 
       describe "when keystrokes match a series of commands", ->
         it "matches the correct actions", ->
@@ -238,11 +231,8 @@ describe "KeymapManager", ->
           keymapManager.handleKeyboardEvent(buildKeyupEvent('space', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('r', target: editor))
           keymapManager.handleKeyboardEvent(buildKeyupEvent('r', target: editor))
-          keymapManager.handleKeyboardEvent(a = buildKeydownEvent('a', target: editor))
-          expect(clearTimeout).toHaveBeenCalled()
-          expect(a.defaultPrevented).toBe false
-          expect(events).toEqual ['move-right', 'vim-mode-replace']
-
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: editor))
+          # expect this to not raise a gnarly stack level too deep exception
 
       describe "when subsequent keystrokes yield an exact match", ->
         it "dispatches the command associated with the matched multi-keystroke binding", ->
