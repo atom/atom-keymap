@@ -211,7 +211,10 @@ describe "KeymapManager", ->
             'd o g': 'dog'
             'v i v a': 'viva!'
             'v i v': 'viv'
-          '.editor': 'v': 'enter-visual-mode'
+          '.editor':
+            'v': 'enter-visual-mode'
+            'space r r': 'command1'
+            'space b': 'something-else'
           '.editor.visual-mode': 'i w': 'select-inside-word'
 
         events = []
@@ -221,6 +224,13 @@ describe "KeymapManager", ->
         workspace.addEventListener 'viv', -> events.push('viv')
         workspace.addEventListener 'select-inside-word', -> events.push('select-inside-word')
         workspace.addEventListener 'enter-visual-mode', -> events.push('enter-visual-mode'); editor.classList.add('visual-mode')
+
+      describe "when keystrokes match a series of commands", ->
+        it "matches the correct actions", ->
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('space', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('r', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: editor))
+          # expect this to not raise a gnarly stack level too deep exception
 
       describe "when subsequent keystrokes yield an exact match", ->
         it "dispatches the command associated with the matched multi-keystroke binding", ->
