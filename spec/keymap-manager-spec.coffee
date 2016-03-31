@@ -750,7 +750,7 @@ describe "KeymapManager", ->
         [keymapFilePath, subscription] = []
 
         beforeEach ->
-          keymapFilePath = path.join(temp.mkdirSync('keymapManager-spec'), "keymapManager.cson")
+          keymapFilePath = path.join(temp.mkdirSync('keymap-manager-spec'), "keymapManager.cson")
           fs.writeFileSync keymapFilePath, """
             '.a': 'ctrl-a': 'x'
           """

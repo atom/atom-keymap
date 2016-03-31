@@ -8,7 +8,7 @@
     "clean": "rm -rf lib && rm -rf api.json",
     "compile": "coffee --no-header --output lib --compile src && babel src --out-dir lib",
     "lint": "coffeelint -r src spec && eslint src spec",
-    "test": "devtool node_modules/mocha/bin/_mocha -c spec/helpers/setup.js spec/*",
+    "test": "devtool node_modules/mocha/bin/_mocha -qc spec/helpers/setup.js spec/*",
     "ci": "npm run compile && npm run lint && npm run test",
     "atomdoc": "grunt shell:update-atomdoc atomdoc"
   },
@@ -41,6 +41,7 @@
     "coffee-cache": "^0.2.0",
     "coffee-script": "^1.7.0",
     "coffeelint": "^1.14.2",
+    "debounce": "^1.0.0",
     "devtool": "^1.9.1",
     "electron-rebuild": "^1.1.3",
     "eslint": "2.2.0",
