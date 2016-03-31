@@ -2,8 +2,8 @@
 
 'use strict'
 
-const lolex = require('lolex')
-const sinon = require('sinon')
+import lolex from 'lolex'
+import sinon from 'sinon'
 
 let sinonSandbox, fakeClock
 
@@ -18,15 +18,15 @@ afterEach(function () {
   sinonSandbox.restore()
 })
 
-exports.appendContent = function appendContent (element) {
+export function appendContent (element) {
   document.body.appendChild(element)
   return element
 }
 
-exports.stub = function stub () {
+export function stub () {
   return sinonSandbox.stub(...arguments)
 }
 
-exports.getFakeClock = function getFakeClock () {
+export function getFakeClock () {
   return fakeClock
 }
