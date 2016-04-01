@@ -4,6 +4,7 @@
   "description": "Atom's DOM-aware keymap module",
   "main": "./lib/keymap-manager",
   "scripts": {
+    "postinstall": "electron-rebuild",
     "prepublish": "npm run clean && npm run compile && npm run lint && npm run atomdoc",
     "clean": "rm -rf lib && rm -rf api.json",
     "compile": "coffee --no-header --output lib --compile src && babel src --out-dir lib",
