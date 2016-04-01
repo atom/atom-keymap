@@ -9,7 +9,8 @@
     "clean": "rm -rf lib && rm -rf api.json",
     "compile": "coffee --no-header --output lib --compile src && babel src --out-dir lib",
     "lint": "coffeelint -r src spec && eslint src spec",
-    "test": "devtool node_modules/mocha/bin/_mocha -qc spec/helpers/setup.js spec/*",
+    "test": "devtool node_modules/mocha/bin/_mocha spec/helpers/setup.js spec/*",
+    "test-drive": "SUPPRESS_EXIT=true devtool node_modules/mocha/bin/_mocha --no-colors spec/helpers/setup.js spec/*",
     "ci": "npm run compile && npm run lint && npm run test",
     "atomdoc": "grunt shell:update-atomdoc atomdoc"
   },
