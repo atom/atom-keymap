@@ -2,62 +2,62 @@
 
 describe ".normalizeKeystrokes(keystrokes)", ->
   it "parses and normalizes the keystrokes", ->
-    expect(normalizeKeystrokes('ctrl--')).toBe 'ctrl--'
-    expect(normalizeKeystrokes('ctrl-x')).toBe 'ctrl-x'
-    expect(normalizeKeystrokes('a')).toBe 'a'
-    expect(normalizeKeystrokes('shift-a')).toBe 'shift-A'
-    expect(normalizeKeystrokes('shift-9')).toBe 'shift-9'
-    expect(normalizeKeystrokes('-')).toBe '-'
-    expect(normalizeKeystrokes('- -')).toBe '- -'
-    expect(normalizeKeystrokes('a b')).toBe 'a b'
-    expect(normalizeKeystrokes('cmd-k cmd-v')).toBe 'cmd-k cmd-v'
-    expect(normalizeKeystrokes('cmd-cmd')).toBe 'cmd'
-    expect(normalizeKeystrokes('cmd-shift')).toBe 'shift-cmd'
-    expect(normalizeKeystrokes('cmd-shift-a')).toBe 'shift-cmd-A'
-    expect(normalizeKeystrokes('cmd-ctrl-alt--')).toBe 'ctrl-alt-cmd--'
+    assert.equal(normalizeKeystrokes('ctrl--'), 'ctrl--')
+    assert.equal(normalizeKeystrokes('ctrl-x'), 'ctrl-x')
+    assert.equal(normalizeKeystrokes('a'), 'a')
+    assert.equal(normalizeKeystrokes('shift-a'), 'shift-A')
+    assert.equal(normalizeKeystrokes('shift-9'), 'shift-9')
+    assert.equal(normalizeKeystrokes('-'), '-')
+    assert.equal(normalizeKeystrokes('- -'), '- -')
+    assert.equal(normalizeKeystrokes('a b'), 'a b')
+    assert.equal(normalizeKeystrokes('cmd-k cmd-v'), 'cmd-k cmd-v')
+    assert.equal(normalizeKeystrokes('cmd-cmd'), 'cmd')
+    assert.equal(normalizeKeystrokes('cmd-shift'), 'shift-cmd')
+    assert.equal(normalizeKeystrokes('cmd-shift-a'), 'shift-cmd-A')
+    assert.equal(normalizeKeystrokes('cmd-ctrl-alt--'), 'ctrl-alt-cmd--')
 
-    expect(normalizeKeystrokes('ctrl-y   ^y')).toBe 'ctrl-y ^y'
-    expect(normalizeKeystrokes('ctrl-y ^ctrl-y')).toBe 'ctrl-y ^y'
-    expect(normalizeKeystrokes('cmd-shift-y ^cmd-shift-y')).toBe 'shift-cmd-Y ^y'
-    expect(normalizeKeystrokes('ctrl-y ^ctrl-y ^ctrl')).toBe 'ctrl-y ^y ^ctrl'
-    expect(normalizeKeystrokes('ctrl-y ^ctrl-shift-alt-cmd-y ^ctrl ^shift ^alt ^cmd')).toBe 'ctrl-y ^y ^ctrl ^shift ^alt ^cmd'
-    expect(normalizeKeystrokes('a b c ^a ^b ^c')).toBe 'a b c ^a ^b ^c'
+    assert.equal(normalizeKeystrokes('ctrl-y   ^y'), 'ctrl-y ^y')
+    assert.equal(normalizeKeystrokes('ctrl-y ^ctrl-y'), 'ctrl-y ^y')
+    assert.equal(normalizeKeystrokes('cmd-shift-y ^cmd-shift-y'), 'shift-cmd-Y ^y')
+    assert.equal(normalizeKeystrokes('ctrl-y ^ctrl-y ^ctrl'), 'ctrl-y ^y ^ctrl')
+    assert.equal(normalizeKeystrokes('ctrl-y ^ctrl-shift-alt-cmd-y ^ctrl ^shift ^alt ^cmd'), 'ctrl-y ^y ^ctrl ^shift ^alt ^cmd')
+    assert.equal(normalizeKeystrokes('a b c ^a ^b ^c'), 'a b c ^a ^b ^c')
 
-    expect(normalizeKeystrokes('a-b')).toBe false
-    expect(normalizeKeystrokes('---')).toBe false
-    expect(normalizeKeystrokes('cmd-a-b')).toBe false
-    expect(normalizeKeystrokes('-a-b')).toBe false
-    expect(normalizeKeystrokes('ctrl-')).toBe false
-    expect(normalizeKeystrokes('--')).toBe false
-    expect(normalizeKeystrokes('- ')).toBe false
-    expect(normalizeKeystrokes('a ')).toBe false
+    assert.equal(normalizeKeystrokes('a-b'), false)
+    assert.equal(normalizeKeystrokes('---'), false)
+    assert.equal(normalizeKeystrokes('cmd-a-b'), false)
+    assert.equal(normalizeKeystrokes('-a-b'), false)
+    assert.equal(normalizeKeystrokes('ctrl-'), false)
+    assert.equal(normalizeKeystrokes('--'), false)
+    assert.equal(normalizeKeystrokes('- '), false)
+    assert.equal(normalizeKeystrokes('a '), false)
 
 describe ".keystrokesMatch(bindingKeystrokes, userKeystrokes)", ->
   it "returns 'exact' for exact matches", ->
-    expect(keystrokesMatch(['ctrl-tab', '^tab', '^ctrl'], ['ctrl-tab', '^tab', '^ctrl'])).toBe 'exact'
-    expect(keystrokesMatch(['ctrl-tab', '^ctrl'], ['ctrl-tab', '^tab', '^ctrl'])).toBe 'exact'
-    expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c'])).toBe 'exact'
-    expect(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c'])).toBe 'exact'
+    assert.equal(keystrokesMatch(['ctrl-tab', '^tab', '^ctrl'], ['ctrl-tab', '^tab', '^ctrl']), 'exact')
+    assert.equal(keystrokesMatch(['ctrl-tab', '^ctrl'], ['ctrl-tab', '^tab', '^ctrl']), 'exact')
+    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c']), 'exact')
+    assert.equal(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c']), 'exact')
 
   it "returns false for non-matches", ->
-    expect(keystrokesMatch(['ctrl-tab', '^tab'], ['ctrl-tab', '^tab', '^ctrl'])).toBe false
-    expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
-    expect(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
+    assert.equal(keystrokesMatch(['ctrl-tab', '^tab'], ['ctrl-tab', '^tab', '^ctrl']), false)
+    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
+    assert.equal(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
 
-    expect(keystrokesMatch(['a'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
-    expect(keystrokesMatch(['a'], ['a', '^a'])).toBe false
-    expect(keystrokesMatch(['a', 'c'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
-    expect(keystrokesMatch(['a', 'b', '^d'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
-    expect(keystrokesMatch(['a', 'd', '^d'], ['a', '^a', 'b', '^b', 'c', '^c'])).toBe false
-    expect(keystrokesMatch(['a', 'd', '^d'], ['^c'])).toBe false
+    assert.equal(keystrokesMatch(['a'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
+    assert.equal(keystrokesMatch(['a'], ['a', '^a']), false)
+    assert.equal(keystrokesMatch(['a', 'c'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
+    assert.equal(keystrokesMatch(['a', 'b', '^d'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
+    assert.equal(keystrokesMatch(['a', 'd', '^d'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
+    assert.equal(keystrokesMatch(['a', 'd', '^d'], ['^c']), false)
 
   it "returns 'partial' for partial matches", ->
-    expect(keystrokesMatch(['a', 'b', '^b'], ['a'])).toBe 'partial'
-    expect(keystrokesMatch(['a', 'b', 'c'], ['a'])).toBe 'partial'
-    expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a'])).toBe 'partial'
-    expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b'])).toBe 'partial'
-    expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b'])).toBe 'partial'
-    expect(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'd', '^d'])).toBe false
+    assert.equal(keystrokesMatch(['a', 'b', '^b'], ['a']), 'partial')
+    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a']), 'partial')
+    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a']), 'partial')
+    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b']), 'partial')
+    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b']), 'partial')
+    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'd', '^d']), false)
 
   it "returns 'keydownExact' for bindings that match and contain a remainder of only keyup events", ->
-    expect(keystrokesMatch(['a', 'b', '^b'], ['a', 'b'])).toBe 'keydownExact'
+    assert.equal(keystrokesMatch(['a', 'b', '^b'], ['a', 'b']), 'keydownExact')
