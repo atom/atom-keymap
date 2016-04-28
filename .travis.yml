@@ -21,6 +21,7 @@ git:
 branches:
   only:
     - master
+    - target-activeElement-in-replay
 
 notifications:
   email:
