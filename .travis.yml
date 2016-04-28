@@ -10,7 +10,7 @@ addons:
     - g++-4.8
 
 node_js:
-  - "5"
+  - "node"
 
 env:
   - CC=gcc-4.8 CXX=g++-4.8
@@ -21,7 +21,6 @@ git:
 branches:
   only:
     - master
-    - target-activeElement-in-replay
 
 notifications:
   email:
