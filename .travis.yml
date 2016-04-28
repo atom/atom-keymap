@@ -10,7 +10,7 @@ addons:
     - g++-4.8
 
 node_js:
-  - "node"
+  - "5"
 
 env:
   - CC=gcc-4.8 CXX=g++-4.8
