@@ -1,8 +1,7 @@
 {calculateSpecificity} = require 'clear-cut'
+KeyboardLayout = require 'keyboard-layout'
 
-AtomModifiers = new Set
-AtomModifiers.add(modifier) for modifier in ['ctrl', 'alt', 'shift', 'cmd']
-
+Modifiers = new Set(['ctrl', 'alt', 'shift', 'cmd'])
 AtomModifierRegex = /(ctrl|alt|shift|cmd)$/
 WhitespaceRegex = /\s+/
 LowerCaseLetterRegex = /^[a-z]$/
@@ -10,100 +9,20 @@ UpperCaseLetterRegex = /^[A-Z]$/
 ExactMatch = 'exact'
 KeydownExactMatch = 'keydownExact'
 PartialMatch = 'partial'
-
-KeyboardEventModifiers = new Set
-KeyboardEventModifiers.add(modifier) for modifier in ['Control', 'Alt', 'Shift', 'Meta']
-
-WindowsAndLinuxKeyIdentifierTranslations =
-  'U+00A0': 'Shift'
-  'U+00A1': 'Shift'
-  'U+00A2': 'Control'
-  'U+00A3': 'Control'
-  'U+00A4': 'Alt'
-  'U+00A5': 'Alt'
-  'Win': 'Meta'
-
-WindowsAndLinuxCharCodeTranslations =
-  48:
-    shifted: 41    # ")"
-    unshifted: 48  # "0"
-  49:
-    shifted: 33    # "!"
-    unshifted: 49  # "1"
-  50:
-    shifted: 64    # "@"
-    unshifted: 50  # "2"
-  51:
-    shifted: 35    # "#"
-    unshifted: 51  # "3"
-  52:
-    shifted: 36    # "$"
-    unshifted: 52  # "4"
-  53:
-    shifted: 37    # "%"
-    unshifted: 53  # "5"
-  54:
-    shifted: 94    # "^"
-    unshifted: 54  # "6"
-  55:
-    shifted: 38    # "&"
-    unshifted: 55  # "7"
-  56:
-    shifted: 42    # "*"
-    unshifted: 56  # "8"
-  57:
-    shifted: 40    # "("
-    unshifted: 57  # "9"
-  186:
-    shifted: 58    # ":"
-    unshifted: 59  # ";"
-  187:
-    shifted: 43    # "+"
-    unshifted: 61  # "="
-  188:
-    shifted: 60    # "<"
-    unshifted: 44  # ","
-  189:
-    shifted: 95    # "_"
-    unshifted: 45  # "-"
-  190:
-    shifted: 62    # ">"
-    unshifted: 46  # "."
-  191:
-    shifted: 63    # "?"
-    unshifted: 47  # "/"
-  192:
-    shifted: 126   # "~"
-    unshifted: 96  # "`"
-  219:
-    shifted: 123   # "{"
-    unshifted: 91  # "["
-  220:
-    shifted: 124   # "|"
-    unshifted: 92  # "\"
-  221:
-    shifted: 125   # "}"
-    unshifted: 93  # "]"
-  222:
-    shifted: 34    # '"'
-    unshifted: 39  # "'"
-
-NumPadToASCII =
-  79: 47 # "/"
-  74: 42 # "*"
-  77: 45 # "-"
-  75: 43 # "+"
-  78: 46 # "."
-  96: 48 # "0"
-  65: 49 # "1"
-  66: 50 # "2"
-  67: 51 # "3"
-  68: 52 # "4"
-  69: 53 # "5"
-  70: 54 # "6"
-  71: 55 # "7"
-  72: 56 # "8"
-  73: 57 # "9"
+NonPrintableKeyNamesByCode = {
+  'AltLeft': 'alt',
+  'AltRight': 'alt',
+  'ControlLeft': 'ctrl',
+  'ControlRight': 'ctrl',
+  'MetaLeft': 'cmd',
+  'MetaRight': 'cmd',
+  'ShiftLeft': 'shift',
+  'ShiftRight': 'shift',
+  'ArrowDown': 'down',
+  'ArrowUp': 'up',
+  'ArrowLeft': 'left',
+  'ArrowRight': 'right'
+}
 
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
@@ -115,23 +34,43 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
-  key = keyForKeyboardEvent(event, dvorakQwertyWorkaroundEnabled)
+  key = NonPrintableKeyNamesByCode[event.code]
+  unless key?
+    if characters = KeyboardLayout.charactersForKeyCode(event.code)
+      key = characters.unmodified
+  unless key?
+    key = event.code.toLowerCase()
 
   keystroke = ''
-  if event.ctrlKey or key is 'Control'
+  if event.ctrlKey or key is 'ctrl'
     keystroke += 'ctrl'
-  if event.altKey or key is 'Alt'
-    keystroke += '-' if keystroke
-    keystroke += 'alt'
-  if event.shiftKey or key is 'Shift'
-    # Don't push 'shift' when modifying symbolic characters like '{'
+
+  if event.shiftKey
+    if event.altKey
+      if characters?
+        key = characters.withShiftAltGr
+      keystroke += '-' if keystroke.length > 0
+      keystroke += 'alt'
+    else
+      if characters?
+        key = characters.withShift
     unless /^[^A-Za-z]$/.test(key)
       keystroke += '-' if keystroke
       keystroke += 'shift'
+  else if event.altKey
+    appendAltModifier = true
+    if characters?
+      if characters.withAltGr.charCodeAt(0) <= 127
+        key = characters.withAltGr
+        appendAltModifier = false
+    if appendAltModifier
+      keystroke += '-' if keystroke.length > 0
+      keystroke += 'alt'
+
   if event.metaKey or key is 'Meta'
     keystroke += '-' if keystroke
     keystroke += 'cmd'
-  if key? and not KeyboardEventModifiers.has(key)
+  if key? and not Modifiers.has(key)
     keystroke += '-' if keystroke
     keystroke += key
 
@@ -146,7 +85,7 @@ exports.characterForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
 exports.calculateSpecificity = calculateSpecificity
 
 exports.isAtomModifier = (keystroke) ->
-  AtomModifiers.has(keystroke) or AtomModifierRegex.test(keystroke)
+  Modifiers.has(keystroke) or AtomModifierRegex.test(keystroke)
 
 exports.keydownEvent = (key, options) ->
   return keyboardEvent(key, 'keydown', options)
@@ -247,7 +186,7 @@ normalizeKeystroke = (keystroke) ->
   modifiers = new Set
 
   for key, i in keys
-    if AtomModifiers.has(key)
+    if Modifiers.has(key)
       modifiers.add(key)
     else
       # only the last key can be a non-modifier
@@ -287,12 +226,13 @@ parseKeystroke = (keystroke) ->
   keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
   keys
 
-keyForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
+keyForKeyboardEvent = (event) ->
+
   keyIdentifier = event.keyIdentifier
   if process.platform in ['linux', 'win32']
     keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
 
-  return keyIdentifier if KeyboardEventModifiers.has(keyIdentifier)
+  return keyIdentifier if KEYBOARD_EVENT_MODIFIERS.has(keyIdentifier)
 
   charCode = charCodeFromKeyIdentifier(keyIdentifier)
 
