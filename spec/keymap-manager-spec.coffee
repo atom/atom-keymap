@@ -585,7 +585,7 @@ describe "KeymapManager", ->
 
     beforeEach ->
       currentKeymap = null
-      stub(KeyboardLayout, 'charactersForKeyCode', (code) -> currentKeymap[code])
+      stub(KeyboardLayout, 'getCurrentKeymap', -> currentKeymap)
 
     describe "when no extra modifiers are pressed", ->
       it "returns a string that identifies the unmodified keystroke", ->

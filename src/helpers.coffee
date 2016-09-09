@@ -37,7 +37,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
   key = NonPrintableKeyNamesByCode[event.code]
   unless key?
-    if characters = KeyboardLayout.charactersForKeyCode(event.code)
+    if characters = KeyboardLayout.getCurrentKeymap()[event.code]
       key = characters.unmodified
   unless key?
     key = event.code.toLowerCase()
