@@ -1,4 +1,4 @@
-module.exports = {
+{
   "Space": {
     "unmodified": " ",
     "withShift": " ",

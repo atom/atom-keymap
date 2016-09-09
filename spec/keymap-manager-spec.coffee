@@ -579,7 +579,7 @@ describe "KeymapManager", ->
       assert.equal(keymapManager.findKeyBindings(command: 'y').length, 1)
       assert.equal(keymapManager.findKeyBindings(command: 'z').length, 0)
 
-  describe.only "::keystrokeForKeyboardEvent(event)", ->
+  describe "::keystrokeForKeyboardEvent(event)", ->
     KeyboardLayout = require('keyboard-layout')
     currentKeymap = null
 
@@ -589,7 +589,7 @@ describe "KeymapManager", ->
 
     describe "when no extra modifiers are pressed", ->
       it "returns a string that identifies the unmodified keystroke", ->
-        currentKeymap = require('./helpers/dvorak-keymap')
+        currentKeymap = require('./helpers/keymaps/dvorak')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyA'}), 'a')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'Minus'}), '[')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'Digit8', shiftKey: true}), '*')
@@ -600,7 +600,7 @@ describe "KeymapManager", ->
 
     describe "when a modifier key is combined with a non-modifier key", ->
       it "returns a string that identifies the modified keystroke", ->
-        currentKeymap = require('./helpers/dvorak-keymap')
+        currentKeymap = require('./helpers/keymaps/dvorak')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyA', altKey: true}), 'alt-a')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'Minus', metaKey: true}), 'cmd-[')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'Digit8', ctrlKey: true, shiftKey: true}), 'ctrl-*')
@@ -611,14 +611,14 @@ describe "KeymapManager", ->
 
     describe "when a numpad key is pressed", ->
       it "returns a string that identifies the key as the appropriate num-key", ->
-        currentKeymap = require('./helpers/dvorak-keymap')
+        currentKeymap = require('./helpers/keymaps/dvorak')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'Numpad1'}), '1')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'Numpad5'}), '5')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'NumpadAdd'}), '+')
 
     describe "international layouts", ->
       it "allows normal ASCII characters (<= 127) to be typed via an alt modifier", ->
-        currentKeymap = require('./helpers/swiss-german-keymap')
+        currentKeymap = require('./helpers/keymaps/swiss-german')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyG', altKey: true}), '@')
         # Only uses alt variants for basic latin
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyG', altKey: true, shiftKey: true}), 'alt-shift-g')
