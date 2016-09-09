@@ -87,10 +87,18 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
   keystroke = normalizeKeystroke("^#{keystroke}") if event.type is 'keyup'
   keystroke
 
-exports.characterForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
-  unless event.ctrlKey or event.altKey or event.metaKey
-    if key = keyForKeyboardEvent(event, dvorakQwertyWorkaroundEnabled)
-      key if key.length is 1
+exports.characterForKeyboardEvent = (event, allowModifiers = false) ->
+  unless event.ctrlKey or event.metaKey
+    if characters = KeyboardLayout.getCurrentKeymap()[event.code]
+      if event.shiftKey
+        if event.altKey
+          return characters.withShiftAltGr
+        else
+          return characters.withShift
+      else if event.altKey
+        return characters.withAltGr
+      else
+        return characters.unmodified
 
 exports.calculateSpecificity = calculateSpecificity
 
