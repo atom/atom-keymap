@@ -625,6 +625,17 @@ describe "KeymapManager", ->
         # Only uses alt variants when no other modifiers are used
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyG', ctrlKey: true, altKey: true}), 'ctrl-alt-g')
 
+      it "converts non-latin keycaps to their U.S. counterpart for purposes of binding", ->
+        currentKeymap = require('./helpers/keymaps/greek')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyX'}), 'χ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyX', shiftKey: true}), 'Χ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyX', metaKey: true}), 'cmd-x')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyX', metaKey: true, shiftKey: true}), 'shift-cmd-X')
+
+        # Don't use U.S. counterpart for latin characters
+        currentKeymap = require('./helpers/keymaps/turkish')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyX', metaKey: true}), 'cmd-ö')
+
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
     beforeEach ->

@@ -1,0 +1,380 @@
+{
+  "Space": {
+    "unmodified": " ",
+    "withShift": " ",
+    "withAltGr": " ",
+    "withShiftAltGr": " "
+  },
+  "Digit0": {
+    "unmodified": "0",
+    "withShift": ")",
+    "withAltGr": "°",
+    "withShiftAltGr": "ύ"
+  },
+  "Digit1": {
+    "unmodified": "1",
+    "withShift": "!",
+    "withAltGr": "¹",
+    "withShiftAltGr": "έ"
+  },
+  "Digit2": {
+    "unmodified": "2",
+    "withShift": "@",
+    "withAltGr": "²",
+    "withShiftAltGr": "ί"
+  },
+  "Digit3": {
+    "unmodified": "3",
+    "withShift": "#",
+    "withAltGr": "³",
+    "withShiftAltGr": "ή"
+  },
+  "Digit4": {
+    "unmodified": "4",
+    "withShift": "$",
+    "withAltGr": "£",
+    "withShiftAltGr": "ό"
+  },
+  "Digit5": {
+    "unmodified": "5",
+    "withShift": "%",
+    "withAltGr": "§",
+    "withShiftAltGr": "Ώ"
+  },
+  "Digit6": {
+    "unmodified": "6",
+    "withShift": "^",
+    "withAltGr": "¶",
+    "withShiftAltGr": "^"
+  },
+  "Digit7": {
+    "unmodified": "7",
+    "withShift": "&",
+    "withAltGr": "°",
+    "withShiftAltGr": ""
+  },
+  "Digit8": {
+    "unmodified": "8",
+    "withShift": "*",
+    "withAltGr": "•",
+    "withShiftAltGr": "Ρ"
+  },
+  "Digit9": {
+    "unmodified": "9",
+    "withShift": "(",
+    "withAltGr": "“",
+    "withShiftAltGr": "Κ"
+  },
+  "KeyA": {
+    "unmodified": "α",
+    "withShift": "Α",
+    "withAltGr": "…",
+    "withShiftAltGr": "ά"
+  },
+  "KeyB": {
+    "unmodified": "β",
+    "withShift": "Β",
+    "withAltGr": "",
+    "withShiftAltGr": ""
+  },
+  "KeyC": {
+    "unmodified": "ψ",
+    "withShift": "Ψ",
+    "withAltGr": "ç",
+    "withShiftAltGr": "Χ"
+  },
+  "KeyD": {
+    "unmodified": "δ",
+    "withShift": "Δ",
+    "withAltGr": "÷",
+    "withShiftAltGr": ""
+  },
+  "KeyE": {
+    "unmodified": "ε",
+    "withShift": "Ε",
+    "withAltGr": "€",
+    "withShiftAltGr": "Έ"
+  },
+  "KeyF": {
+    "unmodified": "φ",
+    "withShift": "Φ",
+    "withAltGr": "≠",
+    "withShiftAltGr": "Π"
+  },
+  "KeyG": {
+    "unmodified": "γ",
+    "withShift": "Γ",
+    "withAltGr": "©",
+    "withShiftAltGr": "Ϊ"
+  },
+  "KeyH": {
+    "unmodified": "η",
+    "withShift": "Η",
+    "withAltGr": "½",
+    "withShiftAltGr": "≠"
+  },
+  "KeyI": {
+    "unmodified": "ι",
+    "withShift": "Ι",
+    "withAltGr": "†",
+    "withShiftAltGr": "Ν"
+  },
+  "KeyJ": {
+    "unmodified": "ξ",
+    "withShift": "Ξ",
+    "withAltGr": "≤",
+    "withShiftAltGr": "§"
+  },
+  "KeyK": {
+    "unmodified": "κ",
+    "withShift": "Κ",
+    "withAltGr": "≥",
+    "withShiftAltGr": "°"
+  },
+  "KeyL": {
+    "unmodified": "λ",
+    "withShift": "Λ",
+    "withAltGr": "¬",
+    "withShiftAltGr": "·"
+  },
+  "KeyM": {
+    "unmodified": "μ",
+    "withShift": "Μ",
+    "withAltGr": "’",
+    "withShiftAltGr": "Ύ"
+  },
+  "KeyN": {
+    "unmodified": "ν",
+    "withShift": "Ν",
+    "withAltGr": "‘",
+    "withShiftAltGr": "Ό"
+  },
+  "KeyO": {
+    "unmodified": "ο",
+    "withShift": "Ο",
+    "withAltGr": "œ",
+    "withShiftAltGr": "Τ"
+  },
+  "KeyP": {
+    "unmodified": "π",
+    "withShift": "Π",
+    "withAltGr": "≈",
+    "withShiftAltGr": ""
+  },
+  "KeyQ": {
+    "unmodified": ";",
+    "withShift": ":",
+    "withAltGr": "·",
+    "withShiftAltGr": "―"
+  },
+  "KeyR": {
+    "unmodified": "ρ",
+    "withShift": "Ρ",
+    "withAltGr": "®",
+    "withShiftAltGr": "Δ"
+  },
+  "KeyS": {
+    "unmodified": "σ",
+    "withShift": "Σ",
+    "withAltGr": "ß",
+    "withShiftAltGr": "ρ"
+  },
+  "KeyT": {
+    "unmodified": "τ",
+    "withShift": "Τ",
+    "withAltGr": "™",
+    "withShiftAltGr": ""
+  },
+  "KeyU": {
+    "unmodified": "θ",
+    "withShift": "Θ",
+    "withAltGr": "­",
+    "withShiftAltGr": "Ξ"
+  },
+  "KeyV": {
+    "unmodified": "ω",
+    "withShift": "Ω",
+    "withAltGr": "±",
+    "withShiftAltGr": "Ά"
+  },
+  "KeyW": {
+    "unmodified": "ς",
+    "withShift": "",
+    "withAltGr": "―",
+    "withShiftAltGr": "Β"
+  },
+  "KeyX": {
+    "unmodified": "χ",
+    "withShift": "Χ",
+    "withAltGr": "",
+    "withShiftAltGr": ""
+  },
+  "KeyY": {
+    "unmodified": "υ",
+    "withShift": "Υ",
+    "withAltGr": "¥",
+    "withShiftAltGr": ""
+  },
+  "KeyZ": {
+    "unmodified": "ζ",
+    "withShift": "Ζ",
+    "withAltGr": "§",
+    "withShiftAltGr": ""
+  },
+  "Numpad0": {
+    "unmodified": "0",
+    "withShift": "0",
+    "withAltGr": "0",
+    "withShiftAltGr": "0"
+  },
+  "Numpad1": {
+    "unmodified": "1",
+    "withShift": "1",
+    "withAltGr": "1",
+    "withShiftAltGr": "1"
+  },
+  "Numpad2": {
+    "unmodified": "2",
+    "withShift": "2",
+    "withAltGr": "2",
+    "withShiftAltGr": "2"
+  },
+  "Numpad3": {
+    "unmodified": "3",
+    "withShift": "3",
+    "withAltGr": "3",
+    "withShiftAltGr": "3"
+  },
+  "Numpad4": {
+    "unmodified": "4",
+    "withShift": "4",
+    "withAltGr": "4",
+    "withShiftAltGr": "4"
+  },
+  "Numpad5": {
+    "unmodified": "5",
+    "withShift": "5",
+    "withAltGr": "5",
+    "withShiftAltGr": "5"
+  },
+  "Numpad6": {
+    "unmodified": "6",
+    "withShift": "6",
+    "withAltGr": "6",
+    "withShiftAltGr": "6"
+  },
+  "Numpad7": {
+    "unmodified": "7",
+    "withShift": "7",
+    "withAltGr": "7",
+    "withShiftAltGr": "7"
+  },
+  "Numpad8": {
+    "unmodified": "8",
+    "withShift": "8",
+    "withAltGr": "8",
+    "withShiftAltGr": "8"
+  },
+  "Numpad9": {
+    "unmodified": "9",
+    "withShift": "9",
+    "withAltGr": "9",
+    "withShiftAltGr": "9"
+  },
+  "NumpadMultiply": {
+    "unmodified": "*",
+    "withShift": "*",
+    "withAltGr": "*",
+    "withShiftAltGr": "*"
+  },
+  "NumpadAdd": {
+    "unmodified": "+",
+    "withShift": "+",
+    "withAltGr": "+",
+    "withShiftAltGr": "+"
+  },
+  "NumpadSubtract": {
+    "unmodified": "-",
+    "withShift": "-",
+    "withAltGr": "-",
+    "withShiftAltGr": "-"
+  },
+  "NumpadDecimal": {
+    "unmodified": ".",
+    "withShift": ".",
+    "withAltGr": ".",
+    "withShiftAltGr": "."
+  },
+  "NumpadDivide": {
+    "unmodified": "/",
+    "withShift": "/",
+    "withAltGr": "/",
+    "withShiftAltGr": "/"
+  },
+  "Semicolon": {
+    "unmodified": "",
+    "withShift": "",
+    "withAltGr": "",
+    "withShiftAltGr": ":"
+  },
+  "Equal": {
+    "unmodified": "=",
+    "withShift": "+",
+    "withAltGr": "½",
+    "withShiftAltGr": "+"
+  },
+  "NumpadComma": {
+    "unmodified": ",",
+    "withShift": "<",
+    "withAltGr": "«",
+    "withShiftAltGr": ""
+  },
+  "Minus": {
+    "unmodified": "-",
+    "withShift": "_",
+    "withAltGr": "±",
+    "withShiftAltGr": "_"
+  },
+  "Period": {
+    "unmodified": ".",
+    "withShift": ">",
+    "withAltGr": "»",
+    "withShiftAltGr": "ώ"
+  },
+  "Slash": {
+    "unmodified": "/",
+    "withShift": "?",
+    "withAltGr": "/",
+    "withShiftAltGr": "?"
+  },
+  "Backquote": {
+    "unmodified": "`",
+    "withShift": "~",
+    "withAltGr": "`",
+    "withShiftAltGr": "Μ"
+  },
+  "BracketLeft": {
+    "unmodified": "[",
+    "withShift": "{",
+    "withAltGr": "«",
+    "withShiftAltGr": "{"
+  },
+  "IntlYen": {
+    "unmodified": "\\",
+    "withShift": "|",
+    "withAltGr": "¦",
+    "withShiftAltGr": "Ζ"
+  },
+  "BracketRight": {
+    "unmodified": "]",
+    "withShift": "}",
+    "withAltGr": "»",
+    "withShiftAltGr": "}"
+  },
+  "Quote": {
+    "unmodified": "'",
+    "withShift": "\"",
+    "withAltGr": "'",
+    "withShiftAltGr": "\""
+  }
+}

@@ -23,6 +23,7 @@ NonPrintableKeyNamesByCode = {
   'ArrowLeft': 'left',
   'ArrowRight': 'right'
 }
+EndOFLatinCharCodeRange = 0x024F
 
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
@@ -40,6 +41,16 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
       key = characters.unmodified
   unless key?
     key = event.code.toLowerCase()
+
+  # Use US equivalent character for non-latin characters in keystrokes with modifiers
+  keyIsNonLatin = key.length is 1 and key.charCodeAt(0) > EndOFLatinCharCodeRange
+  keystrokeHasModifiers = (event.ctrlKey or event.altKey or event.metaKey)
+  if keyIsNonLatin and keystrokeHasModifiers
+    if characters = usCharactersForKeyCode(event.code)
+      if event.shiftKey
+        key = characters.withShift
+      else
+        key = characters.unmodified
 
   keystroke = ''
   if event.ctrlKey or key is 'ctrl'
@@ -68,6 +79,7 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
   if event.metaKey or key is 'Meta'
     keystroke += '-' if keystroke
     keystroke += 'cmd'
+
   if key? and not Modifiers.has(key)
     keystroke += '-' if keystroke
     keystroke += key
@@ -293,3 +305,8 @@ isASCII = (charCode) ->
 
 numpadToASCII = (charCode) ->
   NumPadToASCII[charCode] ? charCode
+
+usKeymap = null
+usCharactersForKeyCode = (code) ->
+  usKeymap ?= require('./us-keymap')
+  usKeymap[code]
