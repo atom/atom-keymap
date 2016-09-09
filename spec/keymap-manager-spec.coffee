@@ -316,7 +316,7 @@ describe "KeymapManager", ->
 
           workspace.addEventListener 'control-dog', -> events.push('control-dog')
 
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl-d', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', ctrl: true, target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
 
           getFakeClock().tick(keymapManager.getPartialMatchTimeout())
