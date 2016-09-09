@@ -112,38 +112,37 @@ exports.keyupEvent = (key, options) ->
   return keyboardEvent(key, 'keyup', options)
 
 keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
-  event = document.createEvent('KeyboardEvent')
+  ctrlKey = ctrl ? false
+  altKey = alt ? false
+  shiftKey = shift ? false
+  metaKey = cmd ? false
   bubbles = true
   cancelable = true
-  view = null
+  code = Object.keys(NonPrintableKeyNamesByCode).find (candidateCode) ->
+    NonPrintableKeyNamesByCode[candidateCode] is key
 
-  key = key.toUpperCase() if LowerCaseLetterRegex.test(key)
-  if key.length is 1
-    keyIdentifier = "U+#{key.charCodeAt(0).toString(16)}"
-  else
-    switch key
-      when 'ctrl'
-        keyIdentifier = 'Control'
-        ctrl = true if eventType isnt 'keyup'
-      when 'alt'
-        keyIdentifier = 'Alt'
-        alt = true if eventType isnt 'keyup'
-      when 'shift'
-        keyIdentifier = 'Shift'
-        shift = true if eventType isnt 'keyup'
-      when 'cmd'
-        keyIdentifier = 'Meta'
-        cmd = true if eventType isnt 'keyup'
-      else
-        keyIdentifier = key[0].toUpperCase() + key[1..]
+  unless code?
+    for candidateCode, characters of KeyboardLayout.getCurrentKeymap()
+      if characters.unmodified is key
+        code = candidateCode
+      else if characters.withShift is key
+        code = candidateCode
+        shiftKey = true
+      else if characters.withAltGr is key
+        code = candidateCode
+        altKey = true
+      else if characters.withShiftAltGr is key
+        code = candidateCode
+        altKey = true
+        shiftKey = true
 
-  location ?= KeyboardEvent.DOM_KEY_LOCATION_STANDARD
-  event.initKeyboardEvent(eventType, bubbles, cancelable, view,  keyIdentifier, location, ctrl, alt, shift, cmd)
+  event = new KeyboardEvent(eventType, {
+    code, ctrlKey, altKey, shiftKey, metaKey, bubbles, cancelable
+  })
+
   if target?
     Object.defineProperty(event, 'target', get: -> target)
     Object.defineProperty(event, 'path', get: -> [target])
-  Object.defineProperty(event, 'keyCode', get: -> keyCode)
-  Object.defineProperty(event, 'which', get: -> keyCode)
   event
 
 # bindingKeystrokes and userKeystrokes are arrays of keystrokes
