@@ -44,7 +44,7 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   keyIsNonLatin = key.length is 1 and key.charCodeAt(0) > EndOFLatinCharCodeRange
-  keystrokeHasModifiers = (event.ctrlKey or event.altKey or event.metaKey)
+  keystrokeHasModifiers = (event.ctrlKey or event.metaKey)
   if keyIsNonLatin and keystrokeHasModifiers
     if characters = usCharactersForKeyCode(event.code)
       if event.shiftKey
