@@ -47,10 +47,11 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
 
   if event.shiftKey
     if event.altKey
-      if characters?
+      if characters? and characters.withShiftAltGr.charCodeAt(0) <= 127 and not event.ctrlKey and not event.metaKey
         key = characters.withShiftAltGr
-      keystroke += '-' if keystroke.length > 0
-      keystroke += 'alt'
+      else
+        keystroke += '-' if keystroke.length > 0
+        keystroke += 'alt'
     else
       if characters?
         key = characters.withShift
@@ -58,12 +59,9 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
       keystroke += '-' if keystroke
       keystroke += 'shift'
   else if event.altKey
-    appendAltModifier = true
-    if characters?
-      if characters.withAltGr.charCodeAt(0) <= 127
-        key = characters.withAltGr
-        appendAltModifier = false
-    if appendAltModifier
+    if characters? and characters.withAltGr.charCodeAt(0) <= 127 and not event.ctrlKey and not event.metaKey
+      key = characters.withAltGr
+    else
       keystroke += '-' if keystroke.length > 0
       keystroke += 'alt'
 

@@ -616,9 +616,14 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'Numpad5'}), '5')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'NumpadAdd'}), '+')
 
-    describe "when a non-English keyboard language is used", ->
-      it "uses the physical character pressed instead of the character it maps to in the current language", ->
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+03B6', cmd: true, keyCode: 122)), 'cmd-z')
+    describe "international layouts", ->
+      it "allows normal ASCII characters (<= 127) to be typed via an alt modifier", ->
+        currentKeymap = require('./helpers/swiss-german-keymap')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyG', altKey: true}), '@')
+        # Only uses alt variants for basic latin
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyG', altKey: true, shiftKey: true}), 'alt-shift-g')
+        # Only uses alt variants when no other modifiers are used
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({code: 'KeyG', ctrlKey: true, altKey: true}), 'ctrl-alt-g')
 
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
