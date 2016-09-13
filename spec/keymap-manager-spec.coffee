@@ -3,6 +3,7 @@ debounce = require 'debounce'
 fs = require 'fs-plus'
 path = require 'path'
 temp = require 'temp'
+KeyboardLayout = require('keyboard-layout')
 KeymapManager = require '../src/keymap-manager'
 {buildKeydownEvent, buildKeyupEvent} = KeymapManager
 {appendContent, stub, getFakeClock, mockProcessPlatform} = require './helpers/helpers'
@@ -601,8 +602,17 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'A', ctrlKey: true, shiftKey: true}), 'ctrl-shift-A')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '{', shiftKey: true}), '{')
 
+    describe "when the Dvorak QWERTY-⌘ layout is in use on macOS", ->
+      it "uses the US layout equivalent when the command key is held down", ->
+        mockProcessPlatform('darwin')
+        stub(KeyboardLayout, 'getCurrentKeymap', -> require('./helpers/keymaps/dvorak-qwerty-cmd'))
+        stub(KeyboardLayout, 'getCurrentKeyboardLayout', -> 'com.apple.keylayout.DVORAK-QWERTYCMD')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', altKey: true}), 'alt-l')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', ctrlKey: true, altKey: true}), 'ctrl-alt-l')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', metaKey: true}), 'cmd-p')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'L', code: 'KeyP', metaKey: true, shiftKey: true}), 'shift-cmd-P')
+
     describe "international layouts", ->
-      KeyboardLayout = require('keyboard-layout')
       currentKeymap = null
 
       beforeEach ->

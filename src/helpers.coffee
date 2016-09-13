@@ -33,7 +33,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
       return false
   normalizedKeystrokes.join(' ')
 
-exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
+exports.keystrokeForKeyboardEvent = (event) ->
   {ctrlKey, altKey, shiftKey, metaKey} = event
   isNonCharacterKey = event.key.length > 1
 
@@ -64,7 +64,9 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
         altKey = false if event.getModifierState('AltGraph')
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
-  if not isLatin(key) and (ctrlKey or altKey or metaKey)
+  # or when using the dvorak-qwertycmd layout and holding down the command key.
+  if (not isLatin(key) and (ctrlKey or altKey or metaKey)) or
+     (metaKey and KeyboardLayout.getCurrentKeyboardLayout() is 'com.apple.keylayout.DVORAK-QWERTYCMD')
     if characters = usCharactersForKeyCode(event.code)
       if event.shiftKey
         key = characters.withShift
