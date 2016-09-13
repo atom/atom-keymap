@@ -5,7 +5,11 @@
 import lolex from 'lolex'
 import sinon from 'sinon'
 
-let sinonSandbox, fakeClock
+let sinonSandbox, fakeClock, processPlatform, originalProcessPlatform
+
+originalProcessPlatform = process.platform
+processPlatform = process.platform
+Object.defineProperty(process, 'platform', {get: () => processPlatform})
 
 beforeEach(function () {
   document.body.innerHTML = ''
@@ -16,6 +20,7 @@ beforeEach(function () {
 afterEach(function () {
   fakeClock.uninstall()
   sinonSandbox.restore()
+  processPlatform = originalProcessPlatform
 })
 
 export function appendContent (element) {
@@ -29,4 +34,8 @@ export function stub () {
 
 export function getFakeClock () {
   return fakeClock
+}
+
+export function mockProcessPlatform (platform) {
+  processPlatform = platform
 }

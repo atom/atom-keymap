@@ -9,21 +9,20 @@ UpperCaseLetterRegex = /^[A-Z]$/
 ExactMatch = 'exact'
 KeydownExactMatch = 'keydownExact'
 PartialMatch = 'partial'
-NonPrintableKeyNamesByCode = {
-  'AltLeft': 'alt',
-  'AltRight': 'alt',
-  'ControlLeft': 'ctrl',
-  'ControlRight': 'ctrl',
-  'MetaLeft': 'cmd',
-  'MetaRight': 'cmd',
-  'ShiftLeft': 'shift',
-  'ShiftRight': 'shift',
+NonCharacterKeyNamesByDOM3Key = {
+  'Control': 'ctrl',
+  'Meta': 'cmd',
   'ArrowDown': 'down',
   'ArrowUp': 'up',
   'ArrowLeft': 'left',
   'ArrowRight': 'right'
 }
-EndOFLatinCharCodeRange = 0x024F
+
+isASCII = (character) -> character.charCodeAt(0) <= 127
+
+isLatin = (character) -> character.charCodeAt(0) <= 0x024F
+
+isUpperCaseLatin = (character) -> isLatin(character) and character.toLowerCase() isnt character
 
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
@@ -35,17 +34,37 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
-  key = NonPrintableKeyNamesByCode[event.code]
-  unless key?
-    if characters = KeyboardLayout.getCurrentKeymap()[event.code]
-      key = characters.unmodified
-  unless key?
-    key = event.code.toLowerCase()
+  {ctrlKey, altKey, shiftKey, metaKey} = event
+  isNonCharacterKey = event.key.length > 1
+
+  if isNonCharacterKey
+    key = NonCharacterKeyNamesByDOM3Key[event.key] ? event.key.toLowerCase()
+  else
+    key = event.key
+
+    if altKey
+      if process.platform is 'darwin'
+        # When the option key is down on macOS, we need to determine whether the
+        # the user intends to type an ASCII character that is only reachable by use
+        # of the option key (such as option-g to type @ on a Swiss-German layout)
+        # or used as a modifier to match against an alt-* binding.
+        #
+        # We check for event.code because test helpers produce events without it.
+        if event.code and (characters = KeyboardLayout.getCurrentKeymap()[event.code])
+          if shiftKey
+            nonAltModifiedKey = characters.withShift
+          else
+            nonAltModifiedKey = characters.unmodified
+
+          if not ctrlKey and not metaKey and isASCII(key) and key isnt nonAltModifiedKey
+            altKey = false
+          else
+            key = nonAltModifiedKey
+      else
+        altKey = false if event.getModifierState('AltGraph')
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
-  keyIsNonLatin = key.length is 1 and key.charCodeAt(0) > EndOFLatinCharCodeRange
-  keystrokeHasModifiers = (event.ctrlKey or event.metaKey)
-  if keyIsNonLatin and keystrokeHasModifiers
+  if not isLatin(key) and (ctrlKey or altKey or metaKey)
     if characters = usCharactersForKeyCode(event.code)
       if event.shiftKey
         key = characters.withShift
@@ -53,52 +72,30 @@ exports.keystrokeForKeyboardEvent = (event, dvorakQwertyWorkaroundEnabled) ->
         key = characters.unmodified
 
   keystroke = ''
-  if event.ctrlKey or key is 'ctrl'
+  if key is 'ctrl' or ctrlKey
     keystroke += 'ctrl'
 
-  if event.shiftKey
-    if event.altKey
-      if characters? and characters.withShiftAltGr.charCodeAt(0) <= 127 and not event.ctrlKey and not event.metaKey
-        key = characters.withShiftAltGr
-      else
-        keystroke += '-' if keystroke.length > 0
-        keystroke += 'alt'
-    else
-      if characters?
-        key = characters.withShift
-    unless /^[^A-Za-z]$/.test(key)
-      keystroke += '-' if keystroke
-      keystroke += 'shift'
-  else if event.altKey
-    if characters? and characters.withAltGr.charCodeAt(0) <= 127 and not event.ctrlKey and not event.metaKey
-      key = characters.withAltGr
-    else
-      keystroke += '-' if keystroke.length > 0
-      keystroke += 'alt'
+  if key is 'alt' or altKey
+    keystroke += '-' if keystroke.length > 0
+    keystroke += 'alt'
 
-  if event.metaKey or key is 'Meta'
+  if key is 'shift' or (shiftKey and (isNonCharacterKey or isUpperCaseLatin(key)))
+    keystroke += '-' if keystroke
+    keystroke += 'shift'
+
+  if key is 'cmd' or metaKey
     keystroke += '-' if keystroke
     keystroke += 'cmd'
 
-  if key? and not Modifiers.has(key)
+  unless Modifiers.has(key)
     keystroke += '-' if keystroke
     keystroke += key
 
   keystroke = normalizeKeystroke("^#{keystroke}") if event.type is 'keyup'
   keystroke
 
-exports.characterForKeyboardEvent = (event, allowModifiers = false) ->
-  unless event.ctrlKey or event.metaKey
-    if characters = KeyboardLayout.getCurrentKeymap()[event.code]
-      if event.shiftKey
-        if event.altKey
-          return characters.withShiftAltGr
-        else
-          return characters.withShift
-      else if event.altKey
-        return characters.withAltGr
-      else
-        return characters.unmodified
+exports.characterForKeyboardEvent = (event) ->
+  event.key unless event.ctrlKey or event.metaKey
 
 exports.calculateSpecificity = calculateSpecificity
 
@@ -118,26 +115,9 @@ keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, locati
   metaKey = cmd ? false
   bubbles = true
   cancelable = true
-  code = Object.keys(NonPrintableKeyNamesByCode).find (candidateCode) ->
-    NonPrintableKeyNamesByCode[candidateCode] is key
-
-  unless code?
-    for candidateCode, characters of KeyboardLayout.getCurrentKeymap()
-      if characters.unmodified is key
-        code = candidateCode
-      else if characters.withShift is key
-        code = candidateCode
-        shiftKey = true
-      else if characters.withAltGr is key
-        code = candidateCode
-        altKey = true
-      else if characters.withShiftAltGr is key
-        code = candidateCode
-        altKey = true
-        shiftKey = true
 
   event = new KeyboardEvent(eventType, {
-    code, ctrlKey, altKey, shiftKey, metaKey, bubbles, cancelable
+    key, ctrlKey, altKey, shiftKey, metaKey, bubbles, cancelable
   })
 
   if target?
@@ -306,9 +286,6 @@ keyFromCharCode = (charCode) ->
     when 32 then 'space'
     when 127 then 'delete'
     else String.fromCharCode(charCode)
-
-isASCII = (charCode) ->
-  0 <= charCode <= 127
 
 numpadToASCII = (charCode) ->
   NumPadToASCII[charCode] ? charCode
