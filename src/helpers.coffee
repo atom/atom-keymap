@@ -1,19 +1,21 @@
 {calculateSpecificity} = require 'clear-cut'
 KeyboardLayout = require 'keyboard-layout'
 
-Modifiers = new Set(['ctrl', 'alt', 'shift', 'cmd'])
-EndsInModifierRegex = /(ctrl|alt|shift|cmd)$/
-WhitespaceRegex = /\s+/
-ExactMatch = 'exact'
-KeydownExactMatch = 'keydownExact'
-PartialMatch = 'partial'
-NonCharacterKeyNamesByDOM3Key = {
+MODIFIERS = new Set(['ctrl', 'alt', 'shift', 'cmd'])
+ENDS_IN_MODIFIER_REGEX = /(ctrl|alt|shift|cmd)$/
+WHITESPACE_REGEX = /\s+/
+NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY = {
   'Control': 'ctrl',
   'Meta': 'cmd',
   'ArrowDown': 'down',
   'ArrowUp': 'up',
   'ArrowLeft': 'left',
   'ArrowRight': 'right'
+}
+MATCH_TYPES = {
+  EXACT: 'exact'
+  KEYDOWN_EXACT: 'keydownExact'
+  PARTIAL: 'partial'
 }
 
 isASCIICharacter = (character) ->
@@ -30,7 +32,7 @@ isLowerCaseCharacter = (character) ->
 
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
-  for keystroke in keystrokes.split(WhitespaceRegex)
+  for keystroke in keystrokes.split(WHITESPACE_REGEX)
     if normalizedKeystroke = normalizeKeystroke(keystroke)
       normalizedKeystrokes.push(normalizedKeystroke)
     else
@@ -42,7 +44,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   isNonCharacterKey = event.key.length > 1
 
   if isNonCharacterKey
-    key = NonCharacterKeyNamesByDOM3Key[event.key] ? event.key.toLowerCase()
+    key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[event.key] ? event.key.toLowerCase()
   else
     key = event.key
 
@@ -93,7 +95,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
     keystroke += '-' if keystroke
     keystroke += 'cmd'
 
-  unless Modifiers.has(key)
+  unless MODIFIERS.has(key)
     keystroke += '-' if keystroke
     keystroke += key
 
@@ -105,7 +107,7 @@ exports.characterForKeyboardEvent = (event) ->
 
 exports.calculateSpecificity = calculateSpecificity
 
-exports.isBareModifier = (keystroke) -> EndsInModifierRegex.test(keystroke)
+exports.isBareModifier = (keystroke) -> ENDS_IN_MODIFIER_REGEX.test(keystroke)
 
 exports.keydownEvent = (key, options) ->
   return keyboardEvent(key, 'keydown', options)
@@ -172,11 +174,11 @@ exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
   return false if userKeystrokeIndex < userKeystrokes.length - 1
 
   if isPartialMatch and bindingRemainderContainsOnlyKeyups
-    KeydownExactMatch
+    MATCH_TYPES.KEYDOWN_EXACT
   else if isPartialMatch
-    PartialMatch
+    MATCH_TYPES.PARTIAL
   else
-    ExactMatch
+    MATCH_TYPES.EXACT
 
 normalizeKeystroke = (keystroke) ->
   if isKeyup = keystroke.startsWith('^')
@@ -188,7 +190,7 @@ normalizeKeystroke = (keystroke) ->
   modifiers = new Set
 
   for key, i in keys
-    if Modifiers.has(key)
+    if MODIFIERS.has(key)
       modifiers.add(key)
     else
       # only the last key can be a non-modifier
