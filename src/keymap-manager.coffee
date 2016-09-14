@@ -7,7 +7,7 @@ path = require 'path'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
-{normalizeKeystrokes, keystrokeForKeyboardEvent, isAtomModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch} = require './helpers'
+{normalizeKeystrokes, keystrokeForKeyboardEvent, isBareModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -493,7 +493,7 @@ class KeymapManager
     keystroke = @keystrokeForKeyboardEvent(event)
 
     # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
-    if event.type is 'keydown' and @queuedKeystrokes.length > 0 and isAtomModifier(keystroke)
+    if event.type is 'keydown' and @queuedKeystrokes.length > 0 and isBareModifier(keystroke)
       event.preventDefault()
       return
 

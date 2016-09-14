@@ -2,10 +2,8 @@
 KeyboardLayout = require 'keyboard-layout'
 
 Modifiers = new Set(['ctrl', 'alt', 'shift', 'cmd'])
-AtomModifierRegex = /(ctrl|alt|shift|cmd)$/
+EndsInModifierRegex = /(ctrl|alt|shift|cmd)$/
 WhitespaceRegex = /\s+/
-LowerCaseLetterRegex = /^[a-z]$/
-UpperCaseLetterRegex = /^[A-Z]$/
 ExactMatch = 'exact'
 KeydownExactMatch = 'keydownExact'
 PartialMatch = 'partial'
@@ -18,11 +16,17 @@ NonCharacterKeyNamesByDOM3Key = {
   'ArrowRight': 'right'
 }
 
-isASCII = (character) -> character.charCodeAt(0) <= 127
+isASCIICharacter = (character) ->
+  character? and character.length is 1 and character.charCodeAt(0) <= 127
 
-isLatin = (character) -> character.charCodeAt(0) <= 0x024F
+isLatinCharacter = (character) ->
+  character? and character.length is 1 and character.charCodeAt(0) <= 0x024F
 
-isUpperCaseLatin = (character) -> isLatin(character) and character.toLowerCase() isnt character
+isUpperCaseCharacter = (character) ->
+  character? and character.length is 1 and character.toLowerCase() isnt character
+
+isLowerCaseCharacter = (character) ->
+  character? and character.length is 1 and character.toUpperCase() isnt character
 
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
@@ -56,7 +60,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
           else
             nonAltModifiedKey = characters.unmodified
 
-          if not ctrlKey and not metaKey and isASCII(key) and key isnt nonAltModifiedKey
+          if not ctrlKey and not metaKey and isASCIICharacter(key) and key isnt nonAltModifiedKey
             altKey = false
           else
             key = nonAltModifiedKey
@@ -65,7 +69,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
-  if (not isLatin(key) and (ctrlKey or altKey or metaKey)) or
+  if (not isLatinCharacter(key) and (ctrlKey or altKey or metaKey)) or
      (metaKey and KeyboardLayout.getCurrentKeyboardLayout() is 'com.apple.keylayout.DVORAK-QWERTYCMD')
     if characters = usCharactersForKeyCode(event.code)
       if event.shiftKey
@@ -81,7 +85,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
     keystroke += '-' if keystroke.length > 0
     keystroke += 'alt'
 
-  if key is 'shift' or (shiftKey and (isNonCharacterKey or isUpperCaseLatin(key)))
+  if key is 'shift' or (shiftKey and (isNonCharacterKey or (isLatinCharacter(key) and isUpperCaseCharacter(key))))
     keystroke += '-' if keystroke
     keystroke += 'shift'
 
@@ -101,8 +105,7 @@ exports.characterForKeyboardEvent = (event) ->
 
 exports.calculateSpecificity = calculateSpecificity
 
-exports.isAtomModifier = (keystroke) ->
-  Modifiers.has(keystroke) or AtomModifierRegex.test(keystroke)
+exports.isBareModifier = (keystroke) -> EndsInModifierRegex.test(keystroke)
 
 exports.keydownEvent = (key, options) ->
   return keyboardEvent(key, 'keydown', options)
@@ -197,8 +200,8 @@ normalizeKeystroke = (keystroke) ->
   if isKeyup
     primaryKey = primaryKey.toLowerCase() if primaryKey?
   else
-    modifiers.add('shift') if UpperCaseLetterRegex.test(primaryKey)
-    if modifiers.has('shift') and LowerCaseLetterRegex.test(primaryKey)
+    modifiers.add('shift') if isUpperCaseCharacter(primaryKey)
+    if modifiers.has('shift') and isLowerCaseCharacter(primaryKey)
       primaryKey = primaryKey.toUpperCase()
 
   keystroke = []
@@ -224,73 +227,6 @@ parseKeystroke = (keystroke) ->
       return false if keyStart is keystroke.length
   keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
   keys
-
-keyForKeyboardEvent = (event) ->
-
-  keyIdentifier = event.keyIdentifier
-  if process.platform in ['linux', 'win32']
-    keyIdentifier = translateKeyIdentifierForWindowsAndLinuxChromiumBug(keyIdentifier)
-
-  return keyIdentifier if KEYBOARD_EVENT_MODIFIERS.has(keyIdentifier)
-
-  charCode = charCodeFromKeyIdentifier(keyIdentifier)
-
-  if dvorakQwertyWorkaroundEnabled and typeof charCode is 'number'
-    if event.keyCode is 46 # key code for 'delete'
-      charCode = 127 # ASCII character code for 'delete'
-    else
-      charCode = event.keyCode
-
-  if charCode?
-    if process.platform in ['linux', 'win32']
-      charCode = translateCharCodeForWindowsAndLinuxChromiumBug(charCode, event.shiftKey)
-
-    if event.location is KeyboardEvent.DOM_KEY_LOCATION_NUMPAD
-      # This is a numpad number
-      charCode = numpadToASCII(charCode)
-
-    charCode = event.which if not isASCII(charCode) and isASCII(event.keyCode)
-    key = keyFromCharCode(charCode)
-  else
-    key = keyIdentifier.toLowerCase()
-
-  # Only upper case alphabetic characters like 'a'
-  if event.shiftKey
-    key = key.toUpperCase() if LowerCaseLetterRegex.test(key)
-  else
-    key = key.toLowerCase() if UpperCaseLetterRegex.test(key)
-
-  key
-
-charCodeFromKeyIdentifier = (keyIdentifier) ->
-  parseInt(keyIdentifier[2..], 16) if keyIdentifier.indexOf('U+') is 0
-
-# Chromium includes incorrect keyIdentifier values on keypress events for
-# certain symbols keys on Window and Linux.
-#
-# See https://code.google.com/p/chromium/issues/detail?id=51024
-# See https://bugs.webkit.org/show_bug.cgi?id=19906
-translateKeyIdentifierForWindowsAndLinuxChromiumBug = (keyIdentifier) ->
-  WindowsAndLinuxKeyIdentifierTranslations[keyIdentifier] ? keyIdentifier
-
-translateCharCodeForWindowsAndLinuxChromiumBug = (charCode, shift) ->
-  if translation = WindowsAndLinuxCharCodeTranslations[charCode]
-    if shift then translation.shifted else translation.unshifted
-  else
-    charCode
-
-keyFromCharCode = (charCode) ->
-  switch charCode
-    when 8 then 'backspace'
-    when 9 then 'tab'
-    when 13 then 'enter'
-    when 27 then 'escape'
-    when 32 then 'space'
-    when 127 then 'delete'
-    else String.fromCharCode(charCode)
-
-numpadToASCII = (charCode) ->
-  NumPadToASCII[charCode] ? charCode
 
 usKeymap = null
 usCharactersForKeyCode = (code) ->
