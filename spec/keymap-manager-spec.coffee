@@ -631,9 +631,9 @@ describe "KeymapManager", ->
 
       it "allows arbitrary characters to be typed via an altgraph modifier on Windows and Linux", ->
         mockProcessPlatform('win32')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '@')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '€', altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '€')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Ë', altKey: true, shiftKey: true, getModifierState: (key) -> key is 'AltGraph'}), 'shift-Ë')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', ctrlKey: true, altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '@')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '€', ctrlKey: true, altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '€')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Ë', ctrlKey: true, altKey: true, shiftKey: true, getModifierState: (key) -> key is 'AltGraph'}), 'shift-Ë')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'g', altKey: true, getModifierState: (key) -> false}), 'alt-g')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'e', altKey: true, getModifierState: (key) -> false}), 'alt-e')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'E', altKey: true, shiftKey: true, getModifierState: (key) -> false}), 'alt-shift-E')

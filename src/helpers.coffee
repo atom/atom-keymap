@@ -121,8 +121,13 @@ exports.keystrokeForKeyboardEvent = (event) ->
             altKey = false
           else
             key = nonAltModifiedKey
-      else
-        altKey = false if event.getModifierState('AltGraph')
+      else if process.platform is 'win32'
+        if event.getModifierState('AltGraph')
+          altKey = false
+          ctrlKey = false
+      else if process.platform is 'linux'
+        if event.getModifierState('AltGraph')
+          altKey = false
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
