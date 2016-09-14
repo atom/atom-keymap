@@ -30,6 +30,11 @@ isUpperCaseCharacter = (character) ->
 isLowerCaseCharacter = (character) ->
   character? and character.length is 1 and character.toUpperCase() isnt character
 
+usKeymap = null
+usCharactersForKeyCode = (code) ->
+  usKeymap ?= require('./us-keymap')
+  usKeymap[code]
+
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
   for keystroke in keystrokes.split(WHITESPACE_REGEX)
@@ -38,6 +43,56 @@ exports.normalizeKeystrokes = (keystrokes) ->
     else
       return false
   normalizedKeystrokes.join(' ')
+
+normalizeKeystroke = (keystroke) ->
+  if isKeyup = keystroke.startsWith('^')
+    keystroke = keystroke.slice(1)
+  keys = parseKeystroke(keystroke)
+  return false unless keys
+
+  primaryKey = null
+  modifiers = new Set
+
+  for key, i in keys
+    if MODIFIERS.has(key)
+      modifiers.add(key)
+    else
+      # only the last key can be a non-modifier
+      if i is keys.length - 1
+        primaryKey = key
+      else
+        return false
+
+  if isKeyup
+    primaryKey = primaryKey.toLowerCase() if primaryKey?
+  else
+    modifiers.add('shift') if isUpperCaseCharacter(primaryKey)
+    if modifiers.has('shift') and isLowerCaseCharacter(primaryKey)
+      primaryKey = primaryKey.toUpperCase()
+
+  keystroke = []
+  if not isKeyup or (isKeyup and not primaryKey?)
+    keystroke.push('ctrl') if modifiers.has('ctrl')
+    keystroke.push('alt') if modifiers.has('alt')
+    keystroke.push('shift') if modifiers.has('shift')
+    keystroke.push('cmd') if modifiers.has('cmd')
+  keystroke.push(primaryKey) if primaryKey?
+  keystroke = keystroke.join('-')
+  keystroke = "^#{keystroke}" if isKeyup
+  keystroke
+
+parseKeystroke = (keystroke) ->
+  keys = []
+  keyStart = 0
+  for character, index in keystroke when character is '-'
+    if index > keyStart
+      keys.push(keystroke.substring(keyStart, index))
+      keyStart = index + 1
+
+      # The keystroke has a trailing - and is invalid
+      return false if keyStart is keystroke.length
+  keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
+  keys
 
 exports.keystrokeForKeyboardEvent = (event) ->
   {ctrlKey, altKey, shiftKey, metaKey} = event
@@ -110,12 +165,12 @@ exports.calculateSpecificity = calculateSpecificity
 exports.isBareModifier = (keystroke) -> ENDS_IN_MODIFIER_REGEX.test(keystroke)
 
 exports.keydownEvent = (key, options) ->
-  return keyboardEvent(key, 'keydown', options)
+  return buildKeyboardEvent(key, 'keydown', options)
 
 exports.keyupEvent = (key, options) ->
-  return keyboardEvent(key, 'keyup', options)
+  return buildKeyboardEvent(key, 'keyup', options)
 
-keyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
+buildKeyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
   ctrlKey = ctrl ? false
   altKey = alt ? false
   shiftKey = shift ? false
@@ -179,58 +234,3 @@ exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
     MATCH_TYPES.PARTIAL
   else
     MATCH_TYPES.EXACT
-
-normalizeKeystroke = (keystroke) ->
-  if isKeyup = keystroke.startsWith('^')
-    keystroke = keystroke.slice(1)
-  keys = parseKeystroke(keystroke)
-  return false unless keys
-
-  primaryKey = null
-  modifiers = new Set
-
-  for key, i in keys
-    if MODIFIERS.has(key)
-      modifiers.add(key)
-    else
-      # only the last key can be a non-modifier
-      if i is keys.length - 1
-        primaryKey = key
-      else
-        return false
-
-  if isKeyup
-    primaryKey = primaryKey.toLowerCase() if primaryKey?
-  else
-    modifiers.add('shift') if isUpperCaseCharacter(primaryKey)
-    if modifiers.has('shift') and isLowerCaseCharacter(primaryKey)
-      primaryKey = primaryKey.toUpperCase()
-
-  keystroke = []
-  if not isKeyup or (isKeyup and not primaryKey?)
-    keystroke.push('ctrl') if modifiers.has('ctrl')
-    keystroke.push('alt') if modifiers.has('alt')
-    keystroke.push('shift') if modifiers.has('shift')
-    keystroke.push('cmd') if modifiers.has('cmd')
-  keystroke.push(primaryKey) if primaryKey?
-  keystroke = keystroke.join('-')
-  keystroke = "^#{keystroke}" if isKeyup
-  keystroke
-
-parseKeystroke = (keystroke) ->
-  keys = []
-  keyStart = 0
-  for character, index in keystroke when character is '-'
-    if index > keyStart
-      keys.push(keystroke.substring(keyStart, index))
-      keyStart = index + 1
-
-      # The keystroke has a trailing - and is invalid
-      return false if keyStart is keystroke.length
-  keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
-  keys
-
-usKeymap = null
-usCharactersForKeyCode = (code) ->
-  usKeymap ?= require('./us-keymap')
-  usKeymap[code]
