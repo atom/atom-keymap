@@ -5,7 +5,7 @@
   "main": "./lib/keymap-manager",
   "scripts": {
     "prepublish": "npm run clean && npm run compile && npm run lint && npm run atomdoc",
-    "clean": "rm -rf lib && rm -rf api.json",
+    "clean": "rimraf lib && rimraf api.json",
     "compile": "coffee --no-header --output lib --compile src && babel src --out-dir lib",
     "lint": "coffeelint -r src spec && eslint src spec",
     "test": "devtool  --quit --console node_modules/mocha/bin/_mocha --colors spec/helpers/setup.js spec/*",
