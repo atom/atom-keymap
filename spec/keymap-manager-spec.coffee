@@ -12,6 +12,7 @@ describe "KeymapManager", ->
   keymapManager = null
 
   beforeEach ->
+    mockProcessPlatform('darwin')
     keymapManager = new KeymapManager
 
   afterEach ->
