@@ -3,14 +3,16 @@ debounce = require 'debounce'
 fs = require 'fs-plus'
 path = require 'path'
 temp = require 'temp'
-{appendContent, stub, getFakeClock} = require './helpers/helpers'
+KeyboardLayout = require('keyboard-layout')
 KeymapManager = require '../src/keymap-manager'
 {buildKeydownEvent, buildKeyupEvent} = KeymapManager
+{appendContent, stub, getFakeClock, mockProcessPlatform} = require './helpers/helpers'
 
 describe "KeymapManager", ->
   keymapManager = null
 
   beforeEach ->
+    mockProcessPlatform('darwin')
     keymapManager = new KeymapManager
 
   afterEach ->
@@ -316,7 +318,7 @@ describe "KeymapManager", ->
 
           workspace.addEventListener 'control-dog', -> events.push('control-dog')
 
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl-d', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', ctrl: true, target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
 
           getFakeClock().tick(keymapManager.getPartialMatchTimeout())
@@ -580,120 +582,102 @@ describe "KeymapManager", ->
       assert.equal(keymapManager.findKeyBindings(command: 'z').length, 0)
 
   describe "::keystrokeForKeyboardEvent(event)", ->
-    describe "when no modifiers are pressed", ->
+    describe "when no extra modifiers are pressed", ->
       it "returns a string that identifies the unmodified keystroke", ->
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('a')), 'a')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('[')), '[')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('*')), '*')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('left')), 'left')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('\b')), 'backspace')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'a'}), 'a')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'A', shiftKey: true}), 'shift-A')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '['}), '[')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '*', shiftKey: true}), '*')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ArrowLeft'}), 'left')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Backspace'}), 'backspace')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Delete'}), 'delete')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'PageUp'}), 'pageup')
 
     describe "when a modifier key is combined with a non-modifier key", ->
       it "returns a string that identifies the modified keystroke", ->
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('a', alt: true)), 'alt-a')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('[', cmd: true)), 'cmd-[')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('*', ctrl: true)), 'ctrl-*')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('left', ctrl: true, alt: true, cmd: true)), 'ctrl-alt-cmd-left')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('A', shift: true)), 'shift-A')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('a', ctrl: true, shift: true)), 'ctrl-shift-A')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('{', shift: true)), '{')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('left', shift: true)), 'shift-left')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('Left', shift: true)), 'shift-left')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'a', altKey: true}), 'alt-a')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '[', metaKey: true}), 'cmd-[')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '*', ctrlKey: true, shiftKey: true}), 'ctrl-*')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ArrowLeft', ctrlKey: true, altKey: true, metaKey: true}), 'ctrl-alt-cmd-left')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'A', shiftKey: true}), 'shift-A')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'A', ctrlKey: true, shiftKey: true}), 'ctrl-shift-A')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '{', shiftKey: true}), '{')
 
-    describe "when a numpad key is pressed", ->
-      it "returns a string that identifies the key as the appropriate num-key", ->
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0041', keyCode: 97, location: 3)), '1')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0045', keyCode: 101, location: 3)), '5')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0049', keyCode: 105, location: 3)), '9')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('PageDown', keyCode: 34, location: 3)), 'pagedown')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('PageUp', keyCode: 33, location: 3)), 'pageup')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+004B', keyCode: 107, location: 3)), '+')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+007F', keyCode: 46, location: 3)), 'delete')
+    describe "when the Dvorak QWERTY-⌘ layout is in use on macOS", ->
+      it "uses the US layout equivalent when the command key is held down", ->
+        mockProcessPlatform('darwin')
+        stub(KeyboardLayout, 'getCurrentKeymap', -> require('./helpers/keymaps/mac-dvorak-qwerty-cmd'))
+        stub(KeyboardLayout, 'getCurrentKeyboardLayout', -> 'com.apple.keylayout.DVORAK-QWERTYCMD')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', altKey: true}), 'alt-l')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', ctrlKey: true, altKey: true}), 'ctrl-alt-l')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', metaKey: true}), 'cmd-p')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'L', code: 'KeyP', metaKey: true, shiftKey: true}), 'shift-cmd-P')
 
-    describe "when a non-English keyboard language is used", ->
-      it "uses the physical character pressed instead of the character it maps to in the current language", ->
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+03B6', cmd: true, keyCode: 122)), 'cmd-z')
-
-    describe "when KeymapManager::dvorakQwertyWorkaroundEnabled is true", ->
-      it "uses event.keyCode instead of event.keyIdentifier when event.keyIdentifier is numeric", ->
-        keymapManager.dvorakQwertyWorkaroundEnabled = true
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+004A', cmd: true, keyCode: 67)), 'cmd-c')
-
-      it "maps the keyCode for delete (46) to the ASCII code for delete (127)", ->
-        keymapManager.dvorakQwertyWorkaroundEnabled = true
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+007F', keyCode: 46)), 'delete')
-
-    describe "on Windows and Linux", ->
-      originalPlatform = null
+    describe "international layouts", ->
+      currentKeymap = null
 
       beforeEach ->
-        originalPlatform = process.platform
+        currentKeymap = null
+        stub(KeyboardLayout, 'getCurrentKeymap', -> currentKeymap)
 
-      afterEach ->
-        Object.defineProperty process, 'platform', value: originalPlatform
+      it "allows ASCII characters (<= 127) to be typed via an option modifier on macOS", ->
+        mockProcessPlatform('darwin')
 
-      it "corrects a Chromium bug where the keyIdentifier is incorrect for certain keypress events", ->
-        testTranslations = ->
-          # Number row
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0030', ctrl: true)), 'ctrl-0')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0031', ctrl: true)), 'ctrl-1')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0032', ctrl: true)), 'ctrl-2')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0033', ctrl: true)), 'ctrl-3')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0034', ctrl: true)), 'ctrl-4')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0035', ctrl: true)), 'ctrl-5')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0036', ctrl: true)), 'ctrl-6')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0037', ctrl: true)), 'ctrl-7')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0038', ctrl: true)), 'ctrl-8')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0039', ctrl: true)), 'ctrl-9')
+        currentKeymap = require('./helpers/keymaps/mac-swiss-german')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'KeyG', altKey: true}), '@')
+        # Does not use alt variant characters outside of basic ASCII range
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '‚', code: 'KeyG', altKey: true, shiftKey: true}), 'alt-shift-G')
+        # Does not use alt variant character if ctrl modifier is used
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'KeyG', ctrlKey: true, altKey: true}), 'ctrl-alt-g')
 
-          # Number row shifted
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0030', ctrl: true, shift: true)), 'ctrl-)')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0031', ctrl: true, shift: true)), 'ctrl-!')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0032', ctrl: true, shift: true)), 'ctrl-@')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0033', ctrl: true, shift: true)), 'ctrl-#')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0034', ctrl: true, shift: true)), 'ctrl-$')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0035', ctrl: true, shift: true)), 'ctrl-%')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0036', ctrl: true, shift: true)), 'ctrl-^')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0037', ctrl: true, shift: true)), 'ctrl-&')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0038', ctrl: true, shift: true)), 'ctrl-*')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+0039', ctrl: true, shift: true)), 'ctrl-(')
+      it "allows ASCII characters to be typed via an altgraph modifier on Windows", ->
+        mockProcessPlatform('win32')
 
-          # Other symbols
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00ba', ctrl: true)), 'ctrl-;')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bb', ctrl: true)), 'ctrl-=')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bc', ctrl: true)), 'ctrl-,')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bd', ctrl: true)), 'ctrl--')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00be', ctrl: true)), 'ctrl-.')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bf', ctrl: true)), 'ctrl-/')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00db', ctrl: true)), 'ctrl-[')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00dc', ctrl: true)), 'ctrl-\\')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00dd', ctrl: true)), 'ctrl-]')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00de', ctrl: true)), 'ctrl-\'')
+        currentKeymap = require('./helpers/keymaps/windows-swiss-german')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'Digit2', ctrlKey: true, altKey: true}), '@')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '°', code: 'Digit4', ctrlKey: true, altKey: true}), 'ctrl-alt-4')
 
-          # Other symbols shifted
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00ba', ctrl: true, shift: true)), 'ctrl-:')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bb', ctrl: true, shift: true)), 'ctrl-+')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bc', ctrl: true, shift: true)), 'ctrl-<')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bd', ctrl: true, shift: true)), 'ctrl-_')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00be', ctrl: true, shift: true)), 'ctrl->')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00bf', ctrl: true, shift: true)), 'ctrl-?')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00db', ctrl: true, shift: true)), 'ctrl-{')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00dc', ctrl: true, shift: true)), 'ctrl-|')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00dd', ctrl: true, shift: true)), 'ctrl-}')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00de', ctrl: true, shift: true)), 'ctrl-"')
+        currentKeymap = require('./helpers/keymaps/windows-us-international')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '¢', code: 'KeyC', ctrlKey: true, altKey: true, shiftKey: true}), 'ctrl-alt-shift-C')
 
-          # Single modifiers
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A0', shift: true)), 'shift')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A1', shift: true)), 'shift')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A2', ctrl: true)), 'ctrl')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A3', ctrl: true)), 'ctrl')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A4', alt: true)), 'alt')
-          assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent('U+00A5', alt: true)), 'alt')
+      it "allows arbitrary characters to be typed via an altgraph modifier on Linux", ->
+        mockProcessPlatform('linux')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '@')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '€', altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '€')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Ë', altKey: true, shiftKey: true, getModifierState: (key) -> key is 'AltGraph'}), 'shift-Ë')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'g', altKey: true, getModifierState: (key) -> false}), 'alt-g')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'e', altKey: true, getModifierState: (key) -> false}), 'alt-e')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'E', altKey: true, shiftKey: true, getModifierState: (key) -> false}), 'alt-shift-E')
 
-        Object.defineProperty process, 'platform', value: 'win32'
-        testTranslations()
-        Object.defineProperty process, 'platform', value: 'linux'
-        testTranslations()
+      it "converts non-latin keycaps to their U.S. counterpart for purposes of binding", ->
+        mockProcessPlatform('darwin')
+        currentKeymap = require('./helpers/keymaps/mac-greek')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'δ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'Δ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '÷', altKey: true, code: 'KeyD'}), 'alt-d')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD', metaKey: true}), 'cmd-d')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', metaKey: true, shiftKey: true}), 'shift-cmd-D')
+
+        # Don't use U.S. counterpart for latin characters
+        currentKeymap = require('./helpers/keymaps/mac-turkish')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ö', code: 'KeyX', metaKey: true}), 'cmd-ö')
+
+        currentKeymap = null
+        mockProcessPlatform('windows')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'δ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'Δ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD', ctrlKey: true}), 'ctrl-d')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true}), 'ctrl-shift-D')
+        # Don't use U.S. counterpart for latin characters
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ö', code: 'KeyX', metaKey: true}), 'cmd-ö')
+
+        mockProcessPlatform('linux')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'δ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'Δ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD', ctrlKey: true}), 'ctrl-d')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true}), 'ctrl-shift-D')
+        # Don't use U.S. counterpart for latin characters
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ö', code: 'KeyX', metaKey: true}), 'cmd-ö')
 
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
