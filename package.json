@@ -39,7 +39,6 @@
     "babel-preset-stage-0": "6.5.0",
     "babel-register": "6.5.2",
     "chai": "3.5.0",
-    "coffee-cache": "0.2.0",
     "coffee-script": "1.7.0",
     "coffeelint": "1.14.2",
     "debounce": "1.0.0",
