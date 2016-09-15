@@ -605,7 +605,7 @@ describe "KeymapManager", ->
     describe "when the Dvorak QWERTY-⌘ layout is in use on macOS", ->
       it "uses the US layout equivalent when the command key is held down", ->
         mockProcessPlatform('darwin')
-        stub(KeyboardLayout, 'getCurrentKeymap', -> require('./helpers/keymaps/dvorak-qwerty-cmd'))
+        stub(KeyboardLayout, 'getCurrentKeymap', -> require('./helpers/keymaps/mac-dvorak-qwerty-cmd'))
         stub(KeyboardLayout, 'getCurrentKeyboardLayout', -> 'com.apple.keylayout.DVORAK-QWERTYCMD')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', altKey: true}), 'alt-l')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', ctrlKey: true, altKey: true}), 'ctrl-alt-l')
@@ -619,25 +619,27 @@ describe "KeymapManager", ->
         currentKeymap = null
         stub(KeyboardLayout, 'getCurrentKeymap', -> currentKeymap)
 
-      it "allows normal ASCII characters (<= 127) to be typed via an option modifier on macOS", ->
+      it "allows ASCII characters (<= 127) to be typed via an option modifier on macOS", ->
         mockProcessPlatform('darwin')
 
-        currentKeymap = require('./helpers/keymaps/swiss-german')
+        currentKeymap = require('./helpers/keymaps/mac-swiss-german')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'KeyG', altKey: true}), '@')
         # Does not use alt variant characters outside of basic ASCII range
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '‚', code: 'KeyG', altKey: true, shiftKey: true}), 'alt-shift-G')
         # Does not use alt variant character if ctrl modifier is used
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'KeyG', ctrlKey: true, altKey: true}), 'ctrl-alt-g')
 
-      it "allows arbitrary characters to be typed via an altgraph modifier on Windows and Linux", ->
+      it "allows ASCII characters to be typed via an altgraph modifier on Windows", ->
         mockProcessPlatform('win32')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', ctrlKey: true, altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '@')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '€', ctrlKey: true, altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '€')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Ë', ctrlKey: true, altKey: true, shiftKey: true, getModifierState: (key) -> key is 'AltGraph'}), 'shift-Ë')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'g', altKey: true, getModifierState: (key) -> false}), 'alt-g')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'e', altKey: true, getModifierState: (key) -> false}), 'alt-e')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'E', altKey: true, shiftKey: true, getModifierState: (key) -> false}), 'alt-shift-E')
 
+        currentKeymap = require('./helpers/keymaps/windows-swiss-german')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'Digit2', ctrlKey: true, altKey: true}), '@')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '°', code: 'Digit4', ctrlKey: true, altKey: true}), 'ctrl-alt-4')
+
+        currentKeymap = require('./helpers/keymaps/windows-us-international')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '¢', code: 'KeyC', ctrlKey: true, altKey: true, shiftKey: true}), 'ctrl-alt-shift-C')
+
+      it "allows arbitrary characters to be typed via an altgraph modifier on Linux", ->
         mockProcessPlatform('linux')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '@')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '€', altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '€')
@@ -648,7 +650,7 @@ describe "KeymapManager", ->
 
       it "converts non-latin keycaps to their U.S. counterpart for purposes of binding", ->
         mockProcessPlatform('darwin')
-        currentKeymap = require('./helpers/keymaps/greek')
+        currentKeymap = require('./helpers/keymaps/mac-greek')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'δ')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'Δ')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '÷', altKey: true, code: 'KeyD'}), 'alt-d')
@@ -656,7 +658,7 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', metaKey: true, shiftKey: true}), 'shift-cmd-D')
 
         # Don't use U.S. counterpart for latin characters
-        currentKeymap = require('./helpers/keymaps/turkish')
+        currentKeymap = require('./helpers/keymaps/mac-turkish')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ö', code: 'KeyX', metaKey: true}), 'cmd-ö')
 
         currentKeymap = null

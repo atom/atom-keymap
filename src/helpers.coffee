@@ -103,28 +103,26 @@ exports.keystrokeForKeyboardEvent = (event) ->
   else
     key = event.key
 
+    # When the option key is down on macOS, we need to determine whether the
+    # the user intends to type an ASCII character that is only reachable by use
+    # of the option key (such as option-g to type @ on a Swiss-German layout)
+    # or used as a modifier to match against an alt-* binding.
+    #
+    # We check for event.code because test helpers produce events without it.
     if altKey
-      if process.platform is 'darwin'
-        # When the option key is down on macOS, we need to determine whether the
-        # the user intends to type an ASCII character that is only reachable by use
-        # of the option key (such as option-g to type @ on a Swiss-German layout)
-        # or used as a modifier to match against an alt-* binding.
-        #
-        # We check for event.code because test helpers produce events without it.
-        if event.code and (characters = KeyboardLayout.getCurrentKeymap()[event.code])
-          if shiftKey
-            nonAltModifiedKey = characters.withShift
-          else
-            nonAltModifiedKey = characters.unmodified
-
-          if not ctrlKey and not metaKey and isASCIICharacter(key) and key isnt nonAltModifiedKey
-            altKey = false
-          else
-            key = nonAltModifiedKey
-      else if process.platform is 'win32'
-        if event.getModifierState('AltGraph')
+      if process.platform is 'darwin' and event.code
+        nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
+        if ctrlKey or metaKey or not isASCIICharacter(key) or key is nonAltModifiedKey
+          key = nonAltModifiedKey
+        else
           altKey = false
+      else if process.platform is 'win32' and ctrlKey and event.code
+        nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
+        if metaKey or not isASCIICharacter(key) or key is nonAltModifiedKey
+          key = nonAltModifiedKey
+        else
           ctrlKey = false
+          altKey = false
       else if process.platform is 'linux'
         if event.getModifierState('AltGraph')
           altKey = false
@@ -161,6 +159,13 @@ exports.keystrokeForKeyboardEvent = (event) ->
 
   keystroke = normalizeKeystroke("^#{keystroke}") if event.type is 'keyup'
   keystroke
+
+nonAltModifiedKeyForKeyboardEvent = (event) ->
+  if event.code and (characters = KeyboardLayout.getCurrentKeymap()[event.code])
+    if event.shiftKey
+      characters.withShift
+    else
+      characters.unmodified
 
 exports.characterForKeyboardEvent = (event) ->
   event.key unless event.ctrlKey or event.metaKey
