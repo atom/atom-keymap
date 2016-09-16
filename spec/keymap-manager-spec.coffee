@@ -679,6 +679,19 @@ describe "KeymapManager", ->
         # Don't use U.S. counterpart for latin characters
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ö', code: 'KeyX', metaKey: true}), 'cmd-ö')
 
+      it "translates dead keys to their printable equivalents", ->
+        mockProcessPlatform('darwin')
+        currentKeymap = require('./helpers/keymaps/mac-swedish')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight'}), '¨')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight', shiftKey: true}), '^')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight', altKey: true}), '~')
+
+        mockProcessPlatform('win32')
+        currentKeymap = require('./helpers/keymaps/windows-swedish')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight'}), '¨')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight', shiftKey: true}), '^')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight', ctrlKey: true, altKey: true, shiftKey: true}), '~')
+
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
     beforeEach ->

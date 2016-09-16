@@ -95,14 +95,25 @@ parseKeystroke = (keystroke) ->
   keys
 
 exports.keystrokeForKeyboardEvent = (event) ->
-  {ctrlKey, altKey, shiftKey, metaKey} = event
-  isNonCharacterKey = event.key.length > 1
+  {key, ctrlKey, altKey, shiftKey, metaKey} = event
 
+  if key is 'Dead'
+    if process.platform isnt 'linux' and characters = KeyboardLayout.getCurrentKeymap()[event.code]
+      if ctrlKey and altKey and shiftKey and characters.withAltGraphShift?
+        key = characters.withAltGraphShift
+      else if process.platform is 'darwin' and altKey and characters.withAltGraph?
+        key = characters.withAltGraph
+      else if process.platform is 'win32' and ctrlKey and altKey and characters.withAltGraph?
+        key = characters.withAltGraph
+      else if shiftKey and characters.withShift?
+        key = characters.withShift
+      else if characters.unmodified?
+        key = characters.unmodified
+
+  isNonCharacterKey = key.length > 1
   if isNonCharacterKey
     key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[event.key] ? event.key.toLowerCase()
   else
-    key = event.key
-
     if altKey
       # All macOS layouts have an alt-modified character variant for every
       # single key. Therefore, if we always favored the alt variant, it would
