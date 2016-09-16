@@ -630,15 +630,15 @@ describe "KeymapManager", ->
         # Does not use alt variant character if ctrl modifier is used
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'KeyG', ctrlKey: true, altKey: true}), 'ctrl-alt-g')
 
-      it "allows ASCII characters to be typed via an altgraph modifier on Windows", ->
+      it "allows any AltGraph-modified character to be typed via the ctrl-alt- modifiers on Windows", ->
         mockProcessPlatform('win32')
 
         currentKeymap = require('./helpers/keymaps/windows-swiss-german')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'Digit2', ctrlKey: true, altKey: true}), '@')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '°', code: 'Digit4', ctrlKey: true, altKey: true}), 'ctrl-alt-4')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '°', code: 'Digit4', ctrlKey: true, altKey: true}), '°')
 
         currentKeymap = require('./helpers/keymaps/windows-us-international')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '¢', code: 'KeyC', ctrlKey: true, altKey: true, shiftKey: true}), 'ctrl-alt-shift-C')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '¢', code: 'KeyC', ctrlKey: true, altKey: true, shiftKey: true}), '¢')
 
       it "allows arbitrary characters to be typed via an altgraph modifier on Linux", ->
         mockProcessPlatform('linux')

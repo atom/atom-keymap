@@ -103,26 +103,35 @@ exports.keystrokeForKeyboardEvent = (event) ->
   else
     key = event.key
 
-    # When the option key is down on macOS, we need to determine whether the
-    # the user intends to type an ASCII character that is only reachable by use
-    # of the option key (such as option-g to type @ on a Swiss-German layout)
-    # or used as a modifier to match against an alt-* binding.
-    #
-    # We check for event.code because test helpers produce events without it.
     if altKey
+      # All macOS layouts have an alt-modified character variant for every
+      # single key. Therefore, if we always favored the alt variant, it would
+      # become impossible to bind `alt-*` to anything. Since `alt-*` bindings
+      # are rare and we bind very few by default on macOS, we will only shadow
+      # an `alt-*` binding with an alt-modified character variant if it is a
+      # basic ASCII character.
       if process.platform is 'darwin' and event.code
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
-        if ctrlKey or metaKey or not isASCIICharacter(key) or key is nonAltModifiedKey
+        if ctrlKey or metaKey or not isASCIICharacter(key)
           key = nonAltModifiedKey
-        else
+        else if key isnt nonAltModifiedKey
           altKey = false
+      # Windows layouts are more sparing in their use of AltGr-modified
+      # characters, and the U.S. layout doesn't have any of them at all. That
+      # means that if an AltGr variant character exists for the current
+      # keystroke, it likely to be the intended character, and we always
+      # interpret it as such rather than favoring a `ctrl-alt-*` binding
+      # intepretation.
       else if process.platform is 'win32' and ctrlKey and event.code
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
-        if metaKey or not isASCIICharacter(key) or key is nonAltModifiedKey
+        if metaKey
           key = nonAltModifiedKey
-        else
+        else if key isnt nonAltModifiedKey
           ctrlKey = false
           altKey = false
+      # Linux has a dedicated `AltGraph` key that is distinct from all other
+      # modifiers, so there is no potential ambiguity and we always honor
+      # AltGraph.
       else if process.platform is 'linux'
         if event.getModifierState('AltGraph')
           altKey = false
