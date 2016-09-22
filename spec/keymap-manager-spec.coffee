@@ -161,38 +161,40 @@ describe "KeymapManager", ->
         elementA.addEventListener 'command-2', ((e) -> events.push(e)), false
         elementA.addEventListener 'command-3', ((e) -> events.push(e)), false
 
-      describe "when the bindings have selectors with different specificity", ->
-        beforeEach ->
-          keymapManager.add "test",
-            ".b.c":
-              "ctrl-x": "command-1"
-            ".b":
-              "ctrl-x": "command-2"
+      describe "when the bindings have the same priority", ->
+        describe "when the bindings have selectors with different specificity", ->
+          beforeEach ->
+            keymapManager.add "test",
+              ".b.c":
+                "ctrl-x": "command-1"
+              ".b":
+                "ctrl-x": "command-2"
 
-        it "dispatches the command associated with the most specific binding", ->
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
-          assert.equal(events.length, 1)
-          assert.equal(events[0].type, 'command-1')
-          assert.equal(events[0].target, elementB)
+          it "dispatches the command associated with the most specific binding", ->
+            keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
+            assert.equal(events.length, 1)
+            assert.equal(events[0].type, 'command-1')
+            assert.equal(events[0].target, elementB)
 
-      describe "when the bindings have selectors with the same specificity", ->
-        it "dispatches the command associated with the most recently added binding", ->
-          keymapManager.add "test",
-            ".b.c":
-              "ctrl-x": "command-1"
-            ".c.d":
-              "ctrl-x": "command-2"
+        describe "when the bindings have selectors with the same specificity", ->
+          it "dispatches the command associated with the most recently added binding", ->
+            keymapManager.add "test",
+              ".b.c":
+                "ctrl-x": "command-1"
+              ".c.d":
+                "ctrl-x": "command-2"
 
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
+            keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
 
-          assert.equal(events.length, 1)
-          assert.equal(events[0].type, 'command-2')
-          assert.equal(events[0].target, elementB)
+            assert.equal(events.length, 1)
+            assert.equal(events[0].type, 'command-2')
+            assert.equal(events[0].target, elementB)
 
+      describe "when bindings have different priorities", ->
         it "dispatches the command associated with the binding which has the highest priority", ->
-          keymapManager.add "keybindings-with-super-priority", {".c.d": {"ctrl-x": "command-1"}}, 2
-          keymapManager.add "normal-keybindings", {".b.d": {"ctrl-x": "command-3"}}, 0
-          keymapManager.add "keybindings-with-priority", {".b.c": {"ctrl-x": "command-2"}}, 1
+          keymapManager.add "keybindings-with-super-priority", {".c": {"ctrl-x": "command-1"}}, 2
+          keymapManager.add "keybindings-with-priority", {".b.c.d": {"ctrl-x": "command-2"}}, 1
+          keymapManager.add "normal-keybindings", {".b.c.d": {"ctrl-x": "command-3"}}, 0
 
           keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
 

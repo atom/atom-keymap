@@ -21,10 +21,10 @@ class KeyBinding
       keystroke.split(' ')[0] == @keystroke.split(' ')[0]
 
   compare: (keyBinding) ->
-    if keyBinding.specificity is @specificity
-      if keyBinding.priority is @priority
+    if keyBinding.priority is @priority
+      if keyBinding.specificity is @specificity
         keyBinding.index - @index
       else
-        keyBinding.priority - @priority
+        keyBinding.specificity - @specificity
     else
-      keyBinding.specificity - @specificity
+      keyBinding.priority - @priority
