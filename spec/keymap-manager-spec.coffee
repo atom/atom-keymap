@@ -203,13 +203,20 @@ describe "KeymapManager", ->
           assert.equal(events[0].target, elementB)
 
     describe "when the keystroke partially matches bindings", ->
-      [workspace, editor, events] = []
+      [workspace, editor, editor2, events, inputElement, input2Element] = []
 
       beforeEach ->
         workspace = appendContent $$ ->
           @div class: 'workspace', ->
-            @div class: 'editor'
+            @div class: 'editor', ->
+              @input class: 'input', type: 'text'
+            @div class: 'editor2', ->
+              @input class: 'input2', type: 'text'
         editor = workspace.firstChild
+        editor2 = editor.nextSibling
+        inputElement = document.querySelector('.input')
+        input2Element = document.querySelector('.input2')
+        inputElement.focus()
 
         keymapManager.add 'test',
           '.workspace':
@@ -217,8 +224,15 @@ describe "KeymapManager", ->
             'd p': 'dp'
             'v i v a': 'viva!'
             'v i v': 'viv'
-          '.editor': 'v': 'enter-visual-mode'
-          '.editor.visual-mode': 'i w': 'select-inside-word'
+          '.editor':
+            'v': 'enter-visual-mode'
+            'm': 'focus-input2'
+            'm j': 'editor-m-j'
+            'a': 'editor-a'
+          '.editor2':
+            'a': 'editor2-a'
+          '.editor.visual-mode':
+            'i w': 'select-inside-word'
 
         events = []
         editor.addEventListener 'textInput', (event) -> events.push("input:#{event.data}")
@@ -228,6 +242,10 @@ describe "KeymapManager", ->
         workspace.addEventListener 'viv', -> events.push('viv')
         workspace.addEventListener 'select-inside-word', -> events.push('select-inside-word')
         workspace.addEventListener 'enter-visual-mode', -> events.push('enter-visual-mode'); editor.classList.add('visual-mode')
+        workspace.addEventListener 'focus-input2', -> events.push('focus-input2'); input2Element.focus()
+        workspace.addEventListener 'editor-m-j', (event) -> events.push('editor-m-j')
+        editor.addEventListener 'editor-a', (event) -> events.push('editor-a')
+        editor2.addEventListener 'editor2-a', (event) -> events.push('editor2-a')
 
       describe "when subsequent keystrokes yield an exact match", ->
         it "dispatches the command associated with the matched multi-keystroke binding", ->
@@ -330,6 +348,19 @@ describe "KeymapManager", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent('g', target: editor))
           assert.deepEqual(events, ['control-dog'])
 
+      describe "when focused element changed in the middle of replaying keystroke", ->
+        it "replay keystroke against newly focused element", ->
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('m', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('j', target: editor))
+          assert.deepEqual(events, ['editor-m-j'])
+
+          events = []
+          assert.deepEqual(document.activeElement, inputElement)
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('m', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: editor))
+          assert.deepEqual(events, ['focus-input2', 'editor2-a'])
+          assert.deepEqual(document.activeElement, input2Element)
+
       describe "when the partially matching bindings all map to the 'unset!' directive", ->
         it "ignores the 'unset!' bindings and invokes the command associated with the matching binding as normal", ->
           keymapManager.add 'test-2',
@@ -356,7 +387,10 @@ describe "KeymapManager", ->
 
       beforeEach ->
         elementA = appendContent $$ ->
-          @div class: 'a'
+          @div class: 'a', ->
+            @input class: 'input', type: 'text'
+        inputElement = document.querySelector('.input')
+        inputElement.focus()
 
         events = []
         elementA.addEventListener 'y-command', (e) -> events.push('y-keydown')

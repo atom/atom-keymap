@@ -503,7 +503,7 @@ class KeymapManager
 
     # If the event's target is document.body, assign it to defaultTarget instead
     # to provide a catch-all element when nothing is focused.
-    target = event.target
+    target = if replay then document.activeElement else event.target
     target = @defaultTarget if event.target is document.body and @defaultTarget?
 
     # First screen for any bindings that match the current keystrokes,
