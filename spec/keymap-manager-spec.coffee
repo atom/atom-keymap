@@ -628,6 +628,7 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Backspace'}), 'backspace')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Delete'}), 'delete')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'PageUp'}), 'pageup')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: ' ', code: 'Space'}), 'space')
 
     describe "when a modifier key is combined with a non-modifier key", ->
       it "returns a string that identifies the modified keystroke", ->

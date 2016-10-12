@@ -4,6 +4,9 @@ KeyboardLayout = require 'keyboard-layout'
 MODIFIERS = new Set(['ctrl', 'alt', 'shift', 'cmd'])
 ENDS_IN_MODIFIER_REGEX = /(ctrl|alt|shift|cmd)$/
 WHITESPACE_REGEX = /\s+/
+KEY_NAMES_BY_KEYBOARD_EVENT_CODE = {
+  'Space': 'space'
+}
 NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY = {
   'Control': 'ctrl',
   'Meta': 'cmd',
@@ -95,7 +98,7 @@ parseKeystroke = (keystroke) ->
   keys
 
 exports.keystrokeForKeyboardEvent = (event) ->
-  {key, ctrlKey, altKey, shiftKey, metaKey} = event
+  {key, code, ctrlKey, altKey, shiftKey, metaKey} = event
 
   if key is 'Dead'
     if process.platform isnt 'linux' and characters = KeyboardLayout.getCurrentKeymap()[event.code]
@@ -110,9 +113,12 @@ exports.keystrokeForKeyboardEvent = (event) ->
       else if characters.unmodified?
         key = characters.unmodified
 
+  if KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]?
+    key = KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
+
   isNonCharacterKey = key.length > 1
   if isNonCharacterKey
-    key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[event.key] ? event.key.toLowerCase()
+    key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[key] ? key.toLowerCase()
   else
     if altKey
       # All macOS layouts have an alt-modified character variant for every
