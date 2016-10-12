@@ -689,8 +689,8 @@ describe "KeymapManager", ->
       it "converts non-latin keycaps to their U.S. counterpart for purposes of binding", ->
         mockProcessPlatform('darwin')
         currentKeymap = require('./helpers/keymaps/mac-greek')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'δ')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'Δ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'd')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'shift-D')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '÷', altKey: true, code: 'KeyD'}), 'alt-d')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD', metaKey: true}), 'cmd-d')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', metaKey: true, shiftKey: true}), 'shift-cmd-D')
@@ -701,16 +701,16 @@ describe "KeymapManager", ->
 
         currentKeymap = null
         mockProcessPlatform('windows')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'δ')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'Δ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'd')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'shift-D')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD', ctrlKey: true}), 'ctrl-d')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true}), 'ctrl-shift-D')
         # Don't use U.S. counterpart for latin characters
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ö', code: 'KeyX', metaKey: true}), 'cmd-ö')
 
         mockProcessPlatform('linux')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'δ')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'Δ')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'd')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'shift-D')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD', ctrlKey: true}), 'ctrl-d')
         assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true}), 'ctrl-shift-D')
         # Don't use U.S. counterpart for latin characters
