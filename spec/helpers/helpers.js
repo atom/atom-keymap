@@ -39,3 +39,47 @@ export function getFakeClock () {
 export function mockProcessPlatform (platform) {
   processPlatform = platform
 }
+
+export function buildKeydownEvent (props) {
+  return buildKeyboardEvent('keydown', props)
+}
+
+export function buildKeyupEvent (props) {
+  return buildKeyboardEvent('keyup', props)
+}
+
+export function buildKeyboardEvent (type, props) {
+  let {key, code, ctrlKey, shiftKey, altKey, metaKey, target, altGraphKey} = props
+
+  if (process.platform === 'darwin') {
+    if (altGraphKey) {
+      altKey = true
+    } else if (altKey) {
+      altGraphKey = true
+    }
+  } else if (process.platform === 'win32') {
+    if (altGraphKey) {
+      ctrlKey = true
+      altKey = true
+    } else if (ctrlKey && altKey) {
+      altGraphKey = true
+    }
+  }
+
+  const event = new KeyboardEvent(type, {
+    key, code,
+    ctrlKey, shiftKey, altKey, metaKey,
+    cancelable: true, bubbles: true
+  })
+
+  if (target) {
+    Object.defineProperty(event, 'target', {get: () => target})
+    Object.defineProperty(event, 'path', {get: () => [target]})
+  }
+
+  Object.defineProperty(event, 'getModifierState', {value: (key) => {
+    return key === 'AltGraph' && altGraphKey
+  }})
+
+  return event
+}
