@@ -157,11 +157,14 @@ exports.keystrokeForKeyboardEvent = (event) ->
           ctrlKey = false
           altKey = false
       # Linux has a dedicated `AltGraph` key that is distinct from all other
-      # modifiers, so there is no potential ambiguity and we always honor
-      # AltGraph.
+      # modifiers, including LeftAlt. However, if AltGraph is used in
+      # combination with other modifiers, we want to treat it as a modifier and
+      # fall back to the non-alt-modified character.
       else if process.platform is 'linux'
-        if event.getModifierState('AltGraph')
-          altKey = false
+        nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
+        if (ctrlKey or altKey or metaKey) and nonAltModifiedKey
+          key = nonAltModifiedKey
+          altKey = event.getModifierState('AltGraph')
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
