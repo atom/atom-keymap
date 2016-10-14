@@ -153,6 +153,10 @@ exports.keystrokeForKeyboardEvent = (event) ->
         if event.getModifierState('AltGraph')
           altKey = false
 
+    # Avoid caps-lock captilizing the key without shift being actually pressed
+    unless shiftKey
+      key = key.toLowerCase()
+
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
   if (key.length is 1 and not isLatinCharacter(key)) or
