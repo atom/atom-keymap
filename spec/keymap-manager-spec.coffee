@@ -684,6 +684,13 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'e', altKey: true, altGraphKey: false})), 'alt-e')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'E', altKey: true, shiftKey: true, altGraphKey: false})), 'alt-shift-E')
 
+      it "uses the keymap to fix incorrect KeyboardEvent.key values when ctrlKey is true", ->
+        mockProcessPlatform('linux')
+        currentKeymap = require('./helpers/keymaps/linux-dvorak')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'f', code: 'KeyF', ctrlKey: true})), 'ctrl-u')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'F', code: 'KeyF', ctrlKey: true, shiftKey: true})), 'ctrl-shift-U')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'F', code: 'KeyF', ctrlKey: true, altKey: true, shiftKey: true})), 'ctrl-alt-shift-U')
+
       it "converts non-latin keycaps to their U.S. counterpart for purposes of binding", ->
         mockProcessPlatform('darwin')
         currentKeymap = require('./helpers/keymaps/mac-greek')
