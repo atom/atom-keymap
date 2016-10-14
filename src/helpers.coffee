@@ -120,7 +120,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   if isNonCharacterKey
     key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[key] ? key.toLowerCase()
   else
-    if altKey
+    if event.getModifierState('AltGraph')
       # All macOS layouts have an alt-modified character variant for every
       # single key. Therefore, if we always favored the alt variant, it would
       # become impossible to bind `alt-*` to anything. Since `alt-*` bindings
@@ -139,7 +139,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
       # keystroke, it likely to be the intended character, and we always
       # interpret it as such rather than favoring a `ctrl-alt-*` binding
       # intepretation.
-      else if process.platform is 'win32' and ctrlKey and event.code
+      else if process.platform is 'win32' and event.code
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
         if metaKey
           key = nonAltModifiedKey
