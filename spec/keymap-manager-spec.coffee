@@ -639,9 +639,13 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '{', shiftKey: true})), '{')
 
     describe "when the KeyboardEvent.key is a capital letter due to caps lock, but shift is not pressed", ->
-      it.only "converts the letter to lower case", ->
+      it "converts the letter to lower case", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'A', shiftKey: false})), 'a')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'A', shiftKey: false, altKey: true})), 'alt-a')
+
+    describe "when the KeyboardEvent.key is 'Delete' but KeyboardEvent.code is 'Backspace' due to pressing ctrl-delete with numlock enabled on Windows", ->
+      it "translates as ctrl-backspace instead of ctrl-delete", ->
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Delete', code: 'Backspace', ctrlKey: true})), 'ctrl-backspace')
 
     describe "when the Dvorak QWERTY-⌘ layout is in use on macOS", ->
       it "uses the US layout equivalent when the command key is held down", ->

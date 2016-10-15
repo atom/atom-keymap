@@ -5,7 +5,8 @@ MODIFIERS = new Set(['ctrl', 'alt', 'shift', 'cmd'])
 ENDS_IN_MODIFIER_REGEX = /(ctrl|alt|shift|cmd)$/
 WHITESPACE_REGEX = /\s+/
 KEY_NAMES_BY_KEYBOARD_EVENT_CODE = {
-  'Space': 'space'
+  'Space': 'space',
+  'Backspace': 'backspace'
 }
 NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY = {
   'Control': 'ctrl',
