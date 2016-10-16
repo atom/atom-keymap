@@ -60,16 +60,5 @@
     "sinon": "1.17.3",
     "space-pencil": "0.3.0",
     "temp": "0.8.3"
-  },
-  "coffeelintConfig": {
-    "no_empty_param_list": {
-      "level": "error"
-    },
-    "max_line_length": {
-      "level": "ignore"
-    },
-    "indentation": {
-      "level": "ignore"
-    }
   }
 }
