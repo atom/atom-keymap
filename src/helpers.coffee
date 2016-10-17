@@ -187,6 +187,8 @@ nonAltModifiedKeyForKeyboardEvent = (event) ->
     else
       characters.unmodified
 
+exports.MODIFIERS = MODIFIERS
+
 exports.characterForKeyboardEvent = (event) ->
   event.key unless event.ctrlKey or event.metaKey
 
@@ -194,11 +196,21 @@ exports.calculateSpecificity = calculateSpecificity
 
 exports.isBareModifier = (keystroke) -> ENDS_IN_MODIFIER_REGEX.test(keystroke)
 
+exports.isModifierKeyup = (keystroke) -> keystroke.startsWith('^') and ENDS_IN_MODIFIER_REGEX.test(keystroke)
+
 exports.keydownEvent = (key, options) ->
   return buildKeyboardEvent(key, 'keydown', options)
 
 exports.keyupEvent = (key, options) ->
   return buildKeyboardEvent(key, 'keyup', options)
+
+exports.getModKeys = (keystroke) ->
+  keys = keystroke.split('-')
+  mod_keys = []
+  for key in keys when MODIFIERS.has(key)
+    mod_keys.push(key)
+  mod_keys
+
 
 buildKeyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
   ctrlKey = ctrl ? false

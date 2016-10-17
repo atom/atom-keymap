@@ -7,7 +7,7 @@ path = require 'path'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
 KeyBinding = require './key-binding'
 CommandEvent = require './command-event'
-{normalizeKeystrokes, keystrokeForKeyboardEvent, isBareModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch} = require './helpers'
+{normalizeKeystrokes, keystrokeForKeyboardEvent, isBareModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch, isModifierKeyup} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -94,6 +94,10 @@ class KeymapManager
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
   dvorakQwertyWorkaroundEnabled: false
+
+  # Pending matches to bindings that begin with a modifier keydown and and with
+  # the matching modifier keyup
+  pendingPartialMatchedModifierKeystrokes: null
 
   ###
   Section: Construction and Destruction
@@ -490,7 +494,9 @@ class KeymapManager
     #
     # Godspeed.
 
+    # keystroke is the atom keybind syntax, e.g. 'ctrl-a'
     keystroke = @keystrokeForKeyboardEvent(event)
+    console.log(keystroke)
 
     # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
     if event.type is 'keydown' and @queuedKeystrokes.length > 0 and isBareModifier(keystroke)
@@ -513,6 +519,15 @@ class KeymapManager
     dispatchedExactMatch = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
+    if @pendingPartialMatchedModifierKeystrokes? and isModifierKeyup(keystroke)
+      for binding in @pendingPartialMatchedModifierKeystrokes
+        binding_mod_keyups = getModKeys(binding.keystrokeArray[binding.keystrokeArray.length-1])
+        keystroke_mod_keyups = getModKeys(keystroke)
+        if keystroke_mod_keyups.length == 1 and binding_mod_keyups.has(keystroke_mod_keyups[0])
+          exactMatchCandidates.push(binding)
+          # Ian TODO remove from @pendingPartialMatchedModifierKeystrokes
+        # Ian TODO deal with all the other partial match possibilities
+
     # If any partial match *was* pending but has now failed to match, add it to
     # the list of bindings to disable so we don't attempt to match it again
     # during a subsequent event replay by `terminatePendingState`.
@@ -525,7 +540,7 @@ class KeymapManager
     shouldUsePartialMatches = hasPartialMatches
 
     # Determine if the current keystrokes match any bindings *exactly*. If we
-    # do find and exact match, the next step depends on whether we have any
+    # do find an exact match, the next step depends on whether we have any
     # partial matches. If we have no partial matches, we dispatch the command
     # immediately. Otherwise we break and allow ourselves to enter the pending
     # state with a timeout.
@@ -552,7 +567,7 @@ class KeymapManager
           if hasPartialMatches
             # When there is a set of bindings like `'ctrl-y', 'ctrl-y ^ctrl'`,
             # and a `ctrl-y` comes in, this will allow the `ctrl-y` command to be
-            # dispatched without waiting for any other keystrokes
+            # dispatched without waiting for any other keystrokes.
             allPartialMatchesContainKeyupRemainder = true
             for partialMatch in partialMatches
               if keydownExactMatchCandidates.indexOf(partialMatch) < 0
@@ -562,6 +577,7 @@ class KeymapManager
             shouldUsePartialMatches = false
 
           if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
+            console.log('dispatched: ' + exactMatchCandidate.keystrokes)
             dispatchedExactMatch = exactMatchCandidate
             eventHandled = true
             break
@@ -700,14 +716,29 @@ class KeymapManager
     @bindingsToDisable = []
 
   enterPendingState: (pendingPartialMatches, enableTimeout) ->
-    @cancelPendingState() if @pendingStateTimeoutHandle?
+    if @pendingStateTimeoutHandle?
+      @cancelPendingState()
+    else
+      @buildPendingPartialMatchedModiferKeystrokes()
+
     @pendingPartialMatches = pendingPartialMatches
     if enableTimeout
       @pendingStateTimeoutHandle = setTimeout(@terminatePendingState.bind(this, true), @partialMatchTimeout)
 
-  cancelPendingState: ->
+  buildPendingPartialMatchedModiferKeystrokes: ->
+    @pendingPartialMatchedModifierKeystrokes = null
+    for match in @pendingPartialMatches?
+      if match.is_matched_modifer_keydown_keyup()
+        @pendingPartialMatchedModifierKeystrokes.push(match)
+
+  cancelPendingState: (modifierKeyupMatched = false) ->
     clearTimeout(@pendingStateTimeoutHandle)
     @pendingStateTimeoutHandle = null
+
+    # Ian TODO perf?
+    # Preserve pending modifier keydown-keyup matches beyond pending state
+    @buildPendingPartialMatchedModiferKeystrokes()
+
     @pendingPartialMatches = null
 
   # This is called by {::handleKeyboardEvent} when no matching bindings are
@@ -718,7 +749,7 @@ class KeymapManager
   #
   # Note that replaying events has a recursive behavior. Replaying will set
   # member state (e.g. @queuedKeyboardEvents) just like real events, and will
-  # likely result in another call this function. The replay process will
+  # likely result in another call to this function. The replay process will
   # potentially replay the events (or a subset of events) several times, while
   # disabling bindings here and there. See any spec that handles multiple
   # keystrokes failures to match a binding.

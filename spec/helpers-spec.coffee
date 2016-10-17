@@ -1,4 +1,4 @@
-{normalizeKeystrokes, keystrokesMatch} = require '../src/helpers'
+{normalizeKeystrokes, keystrokesMatch, isModifierKeyup} = require '../src/helpers'
 
 describe ".normalizeKeystrokes(keystrokes)", ->
   it "parses and normalizes the keystrokes", ->
@@ -61,3 +61,19 @@ describe ".keystrokesMatch(bindingKeystrokes, userKeystrokes)", ->
 
   it "returns 'keydownExact' for bindings that match and contain a remainder of only keyup events", ->
     assert.equal(keystrokesMatch(['a', 'b', '^b'], ['a', 'b']), 'keydownExact')
+
+describe ".isModifierKeyup(keystroke)", ->
+  it "returns true for single modifier keyups", ->
+    assert(isModifierKeyup('^ctrl'))
+    assert(isModifierKeyup('^shift'))
+    assert(isModifierKeyup('^alt'))
+    assert(isModifierKeyup('^cmd'))
+    assert(isModifierKeyup('^ctrl-shift'))
+    assert(isModifierKeyup('^alt-cmd'))
+  it "returns false for modifier keydowns", ->
+    assert(!isModifierKeyup('ctrl-x'))
+    assert(!isModifierKeyup('shift-x'))
+    assert(!isModifierKeyup('alt-x'))
+    assert(!isModifierKeyup('cmd-x'))
+    assert(!isModifierKeyup('ctrl-shift-x'))
+    assert(!isModifierKeyup('alt-cmd-x'))
