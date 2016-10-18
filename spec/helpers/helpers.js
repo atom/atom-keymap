@@ -49,20 +49,21 @@ export function buildKeyupEvent (props) {
 }
 
 export function buildKeyboardEvent (type, props) {
-  let {key, code, ctrlKey, shiftKey, altKey, metaKey, target, altGraphKey} = props
+  let {key, code, ctrlKey, shiftKey, altKey, metaKey, target, modifierState} = props
+  if (!modifierState) modifierState = {}
 
   if (process.platform === 'darwin') {
-    if (altGraphKey) {
+    if (modifierState.AltGraph) {
       altKey = true
     } else if (altKey) {
-      altGraphKey = true
+      modifierState.AltGraph = true
     }
   } else if (process.platform === 'win32') {
-    if (altGraphKey) {
+    if (modifierState.AltGraph) {
       ctrlKey = true
       altKey = true
     } else if (ctrlKey && altKey) {
-      altGraphKey = true
+      modifierState.AltGraph = true
     }
   }
 
@@ -78,7 +79,7 @@ export function buildKeyboardEvent (type, props) {
   }
 
   Object.defineProperty(event, 'getModifierState', {value: (key) => {
-    return key === 'AltGraph' && altGraphKey
+    return !!modifierState[key]
   }})
 
   return event
