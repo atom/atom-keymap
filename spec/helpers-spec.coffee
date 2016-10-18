@@ -70,6 +70,7 @@ describe ".isModifierKeyup(keystroke)", ->
     assert(isModifierKeyup('^cmd'))
     assert(isModifierKeyup('^ctrl-shift'))
     assert(isModifierKeyup('^alt-cmd'))
+
   it "returns false for modifier keydowns", ->
     assert(!isModifierKeyup('ctrl-x'))
     assert(!isModifierKeyup('shift-x'))

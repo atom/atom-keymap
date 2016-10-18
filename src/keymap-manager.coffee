@@ -95,7 +95,7 @@ class KeymapManager
   pendingStateTimeoutHandle: null
   dvorakQwertyWorkaroundEnabled: false
 
-  # Pending matches to bindings that begin with a modifier keydown and and with
+  # Pending matches to bindings that begin with a modifier keydown and end with
   # the matching modifier keyup
   pendingPartialMatchedModifierKeystrokes: null
 
@@ -496,6 +496,7 @@ class KeymapManager
 
     # keystroke is the atom keybind syntax, e.g. 'ctrl-a'
     keystroke = @keystrokeForKeyboardEvent(event)
+    # Ian TODO :fire:
     console.log(keystroke)
 
     # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
@@ -521,8 +522,8 @@ class KeymapManager
 
     if @pendingPartialMatchedModifierKeystrokes? and isModifierKeyup(keystroke)
       for binding in @pendingPartialMatchedModifierKeystrokes
-        binding_mod_keyups = getModKeys(binding.keystrokeArray[binding.keystrokeArray.length-1])
-        keystroke_mod_keyups = getModKeys(keystroke)
+        binding_mod_keyups = getModifierKeys(binding.keystrokeArray[binding.keystrokeArray.length-1])
+        keystroke_mod_keyups = getModifierKeys(keystroke)
         if keystroke_mod_keyups.length == 1 and binding_mod_keyups.has(keystroke_mod_keyups[0])
           exactMatchCandidates.push(binding)
           # Ian TODO remove from @pendingPartialMatchedModifierKeystrokes
@@ -728,7 +729,7 @@ class KeymapManager
   buildPendingPartialMatchedModiferKeystrokes: ->
     @pendingPartialMatchedModifierKeystrokes = null
     for match in @pendingPartialMatches?
-      if match.is_matched_modifer_keydown_keyup()
+      if match.isMatchedModifierKeydownKeyup()
         @pendingPartialMatchedModifierKeystrokes.push(match)
 
   cancelPendingState: (modifierKeyupMatched = false) ->

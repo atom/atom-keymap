@@ -1,4 +1,4 @@
-{calculateSpecificity, MODIFIERS, getModKeys} = require './helpers'
+{calculateSpecificity, MODIFIERS, getModifierKeys} = require './helpers'
 
 module.exports =
 class KeyBinding
@@ -12,7 +12,7 @@ class KeyBinding
     @selector = selector.replace(/!important/g, '')
     @specificity = calculateSpecificity(selector)
     @index = @constructor.currentIndex++
-    @isMatchedModifierKeydownKeyup = null
+    @isMatchedModifierKeydownKeyupCache = null
 
   matches: (keystroke) ->
     multiKeystroke = /\s/.test keystroke
@@ -37,22 +37,22 @@ class KeyBinding
   # combinations are not handled specially, e.g. "ctrl ^ctrl" also returns true.
   # The keymap manager ignores them, there's no reason to do the additional work
   # to identify them again here.
-  is_matched_modifer_keydown_keyup: ->
+  isMatchedModifierKeydownKeyup: ->
     # this is likely to get checked repeatedly so we calc it once and cache it
-    return @isMatchedModifierKeydownKeyup if @isMatchedModifierKeydownKeyup?
+    return @isMatchedModifierKeydownKeyupCache if @isMatchedModifierKeydownKeyupCache?
 
     if not @keystrokeArray?.length > 1
-      return @isMatchedModifierKeydownKeyup = false
+      return @isMatchedModifierKeydownKeyupCache = false
 
     last_keystroke = @keystrokeArray[@keystrokeArray.length-1]
     if not last_keystroke.startsWith('^')
-      return @isMatchedModifierKeydownKeyup = false
+      return @isMatchedModifierKeydownKeyupCache = false
 
-    mod_keys_down = getModKeys(@keystrokeArray[0])
-    mod_keys_up = getModKeys(last_keystroke.substring(1))
+    mod_keys_down = getModifierKeys(@keystrokeArray[0])
+    mod_keys_up = getModifierKeys(last_keystroke.substring(1))
     if mod_keys_down.length != mod_keys_up.length
-      return @isMatchedModifierKeydownKeyup = false
+      return @isMatchedModifierKeydownKeyupCache = false
     for i in [0..mod_keys_down.length-1]
       if mod_keys_down[i] != mod_keys_up[i]
-        return @isMatchedModifierKeydownKeyup = false
-    return @isMatchedModifierKeydownKeyup = true
+        return @isMatchedModifierKeydownKeyupCache = false
+    return @isMatchedModifierKeydownKeyupCache = true

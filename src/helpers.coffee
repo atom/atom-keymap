@@ -204,7 +204,7 @@ exports.keydownEvent = (key, options) ->
 exports.keyupEvent = (key, options) ->
   return buildKeyboardEvent(key, 'keyup', options)
 
-exports.getModKeys = (keystroke) ->
+exports.getModifierKeys = (keystroke) ->
   keys = keystroke.split('-')
   mod_keys = []
   for key in keys when MODIFIERS.has(key)
