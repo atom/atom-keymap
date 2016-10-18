@@ -647,6 +647,12 @@ describe "KeymapManager", ->
       it "translates as ctrl-backspace instead of ctrl-delete", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Delete', code: 'Backspace', ctrlKey: true})), 'ctrl-backspace')
 
+    describe "when the KeyboardEvent.key is '' but the KeyboardEvent.code is 'NumpadDecimal' and getModifierState('NumLock') returns false", ->
+      it "translates as delete to work around a Chrome bug on Linux", ->
+        mockProcessPlatform('linux')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '.', code: 'NumpadDecimal', modifierState: {NumLock: true}})), '.')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '', code: 'NumpadDecimal', modifierState: {NumLock: false}})), 'delete')
+
     describe "when the Dvorak QWERTY-⌘ layout is in use on macOS", ->
       it "uses the US layout equivalent when the command key is held down", ->
         mockProcessPlatform('darwin')
@@ -686,9 +692,9 @@ describe "KeymapManager", ->
 
       it "allows arbitrary characters to be typed via an altgraph modifier on Linux", ->
         mockProcessPlatform('linux')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', altGraphKey: true})), '@')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '€', altGraphKey: true})), '€')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Ë', shiftKey: true, altGraphKey: true})), 'shift-Ë')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', modifierState: {AltGraph: true}})), '@')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '€', modifierState: {AltGraph: true}})), '€')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Ë', shiftKey: true, modifierState: {AltGraph: true}})), 'shift-Ë')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'g', altKey: true, altGraphKey: false})), 'alt-g')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'e', altKey: true, altGraphKey: false})), 'alt-e')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'E', altKey: true, shiftKey: true, altGraphKey: false})), 'alt-shift-E')

@@ -117,6 +117,11 @@ exports.keystrokeForKeyboardEvent = (event) ->
   if KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]?
     key = KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
 
+  # Work around Chrome bug on Linux where NumpadDecimal key value is '' with
+  # NumLock disabled.
+  if process.platform is 'linux' and code is 'NumpadDecimal' and not event.getModifierState('NumLock')
+    key = 'delete'
+
   isNonCharacterKey = key.length > 1
   if isNonCharacterKey
     key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[key] ? key.toLowerCase()
