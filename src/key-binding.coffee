@@ -44,15 +44,15 @@ class KeyBinding
     if not @keystrokeArray?.length > 1
       return @isMatchedModifierKeydownKeyupCache = false
 
-    last_keystroke = @keystrokeArray[@keystrokeArray.length-1]
-    if not last_keystroke.startsWith('^')
+    lastKeystroke = @keystrokeArray[@keystrokeArray.length-1]
+    if not lastKeystroke.startsWith('^')
       return @isMatchedModifierKeydownKeyupCache = false
 
-    mod_keys_down = getModifierKeys(@keystrokeArray[0])
-    mod_keys_up = getModifierKeys(last_keystroke.substring(1))
-    if mod_keys_down.length != mod_keys_up.length
+    modifierKeysDown = getModifierKeys(@keystrokeArray[0])
+    modifierKeysUp = getModifierKeys(lastKeystroke.substring(1))
+    if modifierKeysDown.length != modifierKeysUp.length
       return @isMatchedModifierKeydownKeyupCache = false
-    for i in [0..mod_keys_down.length-1]
-      if mod_keys_down[i] != mod_keys_up[i]
+    for i in [0..modifierKeysDown.length-1]
+      if modifierKeysDown[i] != modifierKeysUp[i]
         return @isMatchedModifierKeydownKeyupCache = false
-    return @isMatchedModifierKeydownKeyupCache = true
+    return @isMatchedModifierKeydownKeyup = true

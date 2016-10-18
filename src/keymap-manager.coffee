@@ -522,9 +522,9 @@ class KeymapManager
 
     if @pendingPartialMatchedModifierKeystrokes? and isModifierKeyup(keystroke)
       for binding in @pendingPartialMatchedModifierKeystrokes
-        binding_mod_keyups = getModifierKeys(binding.keystrokeArray[binding.keystrokeArray.length-1])
-        keystroke_mod_keyups = getModifierKeys(keystroke)
-        if keystroke_mod_keyups.length == 1 and binding_mod_keyups.has(keystroke_mod_keyups[0])
+        bindingModifierKeyups = getModifierKeys(binding.keystrokeArray[binding.keystrokeArray.length-1])
+        keystrokeModifierKeyups = getModifierKeys(keystroke)
+        if keystrokeModifierKeyups.length == 1 and bindingModifierKeyups.has(keystrokeModifierKeyups[0])
           exactMatchCandidates.push(binding)
           # Ian TODO remove from @pendingPartialMatchedModifierKeystrokes
         # Ian TODO deal with all the other partial match possibilities
@@ -578,6 +578,7 @@ class KeymapManager
             shouldUsePartialMatches = false
 
           if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
+            # Ian TODO :fire:
             console.log('dispatched: ' + exactMatchCandidate.keystrokes)
             dispatchedExactMatch = exactMatchCandidate
             eventHandled = true
