@@ -80,10 +80,10 @@ class KeymapManager
   #   * `which`  A {Number} indicating `which` value of the event. See
   #     the docs for KeyboardEvent for more information.
   #   * `target` The target element of the event.
-  KeymapManager.buildKeydownEvent = (key, options) -> 
+  KeymapManager.buildKeydownEvent = (key, options) ->
     keydownEvent(key, options)
 
-  KeymapManager.buildKeyupEvent = (key, options) -> 
+  KeymapManager.buildKeyupEvent = (key, options) ->
     keyupEvent(key, options)
 
   ###
@@ -283,7 +283,7 @@ class KeymapManager
   findKeyBindings: (params={}) ->
     {keystrokes, command, target, keyBindings} = params
 
-    bindings = keyBindings ? @keyBindings
+    bindings = keyBindings ? this.keyBindings
 
     if command?
       bindings = bindings.filter (binding) -> binding.command is command
@@ -324,7 +324,7 @@ class KeymapManager
         if this.filePathMatchesPlatform(filePath)
           this.loadKeymap(filePath, checkIfDirectory: false)
     else
-      this.add(bindingsPath, @readKeymap(bindingsPath, options?.suppressErrors), options?.priority)
+      this.add(bindingsPath, this.readKeymap(bindingsPath, options?.suppressErrors), options?.priority)
       this.watchKeymap(bindingsPath, options) if options?.watch
 
     undefined
@@ -382,7 +382,7 @@ class KeymapManager
   # <platform> does not match the current platform, returns false. Otherwise
   # returns true.
   filePathMatchesPlatform: (filePath) ->
-    otherPlatforms = @getOtherPlatforms()
+    otherPlatforms = this.getOtherPlatforms()
     for component in path.basename(filePath).split('.')[0...-1]
       return false if component in otherPlatforms
     true
@@ -495,7 +495,7 @@ class KeymapManager
     keystroke = this.keystrokeForKeyboardEvent(event)
 
     # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
-    if event.type is 'keydown' and @queuedKeystrokes.length > 0 and isBareModifier(keystroke)
+    if event.type is 'keydown' and this.queuedKeystrokes.length > 0 and isBareModifier(keystroke)
       event.preventDefault()
       return
 
@@ -506,12 +506,12 @@ class KeymapManager
     # If the event's target is document.body, assign it to defaultTarget instead
     # to provide a catch-all element when nothing is focused.
     target = if replay then document.activeElement else event.target
-    target = this.defaultTarget if event.target is document.body and @defaultTarget?
+    target = this.defaultTarget if event.target is document.body and this.defaultTarget?
 
     # First screen for any bindings that match the current keystrokes,
     # regardless of their current selector. Matching strings is cheaper than
     # matching selectors.
-    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, disabledBindings)
+    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = this.findMatchCandidates(this.queuedKeystrokes, disabledBindings)
     dispatchedExactMatch = null
     partialMatches = this.findPartialMatches(partialMatchCandidates, target)
 
@@ -535,7 +535,7 @@ class KeymapManager
       currentTarget = target
       eventHandled = false
       while not eventHandled and currentTarget? and currentTarget isnt document
-        exactMatches = @findExactMatches(exactMatchCandidates, currentTarget)
+        exactMatches = this.findExactMatches(exactMatchCandidates, currentTarget)
         for exactMatchCandidate in exactMatches
           if exactMatchCandidate.command is 'native!'
             shouldUsePartialMatches = false
@@ -563,7 +563,7 @@ class KeymapManager
           else
             shouldUsePartialMatches = false
 
-          if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
+          if this.dispatchCommandEvent(exactMatchCandidate.command, target, event)
             dispatchedExactMatch = exactMatchCandidate
             eventHandled = true
             break
@@ -610,7 +610,7 @@ class KeymapManager
       )
       enableTimeout = false if replay
       this.enterPendingState(partialMatches, enableTimeout)
-    else if not dispatchedExactMatch? and not hasPartialMatches and @pendingPartialMatches?
+    else if not dispatchedExactMatch? and not hasPartialMatches and this.pendingPartialMatches?
       # There are partial matches from a previous event, but none from this
       # event. This means the current event has removed any hope that the queued
       # key events will ever match any binding. So we will clear the state and
@@ -742,7 +742,7 @@ class KeymapManager
       # We can safely re-enable the bindings when we no longer have any partial matches
       bindingsToDisable = null if bindingsToDisable? and not this.pendingPartialMatches?
 
-    if fromTimeout and @pendingPartialMatches?
+    if fromTimeout and this.pendingPartialMatches?
       this.terminatePendingState(true)
 
     return
