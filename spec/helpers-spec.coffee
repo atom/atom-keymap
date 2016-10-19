@@ -32,36 +32,6 @@ describe ".normalizeKeystrokes(keystrokes)", ->
     assert.equal(normalizeKeystrokes('- '), false)
     assert.equal(normalizeKeystrokes('a '), false)
 
-describe ".keystrokesMatch(bindingKeystrokes, userKeystrokes)", ->
-  it "returns 'exact' for exact matches", ->
-    assert.equal(keystrokesMatch(['ctrl-tab', '^tab', '^ctrl'], ['ctrl-tab', '^tab', '^ctrl']), 'exact')
-    assert.equal(keystrokesMatch(['ctrl-tab', '^ctrl'], ['ctrl-tab', '^tab', '^ctrl']), 'exact')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c']), 'exact')
-    assert.equal(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c']), 'exact')
-
-  it "returns false for non-matches", ->
-    assert.equal(keystrokesMatch(['ctrl-tab', '^tab'], ['ctrl-tab', '^tab', '^ctrl']), false)
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-    assert.equal(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-
-    assert.equal(keystrokesMatch(['a'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-    assert.equal(keystrokesMatch(['a'], ['a', '^a']), false)
-    assert.equal(keystrokesMatch(['a', 'c'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-    assert.equal(keystrokesMatch(['a', 'b', '^d'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-    assert.equal(keystrokesMatch(['a', 'd', '^d'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-    assert.equal(keystrokesMatch(['a', 'd', '^d'], ['^c']), false)
-
-  it "returns 'partial' for partial matches", ->
-    assert.equal(keystrokesMatch(['a', 'b', '^b'], ['a']), 'partial')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a']), 'partial')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a']), 'partial')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b']), 'partial')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b']), 'partial')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'd', '^d']), false)
-
-  it "returns 'keydownExact' for bindings that match and contain a remainder of only keyup events", ->
-    assert.equal(keystrokesMatch(['a', 'b', '^b'], ['a', 'b']), 'keydownExact')
-
 describe ".isModifierKeyup(keystroke)", ->
   it "returns true for single modifier keyups", ->
     assert(isModifierKeyup('^ctrl'))

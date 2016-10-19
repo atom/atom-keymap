@@ -12,11 +12,6 @@ NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY = {
   'ArrowLeft': 'left',
   'ArrowRight': 'right'
 }
-MATCH_TYPES = {
-  EXACT: 'exact'
-  KEYDOWN_EXACT: 'keydownExact'
-  PARTIAL: 'partial'
-}
 
 isASCIICharacter = (character) ->
   character? and character.length is 1 and character.charCodeAt(0) <= 127
@@ -228,51 +223,3 @@ buildKeyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, l
     Object.defineProperty(event, 'target', get: -> target)
     Object.defineProperty(event, 'path', get: -> [target])
   event
-
-# bindingKeystrokes and userKeystrokes are arrays of keystrokes
-# e.g. ['ctrl-y', 'ctrl-x', '^x']
-exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
-  userKeystrokeIndex = -1
-  userKeystrokesHasKeydownEvent = false
-  matchesNextUserKeystroke = (bindingKeystroke) ->
-    while userKeystrokeIndex < userKeystrokes.length - 1
-      userKeystrokeIndex += 1
-      userKeystroke = userKeystrokes[userKeystrokeIndex]
-      isKeydownEvent = not userKeystroke.startsWith('^')
-      userKeystrokesHasKeydownEvent = true if isKeydownEvent
-      if bindingKeystroke is userKeystroke
-        return true
-      else if isKeydownEvent
-        return false
-    null
-
-  isPartialMatch = false
-  bindingRemainderContainsOnlyKeyups = true
-  bindingKeystrokeIndex = 0
-  for bindingKeystroke in bindingKeystrokes
-    unless isPartialMatch
-      doesMatch = matchesNextUserKeystroke(bindingKeystroke)
-      if doesMatch is false
-        return false
-      else if doesMatch is null
-        # Make sure userKeystrokes with only keyup events doesn't match everything
-        if userKeystrokesHasKeydownEvent
-          isPartialMatch = true
-        else
-          return false
-
-    if isPartialMatch
-      bindingRemainderContainsOnlyKeyups = false unless bindingKeystroke.startsWith('^')
-
-  # Bindings that match the beginning of the user's keystrokes are not a match.
-  # e.g. This is not a match. It would have been a match on the previous keystroke:
-  # bindingKeystrokes = ['ctrl-tab', '^tab']
-  # userKeystrokes    = ['ctrl-tab', '^tab', '^ctrl']
-  return false if userKeystrokeIndex < userKeystrokes.length - 1
-
-  if isPartialMatch and bindingRemainderContainsOnlyKeyups
-    MATCH_TYPES.KEYDOWN_EXACT
-  else if isPartialMatch
-    MATCH_TYPES.PARTIAL
-  else
-    MATCH_TYPES.EXACT

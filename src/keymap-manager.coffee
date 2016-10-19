@@ -5,7 +5,7 @@ fs = require 'fs-plus'
 path = require 'path'
 {File} = require 'pathwatcher'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
-KeyBinding = require './key-binding'
+{KeyBinding, MATCH_TYPES} = require './key-binding'
 CommandEvent = require './command-event'
 {normalizeKeystrokes, keystrokeForKeyboardEvent, isBareModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch, isModifierKeyup} = require './helpers'
 
@@ -672,12 +672,12 @@ class KeymapManager
     disabledBindingSet = new Set(disabledBindings)
 
     for binding in @keyBindings when not disabledBindingSet.has(binding)
-      doesMatch = keystrokesMatch(binding.keystrokeArray, keystrokeArray)
-      if doesMatch is 'exact'
+      doesMatch = binding.matchesKeystrokes(keystrokeArray)
+      if doesMatch is MATCH_TYPES.EXACT
         exactMatchCandidates.push(binding)
-      else if doesMatch is 'partial'
+      else if doesMatch is MATCH_TYPES.PARTIAL
         partialMatchCandidates.push(binding)
-      else if doesMatch is 'keydownExact'
+      else if doesMatch is MATCH_TYPES.KEYDOWN_EXACT
         partialMatchCandidates.push(binding)
         keydownExactMatchCandidates.push(binding)
     {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates}
@@ -730,7 +730,7 @@ class KeymapManager
   buildPendingPartialMatchedModiferKeystrokes: ->
     @pendingPartialMatchedModifierKeystrokes = null
     for match in @pendingPartialMatches?
-      if match.isMatchedKeydownKeyup()
+      if match.isMatchedModifierKeydownKeyup()
         @pendingPartialMatchedModifierKeystrokes.push(match)
 
   cancelPendingState: (modifierKeyupMatched = false) ->
