@@ -22,15 +22,14 @@ describe "KeymapManager", ->
       it "does not prevent the event's default action", ->
         event = buildKeydownEvent(key: 'q')
         keymapManager.handleKeyboardEvent(event)
-        assert(not event.defaultPrevented)
+        assert(!event.defaultPrevented)
     describe "when the keystroke matches one binding on any particular element", ->
       [events, elementA, elementB] = []
 
       beforeEach ->
-        elementA = appendContent($$(->
-          @div { 'class': 'a' }, ->
-            @div 'class': 'b c'
-        ))
+        elementA = appendContent $$ ->
+          @div class: 'a', ->
+            @div class: 'b c'
         elementB = elementA.firstChild
 
         events = []
@@ -71,7 +70,7 @@ describe "KeymapManager", ->
 
           event = buildKeydownEvent(key: 'y', ctrlKey: true, target: elementB)
           keymapManager.handleKeyboardEvent(event)
-          assert(not event.defaultPrevented)
+          assert(!event.defaultPrevented)
 
           assert.equal(events.length, 3)
           assert.equal(events[0].type, 'y-command')
@@ -150,10 +149,9 @@ describe "KeymapManager", ->
       [elementA, elementB, events] = []
 
       beforeEach ->
-        elementA = appendContent($$(->
-          @div { 'class': 'a' }, ->
-            @div 'class': 'b c'
-        ))
+        elementA = appendContent $$ ->
+          @div class: 'a', ->
+            @div class: 'b c d'
         elementB = elementA.firstChild
 
         events = []
@@ -206,17 +204,12 @@ describe "KeymapManager", ->
       [workspace, editor, editor2, events, inputElement, input2Element] = []
 
       beforeEach ->
-        workspace = appendContent($$(->
-          @div { 'class': 'workspace' }, ->
-            @div { 'class': 'editor' }, ->
-              @input
-                'class': 'input'
-                type: 'text'
-            @div { 'class': 'editor2' }, ->
-              @input
-                'class': 'input2'
-                type: 'text'
-        ))
+        workspace = appendContent $$ ->
+          @div class: 'workspace', ->
+            @div class: 'editor', ->
+              @input class: 'input', type: 'text'
+            @div class: 'editor2', ->
+              @input class: 'input2', type: 'text'
         editor = workspace.firstChild
         editor2 = editor.nextSibling
         inputElement = document.querySelector('.input')
@@ -391,12 +384,9 @@ describe "KeymapManager", ->
       [events, elementA] = []
 
       beforeEach ->
-        elementA = appendContent($$(->
-          @div { 'class': 'a' }, ->
-            @input
-              'class': 'input'
-              type: 'text'
-        ))
+        elementA = appendContent $$ ->
+          @div class: 'a', ->
+            @input class: 'input', type: 'text'
         inputElement = document.querySelector('.input')
         inputElement.focus()
 
@@ -482,9 +472,7 @@ describe "KeymapManager", ->
         assert.deepEqual(events, ['abc-secret-code'])
 
     it "only counts entire keystrokes when checking for partial matches", ->
-      element = $$(->
-        @div 'class': 'a'
-      )
+      element = $$ -> @div class: 'a'
       keymapManager.add 'test',
         '.a':
           'ctrl-alt-a': 'command-a'
@@ -498,9 +486,7 @@ describe "KeymapManager", ->
       assert.deepEqual(events, ['command-b'])
 
     it "does not enqueue keydown events consisting only of modifier keys", ->
-      element = $$(->
-        @div 'class': 'a'
-      )
+      element = $$ -> @div class: 'a'
       keymapManager.add 'test', '.a': 'ctrl-a ctrl-alt-b': 'command'
       events = []
       element.addEventListener 'command', -> events.push('command')
@@ -516,9 +502,7 @@ describe "KeymapManager", ->
       assert.deepEqual(events, ['command'])
 
     it "allows solo modifier-keys to be bound", ->
-      element = $$(->
-        @div 'class': 'a'
-      )
+      element = $$ -> @div class: 'a'
       keymapManager.add 'test', '.a': 'ctrl': 'command'
       events = []
       element.addEventListener 'command', -> events.push('command')
@@ -527,11 +511,10 @@ describe "KeymapManager", ->
       assert.deepEqual(events, ['command'])
 
     it "simulates bubbling if the target is detached", ->
-      elementA = $$(->
-        @div { 'class': 'a' }, ->
-          @div { 'class': 'b' }, ->
-            @div 'class': 'c'
-      )
+      elementA = $$ ->
+        @div class: 'a', ->
+          @div class: 'b', ->
+            @div class: 'c'
       elementB = elementA.firstChild
       elementC = elementB.firstChild
 
@@ -591,7 +574,7 @@ describe "KeymapManager", ->
 
       event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
       keymapManager.handleKeyboardEvent(event)
-      assert(not event.defaultPrevented)
+      assert(!event.defaultPrevented)
 
     it "rejects bindings with an empty command and logs a warning to the console", ->
       stub(console, 'warn')
@@ -600,7 +583,7 @@ describe "KeymapManager", ->
 
       event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
       keymapManager.handleKeyboardEvent(event)
-      assert(not event.defaultPrevented)
+      assert(!event.defaultPrevented)
 
     it "rejects bindings without a command and logs a warning to the console", ->
       stub(console, 'warn')
@@ -609,7 +592,7 @@ describe "KeymapManager", ->
 
       event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
       keymapManager.handleKeyboardEvent(event)
-      assert(not event.defaultPrevented)
+      assert(!event.defaultPrevented)
 
     it "returns a disposable allowing the added bindings to be removed", ->
       disposable1 = keymapManager.add 'foo',
@@ -800,7 +783,7 @@ describe "KeymapManager", ->
         assert.deepEqual(keystrokes, ['ctrl-d', 'ctrl-c', 'ctrl-a'])
 
   describe "::loadKeymap(path, options)", ->
-    this.timeout(5000)
+    @timeout(5000)
 
     beforeEach ->
       getFakeClock().uninstall()
@@ -904,7 +887,7 @@ describe "KeymapManager", ->
           keymapManager.onDidReloadKeymap -> reloaded = true
 
           afterWaiting = ->
-            assert(not reloaded)
+            assert(!reloaded)
 
             # Can start watching again after cancelling
             keymapManager.loadKeymap(keymapFilePath, watch: true)
