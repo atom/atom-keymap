@@ -730,7 +730,7 @@ class KeymapManager
   buildPendingPartialMatchedModiferKeystrokes: ->
     @pendingPartialMatchedModifierKeystrokes = null
     for match in @pendingPartialMatches?
-      if match.isMatchedModifierKeydownKeyup()
+      if match.isMatchedKeydownKeyup()
         @pendingPartialMatchedModifierKeystrokes.push(match)
 
   cancelPendingState: (modifierKeyupMatched = false) ->

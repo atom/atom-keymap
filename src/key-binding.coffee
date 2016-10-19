@@ -12,7 +12,7 @@ class KeyBinding
     @selector = selector.replace(/!important/g, '')
     @specificity = calculateSpecificity(selector)
     @index = @constructor.currentIndex++
-    @isMatchedModifierKeydownKeyupCache = null
+    @isMatchedKeydownKeyupCache = null
 
   matches: (keystroke) ->
     multiKeystroke = /\s/.test keystroke
@@ -30,26 +30,22 @@ class KeyBinding
     else
       keyBinding.priority - @priority
 
-  # Returns true iff the binding starts with one or more modifier keydowns and
-  # ends with at a subset of matching modifier keyups.
-  #
-  # Bare modifier keydown combinations are not handled specially, e.g.
-  # "ctrl ^ctrl" also returns true. The keymap manager ignores them, there's no
-  # reason to do the additional work to identify them again here.
-  isMatchedModifierKeydownKeyup: ->
+  # Returns true iff the binding starts with one or more keydowns and
+  # ends with a subset of matching keyups.
+  isMatchedKeydownKeyup: ->
     # this is likely to get checked repeatedly so we calc it once and cache it
-    return @isMatchedModifierKeydownKeyupCache if @isMatchedModifierKeydownKeyupCache?
+    return @isMatchedKeydownKeyupCache if @isMatchedKeydownKeyupCache?
 
     if not @keystrokeArray?.length > 1
-      return @isMatchedModifierKeydownKeyupCache = false
+      return @isMatchedKeydownKeyupCache = false
 
     lastKeystroke = @keystrokeArray[@keystrokeArray.length-1]
-    if not lastKeystroke.startsWith('^')
-      return @isMatchedModifierKeydownKeyupCache = false
+    if @keystrokeArray[0].startsWith('^') or not lastKeystroke.startsWith('^')
+      return @isMatchedKeydownKeyupCache = false
 
     modifierKeysDown = getModifierKeys(@keystrokeArray[0])
     modifierKeysUp = getModifierKeys(lastKeystroke.substring(1))
     for keyup in modifierKeysUp
       if modifierKeysDown.indexOf(keyup) < 0
-        return @isMatchedModifierKeydownKeyupCache = false
-    return @isMatchedModifierKeydownKeyup = true
+        return @isMatchedKeydownKeyupCache = false
+    return isMatchedKeydownKeyupCache = true
