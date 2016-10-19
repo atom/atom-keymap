@@ -80,11 +80,9 @@ class KeymapManager
   #   * `which`  A {Number} indicating `which` value of the event. See
   #     the docs for KeyboardEvent for more information.
   #   * `target` The target element of the event.
-  KeymapManager.buildKeydownEvent = (key, options) ->
-    keydownEvent(key, options)
+  @buildKeydownEvent: (key, options) -> keydownEvent(key, options)
 
-  KeymapManager.buildKeyupEvent = (key, options) ->
-    keyupEvent(key, options)
+  @buildKeyupEvent: (key, options) -> keyupEvent(key, options)
 
   ###
   Section: Properties
@@ -110,30 +108,30 @@ class KeymapManager
   #     is `document.body` to allow for a catch-all element when nothing is focused.
   constructor: (options={}) ->
     @[key] = value for key, value of options
-    this.watchSubscriptions = {}
-    this.clear()
-    this.enableDvorakQwertyWorkaroundIfNeeded()
+    @watchSubscriptions = {}
+    @clear()
+    @enableDvorakQwertyWorkaroundIfNeeded()
 
   # Public: Clear all registered key bindings and enqueued keystrokes. For use
   # in tests.
   clear: ->
-    this.emitter = new Emitter
-    this.keyBindings = []
-    this.queuedKeyboardEvents = []
-    this.queuedKeystrokes = []
-    this.bindingsToDisable = []
+    @emitter = new Emitter
+    @keyBindings = []
+    @queuedKeyboardEvents = []
+    @queuedKeystrokes = []
+    @bindingsToDisable = []
 
   # Public: Unwatch all watched paths.
   destroy: ->
-    this.keyboardLayoutSubscription.dispose()
-    for filePath, subscription of this.watchSubscriptions
+    @keyboardLayoutSubscription.dispose()
+    for filePath, subscription of @watchSubscriptions
       subscription.dispose()
 
     return
 
   enableDvorakQwertyWorkaroundIfNeeded: ->
-    this.keyboardLayoutSubscription = observeCurrentKeyboardLayout (layoutId) =>
-      this.dvorakQwertyWorkaroundEnabled = (layoutId?.indexOf('DVORAK-QWERTYCMD') > -1)
+    @keyboardLayoutSubscription = observeCurrentKeyboardLayout (layoutId) =>
+      @dvorakQwertyWorkaroundEnabled = (layoutId?.indexOf('DVORAK-QWERTYCMD') > -1)
 
   ###
   Section: Event Subscription
@@ -151,7 +149,7 @@ class KeymapManager
   #
   # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidMatchBinding: (callback) ->
-    this.emitter.on 'did-match-binding', callback
+    @emitter.on 'did-match-binding', callback
 
   # Public: Invoke the given callback when one or more keystrokes partially
   # match a binding.
@@ -167,7 +165,7 @@ class KeymapManager
   #
   # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidPartiallyMatchBindings: (callback) ->
-    this.emitter.on 'did-partially-match-binding', callback
+    @emitter.on 'did-partially-match-binding', callback
 
   # Public: Invoke the given callback when one or more keystrokes fail to match
   # any bindings.
@@ -181,7 +179,7 @@ class KeymapManager
   #
   # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidFailToMatchBinding: (callback) ->
-    this.emitter.on 'did-fail-to-match-binding', callback
+    @emitter.on 'did-fail-to-match-binding', callback
 
   # Invoke the given callback when a keymap file is reloaded.
   #
@@ -191,7 +189,7 @@ class KeymapManager
   #
   # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidReloadKeymap: (callback) ->
-    this.emitter.on 'did-reload-keymap', callback
+    @emitter.on 'did-reload-keymap', callback
 
   # Invoke the given callback when a keymap file is unloaded.
   #
@@ -201,7 +199,7 @@ class KeymapManager
   #
   # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidUnloadKeymap: (callback) ->
-    this.emitter.on 'did-unload-keymap', callback
+    @emitter.on 'did-unload-keymap', callback
 
   # Public: Invoke the given callback when a keymap file not able to be loaded.
   #
@@ -212,7 +210,7 @@ class KeymapManager
   #
   # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidFailToReadFile: (callback) ->
-    this.emitter.on 'did-fail-to-read-file', callback
+    @emitter.on 'did-fail-to-read-file', callback
 
   ###
   Section: Adding and Removing Bindings
@@ -244,18 +242,18 @@ class KeymapManager
         if normalizedKeystrokes = normalizeKeystrokes(keystrokes)
           keyBinding = new KeyBinding(source, command, normalizedKeystrokes, selector, priority)
           addedKeyBindings.push(keyBinding)
-          this.keyBindings.push(keyBinding)
+          @keyBindings.push(keyBinding)
         else
           console.warn "Invalid keystroke sequence for binding: `#{keystrokes}: #{command}` in #{source}"
 
     new Disposable =>
       for keyBinding in addedKeyBindings
-        index = this.keyBindings.indexOf(keyBinding)
-        this.keyBindings.splice(index, 1) unless index is -1
+        index = @keyBindings.indexOf(keyBinding)
+        @keyBindings.splice(index, 1) unless index is -1
       return
 
   removeBindingsFromSource: (source) ->
-    this.keyBindings = this.keyBindings.filter (keyBinding) -> keyBinding.source isnt source
+    @keyBindings = @keyBindings.filter (keyBinding) -> keyBinding.source isnt source
     undefined
 
   ###
@@ -266,7 +264,7 @@ class KeymapManager
   #
   # Returns an {Array} of {KeyBinding}s.
   getKeyBindings: ->
-    this.keyBindings.slice()
+    @keyBindings.slice()
 
   # Public: Get the key bindings for a given command and optional target.
   #
@@ -283,7 +281,7 @@ class KeymapManager
   findKeyBindings: (params={}) ->
     {keystrokes, command, target, keyBindings} = params
 
-    bindings = keyBindings ? this.keyBindings
+    bindings = keyBindings ? @keyBindings
 
     if command?
       bindings = bindings.filter (binding) -> binding.command is command
@@ -321,11 +319,11 @@ class KeymapManager
     checkIfDirectory = options?.checkIfDirectory ? true
     if checkIfDirectory and fs.isDirectorySync(bindingsPath)
       for filePath in fs.listSync(bindingsPath, ['.cson', '.json'])
-        if this.filePathMatchesPlatform(filePath)
-          this.loadKeymap(filePath, checkIfDirectory: false)
+        if @filePathMatchesPlatform(filePath)
+          @loadKeymap(filePath, checkIfDirectory: false)
     else
-      this.add(bindingsPath, this.readKeymap(bindingsPath, options?.suppressErrors), options?.priority)
-      this.watchKeymap(bindingsPath, options) if options?.watch
+      @add(bindingsPath, @readKeymap(bindingsPath, options?.suppressErrors), options?.priority)
+      @watchKeymap(bindingsPath, options) if options?.watch
 
     undefined
 
@@ -341,10 +339,10 @@ class KeymapManager
   #   * `priority` A {Number} used to sort keybindings which have the same
   #     specificity.
   watchKeymap: (filePath, options) ->
-    if not this.watchSubscriptions[filePath]? or this.watchSubscriptions[filePath].disposed
+    if not @watchSubscriptions[filePath]? or @watchSubscriptions[filePath].disposed
       file = new File(filePath)
-      reloadKeymap = => this.reloadKeymap(filePath, options)
-      this.watchSubscriptions[filePath] = new CompositeDisposable(
+      reloadKeymap = => @reloadKeymap(filePath, options)
+      @watchSubscriptions[filePath] = new CompositeDisposable(
         file.onDidChange(reloadKeymap)
         file.onDidRename(reloadKeymap)
         file.onDidDelete(reloadKeymap)
@@ -356,15 +354,15 @@ class KeymapManager
   # we can't read the file cleanly, we don't proceed with the reload.
   reloadKeymap: (filePath, options) ->
     if fs.isFileSync(filePath)
-      bindings = this.readKeymap(filePath, true)
+      bindings = @readKeymap(filePath, true)
 
       if typeof bindings isnt "undefined"
-        this.removeBindingsFromSource(filePath)
-        this.add(filePath, bindings, options?.priority)
-        this.emitter.emit 'did-reload-keymap', {path: filePath}
+        @removeBindingsFromSource(filePath)
+        @add(filePath, bindings, options?.priority)
+        @emitter.emit 'did-reload-keymap', {path: filePath}
     else
-      this.removeBindingsFromSource(filePath)
-      this.emitter.emit 'did-unload-keymap', {path: filePath}
+      @removeBindingsFromSource(filePath)
+      @emitter.emit 'did-unload-keymap', {path: filePath}
 
   readKeymap: (filePath, suppressErrors) ->
     if suppressErrors
@@ -372,7 +370,7 @@ class KeymapManager
         CSON.readFileSync(filePath, allowDuplicateKeys: false)
       catch error
         console.warn("Failed to reload key bindings file: #{filePath}", error.stack ? error)
-        this.emitter.emit 'did-fail-to-read-file', error
+        @emitter.emit 'did-fail-to-read-file', error
         undefined
     else
       CSON.readFileSync(filePath, allowDuplicateKeys: false)
@@ -382,7 +380,7 @@ class KeymapManager
   # <platform> does not match the current platform, returns false. Otherwise
   # returns true.
   filePathMatchesPlatform: (filePath) ->
-    otherPlatforms = this.getOtherPlatforms()
+    otherPlatforms = @getOtherPlatforms()
     for component in path.basename(filePath).split('.')[0...-1]
       return false if component in otherPlatforms
     true
@@ -428,8 +426,8 @@ class KeymapManager
     # of the keystrokes the user has typed. When populated, the state variables
     # look something like:
     #
-    # this.queuedKeystrokes = ['ctrl-a', 'b', 'c']
-    # this.queuedKeyboardEvents = [KeyboardEvent, KeyboardEvent, KeyboardEvent]
+    # @queuedKeystrokes = ['ctrl-a', 'b', 'c']
+    # @queuedKeyboardEvents = [KeyboardEvent, KeyboardEvent, KeyboardEvent]
     #
     # Basically, this `handleKeyboardEvent` function will try to exactly match
     # the user's keystrokes to a binding. If it cant match exactly, it looks for
@@ -437,8 +435,8 @@ class KeymapManager
     # The `ctrl-a b c` binding would be partially matched:
     #
     # // The original binding: 'ctrl-a b c': 'my-sweet-command'
-    # this.queuedKeystrokes = ['ctrl-a', 'b'] // The user's keystrokes
-    # this.queuedKeyboardEvents = [KeyboardEvent, KeyboardEvent]
+    # @queuedKeystrokes = ['ctrl-a', 'b'] // The user's keystrokes
+    # @queuedKeyboardEvents = [KeyboardEvent, KeyboardEvent]
     #
     # When it finds partially matching bindings, it will put the KeymapManager
     # into a pending state via `enterPendingState` indicating that it is waiting
@@ -452,8 +450,8 @@ class KeymapManager
     # `terminatePendingState`. An extension of our last example:
     #
     # // Both of these will exit pending state for: 'ctrl-a b c': 'my-sweet-command'
-    # this.queuedKeystrokes = ['ctrl-a', 'b', 'c'] // User typed `c`. Exact match! Dispatch the command and clear state variables. Easy.
-    # this.queuedKeystrokes = ['ctrl-a', 'b', 'd'] // User typed `d`. No hope of matching, terminatePendingState(). Dragons.
+    # @queuedKeystrokes = ['ctrl-a', 'b', 'c'] // User typed `c`. Exact match! Dispatch the command and clear state variables. Easy.
+    # @queuedKeystrokes = ['ctrl-a', 'b', 'd'] // User typed `d`. No hope of matching, terminatePendingState(). Dragons.
     #
     # `terminatePendingState` is where things get crazy. Let's pretend the user
     # typed 3 total keystrokes: `ctrl-a`, `b`, then `d`. There are no exact
@@ -492,36 +490,36 @@ class KeymapManager
     #
     # Godspeed.
 
-    keystroke = this.keystrokeForKeyboardEvent(event)
+    keystroke = @keystrokeForKeyboardEvent(event)
 
     # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
-    if event.type is 'keydown' and this.queuedKeystrokes.length > 0 and isBareModifier(keystroke)
+    if event.type is 'keydown' and @queuedKeystrokes.length > 0 and isBareModifier(keystroke)
       event.preventDefault()
       return
 
-    this.queuedKeystrokes.push(keystroke)
-    this.queuedKeyboardEvents.push(event)
-    keystrokes = this.queuedKeystrokes.join(' ')
+    @queuedKeystrokes.push(keystroke)
+    @queuedKeyboardEvents.push(event)
+    keystrokes = @queuedKeystrokes.join(' ')
 
     # If the event's target is document.body, assign it to defaultTarget instead
     # to provide a catch-all element when nothing is focused.
     target = if replay then document.activeElement else event.target
-    target = this.defaultTarget if event.target is document.body and this.defaultTarget?
+    target = @defaultTarget if event.target is document.body and @defaultTarget?
 
     # First screen for any bindings that match the current keystrokes,
     # regardless of their current selector. Matching strings is cheaper than
     # matching selectors.
-    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = this.findMatchCandidates(this.queuedKeystrokes, disabledBindings)
+    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, disabledBindings)
     dispatchedExactMatch = null
-    partialMatches = this.findPartialMatches(partialMatchCandidates, target)
+    partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
     # If any partial match *was* pending but has now failed to match, add it to
     # the list of bindings to disable so we don't attempt to match it again
     # during a subsequent event replay by `terminatePendingState`.
-    if this.pendingPartialMatches?
+    if @pendingPartialMatches?
       liveMatches = new Set(partialMatches.concat(exactMatchCandidates))
-      for binding in this.pendingPartialMatches
-        this.bindingsToDisable.push(binding) unless liveMatches.has(binding)
+      for binding in @pendingPartialMatches
+        @bindingsToDisable.push(binding) unless liveMatches.has(binding)
 
     hasPartialMatches = partialMatches.length > 0
     shouldUsePartialMatches = hasPartialMatches
@@ -535,7 +533,7 @@ class KeymapManager
       currentTarget = target
       eventHandled = false
       while not eventHandled and currentTarget? and currentTarget isnt document
-        exactMatches = this.findExactMatches(exactMatchCandidates, currentTarget)
+        exactMatches = @findExactMatches(exactMatchCandidates, currentTarget)
         for exactMatchCandidate in exactMatches
           if exactMatchCandidate.command is 'native!'
             shouldUsePartialMatches = false
@@ -563,7 +561,7 @@ class KeymapManager
           else
             shouldUsePartialMatches = false
 
-          if this.dispatchCommandEvent(exactMatchCandidate.command, target, event)
+          if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
             dispatchedExactMatch = exactMatchCandidate
             eventHandled = true
             break
@@ -572,7 +570,7 @@ class KeymapManager
     # Emit events. These are done on their own for clarity.
 
     if dispatchedExactMatch?
-      this.emitter.emit 'did-match-binding', {
+      @emitter.emit 'did-match-binding', {
         keystrokes,
         eventType: event.type,
         binding: dispatchedExactMatch,
@@ -580,14 +578,14 @@ class KeymapManager
       }
     else if hasPartialMatches and shouldUsePartialMatches
       event.preventDefault()
-      this.emitter.emit 'did-partially-match-binding', {
+      @emitter.emit 'did-partially-match-binding', {
         keystrokes,
         eventType: event.type,
         partiallyMatchedBindings: partialMatches,
         keyboardEventTarget: target
       }
     else if not dispatchedExactMatch? and not hasPartialMatches
-      this.emitter.emit 'did-fail-to-match-binding', {
+      @emitter.emit 'did-fail-to-match-binding', {
         keystrokes,
         eventType: event.type,
         keyboardEventTarget: target
@@ -597,27 +595,27 @@ class KeymapManager
       # whose default action was prevented and no binding is matched, we'll
       # simulate the text input event that was previously prevented to insert
       # the missing characters.
-      this.simulateTextInput(event) if event.defaultPrevented and event.type is 'keydown'
+      @simulateTextInput(event) if event.defaultPrevented and event.type is 'keydown'
 
     # Manage the keystroke queue state. State is updated separately for clarity.
 
-    this.bindingsToDisable.push(dispatchedExactMatch) if dispatchedExactMatch
+    @bindingsToDisable.push(dispatchedExactMatch) if dispatchedExactMatch
     if hasPartialMatches and shouldUsePartialMatches
       enableTimeout = (
-        this.pendingStateTimeoutHandle? or
+        @pendingStateTimeoutHandle? or
         dispatchedExactMatch? or
-        characterForKeyboardEvent(this.queuedKeyboardEvents[0])?
+        characterForKeyboardEvent(@queuedKeyboardEvents[0])?
       )
       enableTimeout = false if replay
-      this.enterPendingState(partialMatches, enableTimeout)
-    else if not dispatchedExactMatch? and not hasPartialMatches and this.pendingPartialMatches?
+      @enterPendingState(partialMatches, enableTimeout)
+    else if not dispatchedExactMatch? and not hasPartialMatches and @pendingPartialMatches?
       # There are partial matches from a previous event, but none from this
       # event. This means the current event has removed any hope that the queued
       # key events will ever match any binding. So we will clear the state and
       # start over after replaying the events in `terminatePendingState`.
-      this.terminatePendingState()
+      @terminatePendingState()
     else
-      this.clearQueuedKeystrokes()
+      @clearQueuedKeystrokes()
 
   # Public: Translate a keydown event to a keystroke string.
   #
@@ -625,21 +623,21 @@ class KeymapManager
   #
   # Returns a {String} describing the keystroke.
   keystrokeForKeyboardEvent: (event) ->
-    keystrokeForKeyboardEvent(event, this.dvorakQwertyWorkaroundEnabled)
+    keystrokeForKeyboardEvent(event, @dvorakQwertyWorkaroundEnabled)
 
   # Public: Get the number of milliseconds allowed before pending states caused
   # by partial matches of multi-keystroke bindings are terminated.
   #
   # Returns a {Number}
   getPartialMatchTimeout: ->
-    this.partialMatchTimeout
+    @partialMatchTimeout
 
   ###
   Section: Private
   ###
 
   simulateTextInput: (keydownEvent) ->
-    if character = characterForKeyboardEvent(keydownEvent, this.dvorakQwertyWorkaroundEnabled)
+    if character = characterForKeyboardEvent(keydownEvent, @dvorakQwertyWorkaroundEnabled)
       textInputEvent = document.createEvent("TextEvent")
       textInputEvent.initTextEvent("textInput", true, true, window, character)
       keydownEvent.path[0].dispatchEvent(textInputEvent)
@@ -655,7 +653,7 @@ class KeymapManager
     keydownExactMatchCandidates = []
     disabledBindingSet = new Set(disabledBindings)
 
-    for binding in this.keyBindings when not disabledBindingSet.has(binding)
+    for binding in @keyBindings when not disabledBindingSet.has(binding)
       doesMatch = keystrokesMatch(binding.keystrokeArray, keystrokeArray)
       if doesMatch is 'exact'
         exactMatchCandidates.push(binding)
@@ -697,20 +695,20 @@ class KeymapManager
       .sort (a, b) -> a.compare(b)
 
   clearQueuedKeystrokes: ->
-    this.queuedKeyboardEvents = []
-    this.queuedKeystrokes = []
-    this.bindingsToDisable = []
+    @queuedKeyboardEvents = []
+    @queuedKeystrokes = []
+    @bindingsToDisable = []
 
   enterPendingState: (pendingPartialMatches, enableTimeout) ->
-    this.cancelPendingState() if this.pendingStateTimeoutHandle?
-    this.pendingPartialMatches = pendingPartialMatches
+    @cancelPendingState() if @pendingStateTimeoutHandle?
+    @pendingPartialMatches = pendingPartialMatches
     if enableTimeout
-      this.pendingStateTimeoutHandle = setTimeout(this.terminatePendingState.bind(this, true), this.partialMatchTimeout)
+      @pendingStateTimeoutHandle = setTimeout(@terminatePendingState.bind(this, true), @partialMatchTimeout)
 
   cancelPendingState: ->
-    clearTimeout(this.pendingStateTimeoutHandle)
-    this.pendingStateTimeoutHandle = null
-    this.pendingPartialMatches = null
+    clearTimeout(@pendingStateTimeoutHandle)
+    @pendingStateTimeoutHandle = null
+    @pendingPartialMatches = null
 
   # This is called by {::handleKeyboardEvent} when no matching bindings are
   # found for the currently queued keystrokes or by the pending state timeout.
@@ -725,11 +723,11 @@ class KeymapManager
   # disabling bindings here and there. See any spec that handles multiple
   # keystrokes failures to match a binding.
   terminatePendingState: (fromTimeout) ->
-    bindingsToDisable = this.pendingPartialMatches.concat(this.bindingsToDisable)
-    eventsToReplay = this.queuedKeyboardEvents
+    bindingsToDisable = @pendingPartialMatches.concat(@bindingsToDisable)
+    eventsToReplay = @queuedKeyboardEvents
 
-    this.cancelPendingState()
-    this.clearQueuedKeystrokes()
+    @cancelPendingState()
+    @clearQueuedKeystrokes()
 
     keyEventOptions =
       replay: true
@@ -737,13 +735,13 @@ class KeymapManager
 
     for event in eventsToReplay
       keyEventOptions.disabledBindings = bindingsToDisable
-      this.handleKeyboardEvent(event, keyEventOptions)
+      @handleKeyboardEvent(event, keyEventOptions)
 
       # We can safely re-enable the bindings when we no longer have any partial matches
-      bindingsToDisable = null if bindingsToDisable? and not this.pendingPartialMatches?
+      bindingsToDisable = null if bindingsToDisable? and not @pendingPartialMatches?
 
-    if fromTimeout and this.pendingPartialMatches?
-      this.terminatePendingState(true)
+    if fromTimeout and @pendingPartialMatches?
+      @terminatePendingState(true)
 
     return
 
@@ -760,7 +758,7 @@ class KeymapManager
     if document.contains(target)
       target.dispatchEvent(commandEvent)
     else
-      this.simulateBubblingOnDetachedTarget(target, commandEvent)
+      @simulateBubblingOnDetachedTarget(target, commandEvent)
 
     {keyBindingAborted} = commandEvent
     keyboardEvent.preventDefault() unless keyBindingAborted
