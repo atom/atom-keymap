@@ -30,13 +30,12 @@ class KeyBinding
     else
       keyBinding.priority - @priority
 
-  # Returns true iff the binding starts with one or more modifier keydowns and ends
-  # with the matching set of modifier keyups.
+  # Returns true iff the binding starts with one or more modifier keydowns and
+  # ends with at a subset of matching modifier keyups.
   #
-  # The modifier key order in each must match. Bare modifier keydown
-  # combinations are not handled specially, e.g. "ctrl ^ctrl" also returns true.
-  # The keymap manager ignores them, there's no reason to do the additional work
-  # to identify them again here.
+  # Bare modifier keydown combinations are not handled specially, e.g.
+  # "ctrl ^ctrl" also returns true. The keymap manager ignores them, there's no
+  # reason to do the additional work to identify them again here.
   isMatchedModifierKeydownKeyup: ->
     # this is likely to get checked repeatedly so we calc it once and cache it
     return @isMatchedModifierKeydownKeyupCache if @isMatchedModifierKeydownKeyupCache?
@@ -50,9 +49,7 @@ class KeyBinding
 
     modifierKeysDown = getModifierKeys(@keystrokeArray[0])
     modifierKeysUp = getModifierKeys(lastKeystroke.substring(1))
-    if modifierKeysDown.length != modifierKeysUp.length
-      return @isMatchedModifierKeydownKeyupCache = false
-    for i in [0..modifierKeysDown.length-1]
-      if modifierKeysDown[i] != modifierKeysUp[i]
+    for keyup in modifierKeysUp
+      if modifierKeysDown.indexOf(keyup) < 0
         return @isMatchedModifierKeydownKeyupCache = false
     return @isMatchedModifierKeydownKeyup = true

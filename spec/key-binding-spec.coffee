@@ -22,13 +22,7 @@ describe "KeyBinding", ->
       it "has mismatched last_keystroke: cmd ^alt", ->
         kb = new KeyBinding('test', 'whatever', 'cmd-a ^alt', 'body', 0)
         assert(not kb.isMatchedModifierKeydownKeyup())
-      it "has partially mismatched last_keystroke: ctrl-cmd ^ctrl", ->
-        kb = new KeyBinding('test', 'whatever', 'ctrl-cmd-a ^ctrl', 'body', 0)
-        assert(not kb.isMatchedModifierKeydownKeyup())
-      it "has partially mismatched last_keystroke: ctrl-cmd ^cmd", ->
-        kb = new KeyBinding('test', 'whatever', 'ctrl-cmd-a ^cmd', 'body', 0)
-        assert(not kb.isMatchedModifierKeydownKeyup())
-      it "has partially mismatched last_keystroke: ctrl ^ctrl-shift", ->
+      it "has more keyups than keydowns: ctrl ^ctrl-shift", ->
         kb = new KeyBinding('test', 'whatever', 'ctrl ^ctrl-shift', 'body', 0)
         assert(not kb.isMatchedModifierKeydownKeyup())
 
@@ -50,4 +44,13 @@ describe "KeyBinding", ->
         assert(kb.isMatchedModifierKeydownKeyup())
       it "has matched bare last_keystroke", ->
         kb = new KeyBinding('test', 'whatever', 'ctrl ^ctrl', 'body', 0)
+        assert(kb.isMatchedModifierKeydownKeyup())
+      it "has partially matching last_keystroke: ctrl-cmd ^ctrl", ->
+        kb = new KeyBinding('test', 'whatever', 'ctrl-cmd-a ^ctrl', 'body', 0)
+        assert(kb.isMatchedModifierKeydownKeyup())
+      it "has partially matching last_keystroke: ctrl-cmd ^cmd", ->
+        kb = new KeyBinding('test', 'whatever', 'ctrl-cmd-a ^cmd', 'body', 0)
+        assert(kb.isMatchedModifierKeydownKeyup())
+      it "has partially matching last_keystroke: ctrl-shift ^ctrl", ->
+        kb = new KeyBinding('test', 'whatever', 'ctrl-shift-a ^ctrl', 'body', 0)
         assert(kb.isMatchedModifierKeydownKeyup())
