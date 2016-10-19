@@ -40,7 +40,7 @@
     "babel-register": "6.5.2",
     "chai": "3.5.0",
     "coffee-script": "1.7.0",
-    "coffeelint": "1.14.2",
+    "coffeelint": "1.16.0",
     "debounce": "1.0.0",
     "devtool": "2.2.0",
     "electron-rebuild": "1.2.1",
