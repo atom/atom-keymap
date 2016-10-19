@@ -2,29 +2,33 @@
 
 module.exports =
 class KeyBinding
-  @currentIndex: 1
+  KeyBinding.currentIndex = 1
 
   enabled: true
 
-  constructor: (@source, @command, @keystrokes, selector, @priority) ->
-    @keystrokeArray = @keystrokes.split(' ')
-    @keystrokeCount = @keystrokeArray.length
-    @selector = selector.replace(/!important/g, '')
-    @specificity = calculateSpecificity(selector)
-    @index = @constructor.currentIndex++
+  constructor: (source, command, keystrokes, selector, priority) ->
+    this.source = source
+    this.command = command
+    this.keystrokes = keystrokes
+    this.priority = priority
+    this.keystrokeArray = this.keystrokes.split(' ')
+    this.keystrokeCount = this.keystrokeArray.length
+    this.selector = selector.replace(/!important/g, '')
+    this.specificity = calculateSpecificity(selector)
+    this.index = this.constructor.currentIndex++
 
   matches: (keystroke) ->
     multiKeystroke = /\s/.test keystroke
     if multiKeystroke
-      keystroke == @keystroke
+      keystroke is this.keystroke
     else
-      keystroke.split(' ')[0] == @keystroke.split(' ')[0]
+      keystroke.split(' ')[0] is this.keystroke.split(' ')[0]
 
   compare: (keyBinding) ->
-    if keyBinding.priority is @priority
-      if keyBinding.specificity is @specificity
-        keyBinding.index - @index
+    if keyBinding.priority is this.priority
+      if keyBinding.specificity is this.specificity
+        keyBinding.index - this.index
       else
-        keyBinding.specificity - @specificity
+        keyBinding.specificity - this.specificity
     else
-      keyBinding.priority - @priority
+      keyBinding.priority - this.priority
