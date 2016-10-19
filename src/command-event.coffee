@@ -13,13 +13,13 @@ class CommandEvent extends CustomEvent
   propagationStopped: false
 
   abortKeyBinding: ->
-    this.stopImmediatePropagation()
-    this.keyBindingAborted = true
+    @stopImmediatePropagation()
+    @keyBindingAborted = true
 
   stopPropagation: ->
-    this.propagationStopped = true
+    @propagationStopped = true
     super
 
   stopImmediatePropagation: ->
-    this.propagationStopped = true
+    @propagationStopped = true
     super
