@@ -1,10 +1,9 @@
-{calculateSpecificity, MODIFIERS, getModifierKeys, MATCH_TYPES} = require './helpers'
-
+{calculateSpecificity, MODIFIERS, getModifierKeys} = require './helpers'
 
 MATCH_TYPES = {
   EXACT: 'exact'
-  KEYDOWN_EXACT: 'keydownExact'
   PARTIAL: 'partial'
+  PENDING_KEYUP: 'pendingKeyup'
 }
 module.exports.MATCH_TYPES = MATCH_TYPES
 
@@ -56,7 +55,7 @@ class KeyBinding
     for keyup in modifierKeysUp
       if modifierKeysDown.indexOf(keyup) < 0
         return @isMatchedKeydownKeyupCache = false
-    return isMatchedKeydownKeyupCache = true
+    return @isMatchedKeydownKeyupCache = true
 
   # userKeystrokes is an array of keystrokes e.g.
   # ['ctrl-y', 'ctrl-x', '^x']
@@ -99,8 +98,8 @@ class KeyBinding
     # userKeystrokes    = ['ctrl-tab', '^tab', '^ctrl']
     return false if userKeystrokeIndex < userKeystrokes.length - 1
 
-    if isPartialMatch and bindingRemainderContainsOnlyKeyups
-      MATCH_TYPES.KEYDOWN_EXACT
+    if isPartialMatch and bindingRemainderContainsOnlyKeyups and @isMatchedKeydownKeyup()
+      MATCH_TYPES.PENDING_KEYUP
     else if isPartialMatch
       MATCH_TYPES.PARTIAL
     else

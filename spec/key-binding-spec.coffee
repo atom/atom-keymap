@@ -1,4 +1,4 @@
-{KeyBinding} = require '../src/key-binding'
+{KeyBinding, MATCH_TYPES} = require '../src/key-binding'
 
 describe "KeyBinding", ->
   describe "isMatchedKeydownKeyup", ->
@@ -88,8 +88,8 @@ describe "KeyBinding", ->
       assert.equal(keyBindingArgHelper('a b c').matchesKeystrokes(['a', '^a', 'b', '^b']), 'partial')
       assert.equal(keyBindingArgHelper('a b c').matchesKeystrokes(['a', '^a', 'd', '^d']), false)
 
-    it "returns 'keydownExact' for bindings that match and contain a remainder of only keyup events", ->
-      assert.equal(keyBindingArgHelper('a b ^b').matchesKeystrokes(['a', 'b']), 'keydownExact')
+    it "returns MATCH_TYPES.PENDING_KEYUP for bindings that match and contain a remainder of only keyup events", ->
+      assert.equal(keyBindingArgHelper('a b ^b').matchesKeystrokes(['a', 'b']), MATCH_TYPES.PENDING_KEYUP)
 
 keyBindingArgHelper = (binding) ->
   return new KeyBinding('test', 'test', binding, 'body', 0)

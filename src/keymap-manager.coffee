@@ -95,9 +95,9 @@ class KeymapManager
   pendingStateTimeoutHandle: null
   dvorakQwertyWorkaroundEnabled: false
 
-  # Pending matches to bindings that begin with a modifier keydown and end with
-  # the matching modifier keyup
-  pendingPartialMatchedModifierKeystrokes: null
+  # Pending matches to bindings that begin with keydowns and end with a subset
+  # of matching keyups
+  pendingKeyupMatches: null
 
   ###
   Section: Construction and Destruction
@@ -516,7 +516,7 @@ class KeymapManager
     # First screen for any bindings that match the current keystrokes,
     # regardless of their current selector. Matching strings is cheaper than
     # matching selectors.
-    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, disabledBindings)
+    {partialMatchCandidates, pendingKeyupMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, disabledBindings)
     dispatchedExactMatch = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
@@ -571,7 +571,7 @@ class KeymapManager
             # dispatched without waiting for any other keystrokes.
             allPartialMatchesContainKeyupRemainder = true
             for partialMatch in partialMatches
-              if keydownExactMatchCandidates.indexOf(partialMatch) < 0
+              if pendingKeyupMatchCandidates.indexOf(partialMatch) < 0
                 allPartialMatchesContainKeyupRemainder = false
             break if allPartialMatchesContainKeyupRemainder is false
           else
@@ -668,7 +668,7 @@ class KeymapManager
   findMatchCandidates: (keystrokeArray, disabledBindings) ->
     partialMatchCandidates = []
     exactMatchCandidates = []
-    keydownExactMatchCandidates = []
+    pendingKeyupMatchCandidates = []
     disabledBindingSet = new Set(disabledBindings)
 
     for binding in @keyBindings when not disabledBindingSet.has(binding)
@@ -677,10 +677,10 @@ class KeymapManager
         exactMatchCandidates.push(binding)
       else if doesMatch is MATCH_TYPES.PARTIAL
         partialMatchCandidates.push(binding)
-      else if doesMatch is MATCH_TYPES.KEYDOWN_EXACT
+      else if doesMatch is MATCH_TYPES.PENDING_KEYUP
         partialMatchCandidates.push(binding)
-        keydownExactMatchCandidates.push(binding)
-    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates}
+        pendingKeyupMatchCandidates.push(binding)
+    {partialMatchCandidates, pendingKeyupMatchCandidates, exactMatchCandidates}
 
   # Determine which of the given bindings have selectors matching the target or
   # one of its ancestors. This is used by {::handleKeyboardEvent} to determine
@@ -718,29 +718,14 @@ class KeymapManager
     @bindingsToDisable = []
 
   enterPendingState: (pendingPartialMatches, enableTimeout) ->
-    if @pendingStateTimeoutHandle?
-      @cancelPendingState()
-    else
-      @buildPendingPartialMatchedModiferKeystrokes()
-
+    @cancelPendingState() if @pendingStateTimeoutHandle?
     @pendingPartialMatches = pendingPartialMatches
     if enableTimeout
       @pendingStateTimeoutHandle = setTimeout(@terminatePendingState.bind(this, true), @partialMatchTimeout)
 
-  buildPendingPartialMatchedModiferKeystrokes: ->
-    @pendingPartialMatchedModifierKeystrokes = null
-    for match in @pendingPartialMatches?
-      if match.isMatchedModifierKeydownKeyup()
-        @pendingPartialMatchedModifierKeystrokes.push(match)
-
-  cancelPendingState: (modifierKeyupMatched = false) ->
+  cancelPendingState: ->
     clearTimeout(@pendingStateTimeoutHandle)
     @pendingStateTimeoutHandle = null
-
-    # Ian TODO perf?
-    # Preserve pending modifier keydown-keyup matches beyond pending state
-    @buildPendingPartialMatchedModiferKeystrokes()
-
     @pendingPartialMatches = null
 
   # This is called by {::handleKeyboardEvent} when no matching bindings are
