@@ -40,7 +40,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 normalizeKeystroke = (keystroke) ->
-  if isKeyup = keystroke.startsWith('^')
+  if keyup = isKeyup(keystroke)
     keystroke = keystroke.slice(1)
   keys = parseKeystroke(keystroke)
   return false unless keys
@@ -58,7 +58,7 @@ normalizeKeystroke = (keystroke) ->
       else
         return false
 
-  if isKeyup
+  if keyup
     primaryKey = primaryKey.toLowerCase() if primaryKey?
   else
     modifiers.add('shift') if isUpperCaseCharacter(primaryKey)
@@ -66,14 +66,14 @@ normalizeKeystroke = (keystroke) ->
       primaryKey = primaryKey.toUpperCase()
 
   keystroke = []
-  if not isKeyup or (isKeyup and not primaryKey?)
+  if not keyup or (keyup and not primaryKey?)
     keystroke.push('ctrl') if modifiers.has('ctrl')
     keystroke.push('alt') if modifiers.has('alt')
     keystroke.push('shift') if modifiers.has('shift')
     keystroke.push('cmd') if modifiers.has('cmd')
   keystroke.push(primaryKey) if primaryKey?
   keystroke = keystroke.join('-')
-  keystroke = "^#{keystroke}" if isKeyup
+  keystroke = "^#{keystroke}" if keyup
   keystroke
 
 parseKeystroke = (keystroke) ->
@@ -191,7 +191,9 @@ exports.calculateSpecificity = calculateSpecificity
 
 exports.isBareModifier = (keystroke) -> ENDS_IN_MODIFIER_REGEX.test(keystroke)
 
-exports.isModifierKeyup = (keystroke) -> keystroke.startsWith('^') and ENDS_IN_MODIFIER_REGEX.test(keystroke)
+exports.isModifierKeyup = (keystroke) -> isKeyup(keystroke) and ENDS_IN_MODIFIER_REGEX.test(keystroke)
+
+exports.isKeyup = isKeyup = (keystroke) -> keystroke.startsWith('^')
 
 exports.keydownEvent = (key, options) ->
   return buildKeyboardEvent(key, 'keydown', options)

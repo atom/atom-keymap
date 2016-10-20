@@ -1,4 +1,4 @@
-{calculateSpecificity, MODIFIERS, getModifierKeys} = require './helpers'
+{calculateSpecificity, MODIFIERS, isKeyup} = require './helpers'
 
 MATCH_TYPES = {
   EXACT: 'exact'
@@ -36,26 +36,6 @@ class KeyBinding
         keyBinding.specificity - @specificity
     else
       keyBinding.priority - @priority
-
-  # Returns true iff the binding starts with one or more keydowns and
-  # ends with a subset of matching keyups.
-  isMatchedKeydownKeyup: ->
-    # this is likely to get checked repeatedly so we calc it once and cache it
-    return @isMatchedKeydownKeyupCache if @isMatchedKeydownKeyupCache?
-
-    if not @keystrokeArray?.length > 1
-      return @isMatchedKeydownKeyupCache = false
-
-    lastKeystroke = @keystrokeArray[@keystrokeArray.length-1]
-    if @keystrokeArray[0].startsWith('^') or not lastKeystroke.startsWith('^')
-      return @isMatchedKeydownKeyupCache = false
-
-    modifierKeysDown = getModifierKeys(@keystrokeArray[0])
-    modifierKeysUp = getModifierKeys(lastKeystroke.substring(1))
-    for keyup in modifierKeysUp
-      if modifierKeysDown.indexOf(keyup) < 0
-        return @isMatchedKeydownKeyupCache = false
-    return @isMatchedKeydownKeyupCache = true
 
   # userKeystrokes is an array of keystrokes e.g.
   # ['ctrl-y', 'ctrl-x', '^x']
@@ -98,7 +78,7 @@ class KeyBinding
     # userKeystrokes    = ['ctrl-tab', '^tab', '^ctrl']
     return false if userKeystrokeIndex < userKeystrokes.length - 1
 
-    if isPartialMatch and bindingRemainderContainsOnlyKeyups and @isMatchedKeydownKeyup()
+    if isPartialMatch and bindingRemainderContainsOnlyKeyups
       MATCH_TYPES.PENDING_KEYUP
     else if isPartialMatch
       MATCH_TYPES.PARTIAL

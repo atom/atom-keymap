@@ -7,7 +7,7 @@ path = require 'path'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
 {KeyBinding, MATCH_TYPES} = require './key-binding'
 CommandEvent = require './command-event'
-{normalizeKeystrokes, keystrokeForKeyboardEvent, isBareModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch, isModifierKeyup} = require './helpers'
+{normalizeKeystrokes, keystrokeForKeyboardEvent, isBareModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch, isKeyup} = require './helpers'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -520,15 +520,6 @@ class KeymapManager
     dispatchedExactMatch = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
-    if @pendingPartialMatchedModifierKeystrokes? and isModifierKeyup(keystroke)
-      for binding in @pendingPartialMatchedModifierKeystrokes
-        bindingModifierKeyups = getModifierKeys(binding.keystrokeArray[binding.keystrokeArray.length-1])
-        keystrokeModifierKeyups = getModifierKeys(keystroke)
-        if keystrokeModifierKeyups.length == 1 and bindingModifierKeyups.has(keystrokeModifierKeyups[0])
-          exactMatchCandidates.push(binding)
-          # Ian TODO remove from @pendingPartialMatchedModifierKeystrokes
-        # Ian TODO deal with all the other partial match possibilities
-
     # If any partial match *was* pending but has now failed to match, add it to
     # the list of bindings to disable so we don't attempt to match it again
     # during a subsequent event replay by `terminatePendingState`.
@@ -546,6 +537,9 @@ class KeymapManager
     # immediately. Otherwise we break and allow ourselves to enter the pending
     # state with a timeout.
     if exactMatchCandidates.length > 0
+      console.log('exactMatchCandidates:')
+      for c in exactMatchCandidates
+        console.log(c.keystrokes)
       currentTarget = target
       eventHandled = false
       while not eventHandled and currentTarget? and currentTarget isnt document
@@ -573,6 +567,11 @@ class KeymapManager
             for partialMatch in partialMatches
               if pendingKeyupMatchCandidates.indexOf(partialMatch) < 0
                 allPartialMatchesContainKeyupRemainder = false
+                # We found one partial match with unmatched keydowns.
+                # We can stop looking.
+                break
+            # Don't dispatch this exact match. There are partial matches left
+            # that have keydowns.
             break if allPartialMatchesContainKeyupRemainder is false
           else
             shouldUsePartialMatches = false
