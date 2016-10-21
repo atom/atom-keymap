@@ -1,0 +1,21 @@
+'use babel'
+
+const PartialKeyupMatcher = require('../src/partial-keyup-matcher.js')
+import {KeyBinding} from '../src/key-binding'
+
+describe("PartialKeyupMatcher", () => {
+
+  let matcher = new PartialKeyupMatcher()
+
+  it("blah", () => {
+    const kb = keyBindingArgHelper('ctrl-tab ^ctrl');
+    matcher.addPendingMatch(kb)
+    const matches = matcher.getMatches('^ctrl')
+    assert.equal(matches.length, 1)
+    assert.equal(matches[0], kb)
+  })
+})
+
+function keyBindingArgHelper(binding) {
+  return new KeyBinding('test', 'test', binding, 'body', 0)
+}

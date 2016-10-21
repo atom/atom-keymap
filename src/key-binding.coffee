@@ -19,7 +19,7 @@ class KeyBinding
     @selector = selector.replace(/!important/g, '')
     @specificity = calculateSpecificity(selector)
     @index = @constructor.currentIndex++
-    @isMatchedKeydownKeyupCache = null
+    @cachedKeyups = null
 
   matches: (keystroke) ->
     multiKeystroke = /\s/.test keystroke
@@ -36,6 +36,13 @@ class KeyBinding
         keyBinding.specificity - @specificity
     else
       keyBinding.priority - @priority
+
+  # Return the keyup portion of the binding, if any, as an array of
+  # keystrokes.
+  getKeyups: ->
+    return @cachedKeyups if @cachedKeyups?
+    for keystroke, i in @keystrokeArray
+      return @cachedKeyups = @keystrokeArray.slice(i) if isKeyup(keystroke)
 
   # userKeystrokes is an array of keystrokes e.g.
   # ['ctrl-y', 'ctrl-x', '^x']
