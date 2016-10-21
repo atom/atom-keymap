@@ -34,17 +34,17 @@ describe ".normalizeKeystrokes(keystrokes)", ->
 
 describe ".isModifierKeyup(keystroke)", ->
   it "returns true for single modifier keyups", ->
-    assert(isModifierKeyup('^ctrl'))
-    assert(isModifierKeyup('^shift'))
-    assert(isModifierKeyup('^alt'))
-    assert(isModifierKeyup('^cmd'))
-    assert(isModifierKeyup('^ctrl-shift'))
-    assert(isModifierKeyup('^alt-cmd'))
+    assert.isTrue(isModifierKeyup('^ctrl'))
+    assert.isTrue(isModifierKeyup('^shift'))
+    assert.isTrue(isModifierKeyup('^alt'))
+    assert.isTrue(isModifierKeyup('^cmd'))
+    assert.isTrue(isModifierKeyup('^ctrl-shift'))
+    assert.isTrue(isModifierKeyup('^alt-cmd'))
 
   it "returns false for modifier keydowns", ->
-    assert(!isModifierKeyup('ctrl-x'))
-    assert(!isModifierKeyup('shift-x'))
-    assert(!isModifierKeyup('alt-x'))
-    assert(!isModifierKeyup('cmd-x'))
-    assert(!isModifierKeyup('ctrl-shift-x'))
-    assert(!isModifierKeyup('alt-cmd-x'))
+    assert.isFalse(isModifierKeyup('ctrl-x'))
+    assert.isFalse(isModifierKeyup('shift-x'))
+    assert.isFalse(isModifierKeyup('alt-x'))
+    assert.isFalse(isModifierKeyup('cmd-x'))
+    assert.isFalse(isModifierKeyup('ctrl-shift-x'))
+    assert.isFalse(isModifierKeyup('alt-cmd-x'))
