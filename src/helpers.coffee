@@ -153,18 +153,18 @@ exports.keystrokeForKeyboardEvent = (event) ->
         key = characters.unmodified
 
   keystroke = ''
-  if key is 'ctrl' or ctrlKey
+  if key is 'ctrl' or (ctrlKey and event.type != 'keyup')
     keystroke += 'ctrl'
 
-  if key is 'alt' or altKey
+  if key is 'alt' or (altKey and event.type != 'keyup')
     keystroke += '-' if keystroke.length > 0
     keystroke += 'alt'
 
-  if key is 'shift' or (shiftKey and (isNonCharacterKey or (isLatinCharacter(key) and isUpperCaseCharacter(key))))
+  if key is 'shift' or (shiftKey and event.type != 'keyup' and (isNonCharacterKey or (isLatinCharacter(key) and isUpperCaseCharacter(key))))
     keystroke += '-' if keystroke
     keystroke += 'shift'
 
-  if key is 'cmd' or metaKey
+  if key is 'cmd' or (metaKey and event.type != 'keyup')
     keystroke += '-' if keystroke
     keystroke += 'cmd'
 

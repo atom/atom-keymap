@@ -8,6 +8,7 @@ path = require 'path'
 {KeyBinding, MATCH_TYPES} = require './key-binding'
 CommandEvent = require './command-event'
 {normalizeKeystrokes, keystrokeForKeyboardEvent, isBareModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch, isKeyup} = require './helpers'
+PartialKeyupMatcher = require './partial-keyup-matcher'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -97,7 +98,7 @@ class KeymapManager
 
   # Pending matches to bindings that begin with keydowns and end with a subset
   # of matching keyups
-  pendingKeyupMatches: null
+  pendingKeyupMatcher: new PartialKeyupMatcher()
 
   ###
   Section: Construction and Destruction
@@ -531,15 +532,15 @@ class KeymapManager
     hasPartialMatches = partialMatches.length > 0
     shouldUsePartialMatches = hasPartialMatches
 
+    if isKeyup(keystroke)
+      exactMatchCandidates = exactMatchCandidates.concat(@pendingKeyupMatcher.getMatches(keystroke))
+
     # Determine if the current keystrokes match any bindings *exactly*. If we
     # do find an exact match, the next step depends on whether we have any
     # partial matches. If we have no partial matches, we dispatch the command
     # immediately. Otherwise we break and allow ourselves to enter the pending
     # state with a timeout.
     if exactMatchCandidates.length > 0
-      console.log('exactMatchCandidates:')
-      for c in exactMatchCandidates
-        console.log(c.keystrokes)
       currentTarget = target
       eventHandled = false
       while not eventHandled and currentTarget? and currentTarget isnt document
@@ -581,6 +582,8 @@ class KeymapManager
             console.log('dispatched: ' + exactMatchCandidate.keystrokes)
             dispatchedExactMatch = exactMatchCandidate
             eventHandled = true
+            for pendingKeyupMatch in pendingKeyupMatchCandidates
+              @pendingKeyupMatcher.addPendingMatch(pendingKeyupMatch)
             break
         currentTarget = currentTarget.parentElement
 
@@ -677,7 +680,6 @@ class KeymapManager
       else if doesMatch is MATCH_TYPES.PARTIAL
         partialMatchCandidates.push(binding)
       else if doesMatch is MATCH_TYPES.PENDING_KEYUP
-        partialMatchCandidates.push(binding)
         pendingKeyupMatchCandidates.push(binding)
     {partialMatchCandidates, pendingKeyupMatchCandidates, exactMatchCandidates}
 

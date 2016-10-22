@@ -19,19 +19,6 @@ describe('PartialKeyupMatcher', () => {
     })
   })
 
-  it('matches single keyups binding on multiple keyup event', () => {
-    const matcher = new PartialKeyupMatcher()
-    const kb = keyBindingArgHelper('ctrl-tab ^ctrl')
-    matcher.addPendingMatch(kb)
-    const matches = matcher.getMatches('^ctrl-shift')
-    assert.equal(matches.length, 1)
-    assert.equal(matches[0], kb)
-    it('removes match returned', () => {
-      const matches = matcher.getMatches('^ctrl')
-      assert.equal(matches.length, 0)
-    })
-  })
-
   it('does not match multiple keyup binding on single keyup events', () => {
     const matcher = new PartialKeyupMatcher()
     const kb = keyBindingArgHelper('ctrl-shift-tab ^ctrl-shift')
@@ -40,18 +27,6 @@ describe('PartialKeyupMatcher', () => {
     assert.equal(matches.length, 0)
     matches = matcher.getMatches('^shift')
     assert.equal(matches.length, 0)
-  })
-  it('matches multiple keyup binding on multiple keyup events', () => {
-    const matcher = new PartialKeyupMatcher()
-    const kb = keyBindingArgHelper('ctrl-shift-tab ^ctrl-shift')
-    matcher.addPendingMatch(kb)
-    let matches = matcher.getMatches('^ctrl-shift')
-    assert.equal(matches.length, 1)
-    assert.equal(matches[0], kb)
-    it('removes match returned', () => {
-      const matches = matcher.getMatches('^ctrl')
-      assert.equal(matches.length, 0)
-    })
   })
 
   it('for multi-keystroke bindings, matches only when all keyups are received', () => {

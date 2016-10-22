@@ -20,22 +20,11 @@ class PartialKeyupMatcher {
 
     // Loop over each pending keyup match.
     for (const keyBinding of this._pendingMatches) {
-      const bindingKeystrokeToMatch = this._normalizeKeystroke(keyBinding.getKeyups()[keyBinding['nextKeyUpIndex']])
-      const userKeyups = userKeyupKeystroke.split('-')
-
-      // Attempt to match multi-keyup combinations e.g. ^ctrl-shift
-      if (userKeyups.length > 1) {
-        if (userKeyupKeystroke === bindingKeystrokeToMatch) {
-          this._updateStateForMatch(matches, keyBinding)
-        }
-      }
-
-      // Loop over individual keys in the user keystroke because we want e.g.
-      // user keystroke ^ctrl-shift to match a pending ^ctrl or ^shift.
-      for (const userKeyup of userKeyups) {
-        if (userKeyup === bindingKeystrokeToMatch) {
-          this._updateStateForMatch(matches, keyBinding)
-        }
+      const bindingKeystrokeToMatch = this._normalizeKeystroke(
+        keyBinding.getKeyups()[keyBinding['nextKeyUpIndex']]
+      )
+      if (userKeyupKeystroke === bindingKeystrokeToMatch) {
+        this._updateStateForMatch(matches, keyBinding)
       }
     }
     return [...matches]
