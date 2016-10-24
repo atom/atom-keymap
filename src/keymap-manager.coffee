@@ -680,6 +680,7 @@ class KeymapManager
       else if doesMatch is MATCH_TYPES.PARTIAL
         partialMatchCandidates.push(binding)
       else if doesMatch is MATCH_TYPES.PENDING_KEYUP
+        partialMatchCandidates.push(binding)
         pendingKeyupMatchCandidates.push(binding)
     {partialMatchCandidates, pendingKeyupMatchCandidates, exactMatchCandidates}
 
