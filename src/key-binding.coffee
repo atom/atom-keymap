@@ -16,9 +16,9 @@ class KeyBinding
   matches: (keystroke) ->
     multiKeystroke = /\s/.test keystroke
     if multiKeystroke
-      keystroke == @keystroke
+      keystroke is @keystroke
     else
-      keystroke.split(' ')[0] == @keystroke.split(' ')[0]
+      keystroke.split(' ')[0] is @keystroke.split(' ')[0]
 
   compare: (keyBinding) ->
     if keyBinding.priority is @priority

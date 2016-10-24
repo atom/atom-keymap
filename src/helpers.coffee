@@ -5,7 +5,8 @@ MODIFIERS = new Set(['ctrl', 'alt', 'shift', 'cmd'])
 ENDS_IN_MODIFIER_REGEX = /(ctrl|alt|shift|cmd)$/
 WHITESPACE_REGEX = /\s+/
 KEY_NAMES_BY_KEYBOARD_EVENT_CODE = {
-  'Space': 'space'
+  'Space': 'space',
+  'Backspace': 'backspace'
 }
 NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY = {
   'Control': 'ctrl',
@@ -116,6 +117,11 @@ exports.keystrokeForKeyboardEvent = (event) ->
   if KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]?
     key = KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
 
+  # Work around Chrome bug on Linux where NumpadDecimal key value is '' with
+  # NumLock disabled.
+  if process.platform is 'linux' and code is 'NumpadDecimal' and not event.getModifierState('NumLock')
+    key = 'delete'
+
   isNonCharacterKey = key.length > 1
   if isNonCharacterKey
     key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[key] ? key.toLowerCase()
@@ -165,6 +171,10 @@ exports.keystrokeForKeyboardEvent = (event) ->
         if (ctrlKey or altKey or metaKey) and nonAltModifiedKey
           key = nonAltModifiedKey
           altKey = event.getModifierState('AltGraph')
+
+    # Avoid caps-lock captilizing the key without shift being actually pressed
+    unless shiftKey
+      key = key.toLowerCase()
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
