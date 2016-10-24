@@ -663,6 +663,13 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'l', code: 'KeyP', metaKey: true})), 'cmd-p')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'L', code: 'KeyP', metaKey: true, shiftKey: true})), 'shift-cmd-P')
 
+    describe "when the current system keymap cannot be obtained on macOS", ->
+      it "does not throw exceptions and just takes the current key value", ->
+        mockProcessPlatform('darwin')
+        stub(KeyboardLayout, 'getCurrentKeymap', -> null)
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', modifierState: {AltGraph: true}})), '@')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'KeyU', modifierState: {AltGraph: true}})), 'alt-dead')
+
     describe "international layouts", ->
       currentKeymap = null
 
