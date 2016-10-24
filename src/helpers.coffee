@@ -126,7 +126,17 @@ exports.keystrokeForKeyboardEvent = (event) ->
   if isNonCharacterKey
     key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[key] ? key.toLowerCase()
   else
-    if altKey
+    # Chrome has a bug on Linux: It always reports the U.S. layout value for
+    # KeyboardEvent.key when ctrlKey is true. We work around it by consulting
+    # the current keymap.
+    if process.platform is 'linux' and ctrlKey
+      if event.code and (characters = KeyboardLayout.getCurrentKeymap()?[event.code])
+        if event.shiftKey and characters.withShift?
+          key = characters.withShift
+        else if characters.unmodified?
+          key = characters.unmodified
+
+    if event.getModifierState('AltGraph')
       # All macOS layouts have an alt-modified character variant for every
       # single key. Therefore, if we always favored the alt variant, it would
       # become impossible to bind `alt-*` to anything. Since `alt-*` bindings
@@ -145,7 +155,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
       # keystroke, it likely to be the intended character, and we always
       # interpret it as such rather than favoring a `ctrl-alt-*` binding
       # intepretation.
-      else if process.platform is 'win32' and ctrlKey and event.code
+      else if process.platform is 'win32' and event.code
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
         if metaKey
           key = nonAltModifiedKey
@@ -153,11 +163,14 @@ exports.keystrokeForKeyboardEvent = (event) ->
           ctrlKey = false
           altKey = false
       # Linux has a dedicated `AltGraph` key that is distinct from all other
-      # modifiers, so there is no potential ambiguity and we always honor
-      # AltGraph.
+      # modifiers, including LeftAlt. However, if AltGraph is used in
+      # combination with other modifiers, we want to treat it as a modifier and
+      # fall back to the non-alt-modified character.
       else if process.platform is 'linux'
-        if event.getModifierState('AltGraph')
-          altKey = false
+        nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
+        if (ctrlKey or altKey or metaKey) and nonAltModifiedKey
+          key = nonAltModifiedKey
+          altKey = event.getModifierState('AltGraph')
 
     # Avoid caps-lock captilizing the key without shift being actually pressed
     unless shiftKey
