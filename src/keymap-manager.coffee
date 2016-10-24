@@ -497,8 +497,6 @@ class KeymapManager
 
     # keystroke is the atom keybind syntax, e.g. 'ctrl-a'
     keystroke = @keystrokeForKeyboardEvent(event)
-    # Ian TODO :fire:
-    console.log(keystroke)
 
     # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
     if event.type is 'keydown' and @queuedKeystrokes.length > 0 and isBareModifier(keystroke)
@@ -578,8 +576,6 @@ class KeymapManager
             shouldUsePartialMatches = false
 
           if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
-            # Ian TODO :fire:
-            console.log('dispatched: ' + exactMatchCandidate.keystrokes)
             dispatchedExactMatch = exactMatchCandidate
             eventHandled = true
             for pendingKeyupMatch in pendingKeyupMatchCandidates

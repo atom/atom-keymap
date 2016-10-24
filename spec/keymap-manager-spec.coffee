@@ -422,6 +422,15 @@ describe "KeymapManager", ->
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['y-keydown', 'y-up-ctrl-keyup'])
 
+      it "dispatches the command when they keyup comes after the partial match timeout", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        assert.deepEqual(events, ['y-keydown'])
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, cmd: true, shift: true, alt: true, target: elementA))
+        assert.deepEqual(events, ['y-keydown'])
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        assert.deepEqual(events, ['y-keydown', 'y-up-ctrl-keyup'])
+
       it "dispatches the command multiple times when multiple keydown events for the binding come in before the binding with a keyup handler", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
         assert.deepEqual(events, ['y-keydown'])
