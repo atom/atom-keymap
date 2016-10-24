@@ -702,9 +702,9 @@ describe "KeymapManager", ->
       it "falls back to the non-alt key if other modifiers are combined with ALtGraph on Linux", ->
         mockProcessPlatform('linux')
         currentKeymap = require('./helpers/keymaps/linux-swiss-german')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', altGraphKey: true, ctrlKey: true})), 'ctrl-alt-g')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', altGraphKey: true, metaKey: true})), 'alt-cmd-g')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', altGraphKey: true, altKey: true})), 'alt-g')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', ctrlKey: true, modifierState: {AltGraph: true}})), 'ctrl-alt-g')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', metaKey: true, modifierState: {AltGraph: true}})), 'alt-cmd-g')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', altKey: true, modifierState: {AltGraph: true}})), 'alt-g')
 
       it "uses the keymap to fix incorrect KeyboardEvent.key values when ctrlKey is true", ->
         mockProcessPlatform('linux')
