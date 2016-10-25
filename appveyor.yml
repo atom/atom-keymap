@@ -10,7 +10,7 @@ environment:
 
 install:
   - ps: Install-Product node $env:NODE_VERSION
-  - npm install -g npm
+  - npm install
 
 test_script:
   - node --version
