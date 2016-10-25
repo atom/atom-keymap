@@ -1,6 +1,6 @@
 {
   "name": "atom-keymap",
-  "version": "7.0.2",
+  "version": "7.0.7",
   "description": "Atom's DOM-aware keymap module",
   "main": "./lib/keymap-manager",
   "scripts": {
@@ -27,7 +27,7 @@
     "event-kit": "^1.0.0",
     "fs-plus": "^2.0.4",
     "grim": "^1.2.1",
-    "keyboard-layout": "^1.2.2",
+    "keyboard-layout": "^2.0.1",
     "pathwatcher": "^6.2",
     "property-accessors": "^1",
     "season": "^5.4.1"
@@ -40,7 +40,7 @@
     "babel-register": "6.5.2",
     "chai": "3.5.0",
     "coffee-script": "1.7.0",
-    "coffeelint": "1.14.2",
+    "coffeelint": "1.16.0",
     "debounce": "1.0.0",
     "devtool": "2.2.0",
     "electron-rebuild": "1.2.1",
@@ -51,7 +51,6 @@
     "grunt": "0.4.1",
     "grunt-atomdoc": "1.0.0",
     "grunt-cli": "0.1.8",
-    "grunt-coffeelint": "0.0.6",
     "grunt-contrib-coffee": "0.9.0",
     "grunt-shell": "0.2.2",
     "lolex": "1.4.0",
@@ -60,16 +59,5 @@
     "sinon": "1.17.3",
     "space-pencil": "0.3.0",
     "temp": "0.8.3"
-  },
-  "coffeelintConfig": {
-    "no_empty_param_list": {
-      "level": "error"
-    },
-    "max_line_length": {
-      "level": "ignore"
-    },
-    "indentation": {
-      "level": "ignore"
-    }
   }
 }

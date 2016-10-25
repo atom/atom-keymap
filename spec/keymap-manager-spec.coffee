@@ -5,8 +5,7 @@ path = require 'path'
 temp = require 'temp'
 KeyboardLayout = require('keyboard-layout')
 KeymapManager = require '../src/keymap-manager'
-{buildKeydownEvent, buildKeyupEvent} = KeymapManager
-{appendContent, stub, getFakeClock, mockProcessPlatform} = require './helpers/helpers'
+{appendContent, stub, getFakeClock, mockProcessPlatform, buildKeydownEvent, buildKeyupEvent} = require './helpers/helpers'
 
 describe "KeymapManager", ->
   keymapManager = null
@@ -21,10 +20,9 @@ describe "KeymapManager", ->
   describe "::handleKeyboardEvent(event)", ->
     describe "when the keystroke matches no bindings", ->
       it "does not prevent the event's default action", ->
-        event = buildKeydownEvent('q')
+        event = buildKeydownEvent(key: 'q')
         keymapManager.handleKeyboardEvent(event)
-        assert(!event.defaultPrevented)
-
+        assert(not event.defaultPrevented)
     describe "when the keystroke matches one binding on any particular element", ->
       [events, elementA, elementB] = []
 
@@ -48,19 +46,19 @@ describe "KeymapManager", ->
             "ctrl-y": "y-command"
 
       it "dispatches the matching binding's command event on the keyboard event's target", ->
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementB))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementB))
         assert.equal(events.length, 1)
         assert.equal(events[0].type, 'y-command')
         assert.equal(events[0].target, elementB)
 
         events = []
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', ctrlKey: true, target: elementB))
         assert.equal(events.length, 1)
         assert.equal(events[0].type, 'x-command')
         assert.equal(events[0].target, elementB)
 
       it "prevents the default action", ->
-        event = buildKeydownEvent('y', ctrl: true, target: elementB)
+        event = buildKeydownEvent(key: 'y', ctrlKey: true, target: elementB)
         keymapManager.handleKeyboardEvent(event)
         assert(event.defaultPrevented)
 
@@ -70,9 +68,9 @@ describe "KeymapManager", ->
           elementB.addEventListener 'y-command', (e) -> events.push(e) # should never be called
           elementB.addEventListener 'z-command', (e) -> events.push(e); e.abortKeyBinding()
 
-          event = buildKeydownEvent('y', ctrl: true, target: elementB)
+          event = buildKeydownEvent(key: 'y', ctrlKey: true, target: elementB)
           keymapManager.handleKeyboardEvent(event)
-          assert(!event.defaultPrevented)
+          assert(not event.defaultPrevented)
 
           assert.equal(events.length, 3)
           assert.equal(events[0].type, 'y-command')
@@ -85,7 +83,7 @@ describe "KeymapManager", ->
       describe "if the keyboard event's target is document.body", ->
         it "starts matching keybindings at the .defaultTarget", ->
           keymapManager.defaultTarget = elementA
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: document.body))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: document.body))
           assert.equal(events.length, 1)
           assert.equal(events[0].type, 'y-command')
           assert.equal(events[0].target, elementA)
@@ -97,10 +95,10 @@ describe "KeymapManager", ->
             ".b":
               "ctrl-y": "native!"
 
-          event = buildKeydownEvent('y', ctrl: true, target: elementB)
+          event = buildKeydownEvent(key: 'y', ctrlKey: true, target: elementB)
           keymapManager.handleKeyboardEvent(event)
           assert.deepEqual(events, [])
-          assert(!event.defaultPrevented)
+          assert(not event.defaultPrevented)
 
       describe "if the matching binding's command is 'unset!'", ->
         it "continues searching for a matching binding on the parent element", ->
@@ -111,7 +109,7 @@ describe "KeymapManager", ->
             ".b":
               "ctrl-y": "unset!"
 
-          event = buildKeydownEvent('y', ctrl: true, target: elementB)
+          event = buildKeydownEvent(key: 'y', ctrlKey: true, target: elementB)
           keymapManager.handleKeyboardEvent(event)
           assert.equal(events.length, 1)
           assert.equal(events[0].type, 'x-command')
@@ -124,7 +122,7 @@ describe "KeymapManager", ->
             ".a":
               "ctrl-y": "x-command"
               "ctrl-y ctrl-y": "unset!"
-          event = buildKeydownEvent('y', ctrl: true, target: elementA)
+          event = buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA)
           keymapManager.handleKeyboardEvent(event)
           assert.equal(events.length, 1)
           assert.equal(events[0].type, 'x-command')
@@ -139,12 +137,12 @@ describe "KeymapManager", ->
             ".b":
               "ctrl-y": "abort!"
 
-          event = buildKeydownEvent('y', ctrl: true, target: elementB)
+          event = buildKeydownEvent(key: 'y', ctrlKey: true, target: elementB)
           keymapManager.handleKeyboardEvent(event)
           assert.equal(events.length, 0)
           assert(event.defaultPrevented)
 
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', ctrlKey: true, target: elementB))
           assert.equal(events.length, 1)
 
     describe "when the keystroke matches multiple bindings on the same element", ->
@@ -171,7 +169,7 @@ describe "KeymapManager", ->
                 "ctrl-x": "command-2"
 
           it "dispatches the command associated with the most specific binding", ->
-            keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
+            keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', ctrlKey: true, target: elementB))
             assert.equal(events.length, 1)
             assert.equal(events[0].type, 'command-1')
             assert.equal(events[0].target, elementB)
@@ -184,7 +182,7 @@ describe "KeymapManager", ->
               ".c.d":
                 "ctrl-x": "command-2"
 
-            keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
+            keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', ctrlKey: true, target: elementB))
 
             assert.equal(events.length, 1)
             assert.equal(events[0].type, 'command-2')
@@ -196,7 +194,7 @@ describe "KeymapManager", ->
           keymapManager.add "keybindings-with-priority", {".b.c.d": {"ctrl-x": "command-2"}}, 1
           keymapManager.add "normal-keybindings", {".b.c.d": {"ctrl-x": "command-3"}}, 0
 
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementB))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', ctrlKey: true, target: elementB))
 
           assert.equal(events.length, 1)
           assert.equal(events[0].type, 'command-1')
@@ -249,30 +247,30 @@ describe "KeymapManager", ->
 
       describe "when subsequent keystrokes yield an exact match", ->
         it "dispatches the command associated with the matched multi-keystroke binding", ->
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeyupEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'a', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'a', target: editor))
           assert.deepEqual(events, ['viva!'])
 
       describe "when subsequent keystrokes yield no matches", ->
         it "disables the bindings with the longest keystroke sequences and replays the queued keystrokes", ->
-          keymapManager.handleKeyboardEvent(vEvent = buildKeydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(iEvent = buildKeydownEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(wEvent = buildKeydownEvent('w', target: editor))
+          keymapManager.handleKeyboardEvent(vEvent = buildKeydownEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(iEvent = buildKeydownEvent(key: 'i', target: editor))
+          keymapManager.handleKeyboardEvent(wEvent = buildKeydownEvent(key: 'w', target: editor))
           assert.equal(vEvent.defaultPrevented, true)
           assert.equal(iEvent.defaultPrevented, true)
           assert.equal(wEvent.defaultPrevented, true)
           assert.deepEqual(events, ['enter-visual-mode', 'select-inside-word'])
 
           events = []
-          keymapManager.handleKeyboardEvent(vEvent = buildKeydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(iEvent = buildKeydownEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(kEvent = buildKeydownEvent('k', target: editor))
+          keymapManager.handleKeyboardEvent(vEvent = buildKeydownEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(iEvent = buildKeydownEvent(key: 'i', target: editor))
+          keymapManager.handleKeyboardEvent(kEvent = buildKeydownEvent(key: 'k', target: editor))
           assert.equal(vEvent.defaultPrevented, true)
           assert.equal(iEvent.defaultPrevented, true)
           assert.equal(kEvent.defaultPrevented, false)
@@ -281,51 +279,51 @@ describe "KeymapManager", ->
           # expect(clearTimeout).toHaveBeenCalled()
 
         it "dispatches a text-input event for any replayed keyboard events that would have inserted characters", ->
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
-          keymapManager.handleKeyboardEvent(lastEvent = buildKeydownEvent('q', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'd', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'o', target: editor))
+          keymapManager.handleKeyboardEvent(lastEvent = buildKeydownEvent(key: 'q', target: editor))
 
           assert.deepEqual(events, ['input:d', 'input:o'])
-          assert(!lastEvent.defaultPrevented)
+          assert(not lastEvent.defaultPrevented)
 
       describe "when the currently queued keystrokes exactly match at least one binding", ->
         it "disables partially-matching bindings and replays the queued keystrokes if the ::partialMatchTimeout expires", ->
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'v', target: editor))
           assert.deepEqual(events, [])
           getFakeClock().tick(keymapManager.getPartialMatchTimeout())
           assert.deepEqual(events, ['enter-visual-mode'])
 
           events = []
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeyupEvent('i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'i', target: editor))
           assert.deepEqual(events, [])
           getFakeClock().tick(keymapManager.getPartialMatchTimeout())
           assert.deepEqual(events, ['enter-visual-mode', 'input:i'])
 
           events = []
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeyupEvent('v', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeyupEvent('i', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'v', target: editor))
           assert.deepEqual(events, [])
           getFakeClock().tick(keymapManager.getPartialMatchTimeout())
           assert.deepEqual(events, ['viv'])
 
         it "does not enter a pending state or prevent the default action if the matching binding's command is 'native!'", ->
           keymapManager.add 'test', '.workspace': 'v': 'native!'
-          event = buildKeydownEvent('v', target: editor)
+          event = buildKeydownEvent(key: 'v', target: editor)
           keymapManager.handleKeyboardEvent(event)
-          assert(!event.defaultPrevented)
+          assert(not event.defaultPrevented)
           getFakeClock().next()
           assert.equal(keymapManager.queuedKeyboardEvents.length, 0)
 
       describe "when the first queued keystroke corresponds to a character insertion", ->
         it "disables partially-matching bindings and replays the queued keystrokes if the ::partialMatchTimeout expires", ->
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'd', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'o', target: editor))
           getFakeClock().tick(keymapManager.getPartialMatchTimeout())
 
           assert.deepEqual(events, ['input:d', 'input:o'])
@@ -338,26 +336,26 @@ describe "KeymapManager", ->
 
           workspace.addEventListener 'control-dog', -> events.push('control-dog')
 
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', ctrl: true, target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'd', ctrlKey: true, target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'o', target: editor))
 
           getFakeClock().tick(keymapManager.getPartialMatchTimeout())
           getFakeClock().tick(keymapManager.getPartialMatchTimeout())
 
           assert.deepEqual(events, [])
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('g', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'g', target: editor))
           assert.deepEqual(events, ['control-dog'])
 
       describe "when focused element changed in the middle of replaying keystroke", ->
         it "replay keystroke against newly focused element", ->
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('m', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('j', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'm', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'j', target: editor))
           assert.deepEqual(events, ['editor-m-j'])
 
           events = []
           assert.deepEqual(document.activeElement, inputElement)
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('m', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'm', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'a', target: editor))
           assert.deepEqual(events, ['focus-input2', 'editor2-a'])
           assert.deepEqual(document.activeElement, input2Element)
 
@@ -368,17 +366,17 @@ describe "KeymapManager", ->
               'v i v a': 'unset!'
               'v i v': 'unset!'
 
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'v', target: editor))
 
           assert.deepEqual(events, ['enter-visual-mode'])
 
       describe "when a subsequent keystroke begins a new match of an already pending binding", ->
         it "recognizes the match", ->
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('o', target: editor))
-          keymapManager.handleKeyboardEvent(buildKeydownEvent('g', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'd', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'd', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'g', target: editor))
 
           assert.deepEqual(events, ['input:d', 'input:o', 'dog'])
 
@@ -410,15 +408,15 @@ describe "KeymapManager", ->
             "ctrl-z d e f": "z-command-d-e-f"
 
       it "dispatches the command for a binding containing only keydown events immediately even when there is a corresponding multi-stroke binding that contains only other keyup events", ->
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown'])
 
       it "dispatches the command when a matching keystroke precedes it", ->
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown'])
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, cmd: true, shift: true, alt: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'y', ctrlKey: true, metaKey: true, shiftKey: true, altKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown'])
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'Control', target: elementA))
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['y-keydown', 'y-up-ctrl-keyup'])
 
@@ -432,36 +430,36 @@ describe "KeymapManager", ->
         assert.deepEqual(events, ['y-keydown', 'y-up-ctrl-keyup'])
 
       it "dispatches the command multiple times when multiple keydown events for the binding come in before the binding with a keyup handler", ->
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown'])
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'y', ctrlKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown'])
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown', 'y-keydown'])
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['y-keydown', 'y-keydown'])
 
       it "dispatches the command when the modifier is lifted before the character", ->
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown'])
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'Control', target: elementA))
         assert.deepEqual(events, ['y-keydown', 'y-ctrl-keyup'])
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['y-keydown', 'y-ctrl-keyup'])
 
       it "dispatches the command when extra user-generated keyup events are not specified in the binding", ->
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('x', ctrl: true, target: elementA)) # not specified in binding
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', ctrlKey: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'x', ctrlKey: true, target: elementA)) # not specified in binding
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'Control', target: elementA))
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['x-ctrl-keyup'])
 
       it "dispatches the command when extra user-generated keydown events not specified in the binding occur between keydown and keyup", ->
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown'])
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('j', ctrl: true, target: elementA)) # not specified in binding
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'j', ctrlKey: true, target: elementA)) # not specified in binding
         assert.deepEqual(events, ['y-keydown'])
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'Control', target: elementA))
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['y-keydown', 'y-ctrl-keyup'])
 
@@ -476,21 +474,21 @@ describe "KeymapManager", ->
         assert.deepEqual(events, [])
 
       it "dispatches the command when multiple keyup keystrokes are specified", ->
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('b', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('c', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('b', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'c', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'c', target: elementA))
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, [])
 
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('b', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeydownEvent('c', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('b', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('a', target: elementA))
-        keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'c', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'b', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'a', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'c', target: elementA))
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['abc-secret-code'])
 
@@ -505,7 +503,7 @@ describe "KeymapManager", ->
       element.addEventListener 'command-b', -> events.push('command-b')
 
       # Should *only* match ctrl-a, not ctrl-alt-a (can't just use a textual prefix match)
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('a', ctrl: true, target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'a', ctrlKey: true, target: element))
       assert.deepEqual(events, ['command-b'])
 
     it "does not enqueue keydown events consisting only of modifier keys", ->
@@ -516,11 +514,11 @@ describe "KeymapManager", ->
 
       # Simulate keydown events for the modifier key being pressed on its own
       # prior to the key it is modifying.
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', ctrl: true, target: element))
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('a', ctrl: true, target: element))
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', ctrl: true, target: element))
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('alt', ctrl: true, target: element))
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('b', ctrl: true, alt: true, target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'Control', ctrlKey: true, target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'a', ctrlKey: true, target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'Control', ctrlKey: true, target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'Alt', ctrlKey: true, target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'b', ctrlKey: true, altKey: true, target: element))
 
       assert.deepEqual(events, ['command'])
 
@@ -530,7 +528,7 @@ describe "KeymapManager", ->
       events = []
       element.addEventListener 'command', -> events.push('command')
 
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('ctrl', target: element))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'Control', target: element))
       assert.deepEqual(events, ['command'])
 
     it "simulates bubbling if the target is detached", ->
@@ -557,7 +555,7 @@ describe "KeymapManager", ->
         assert.equal(e.target, elementC)
         assert.equal(e.currentTarget, elementC)
 
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('x', target: elementC))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', target: elementC))
 
       assert.deepEqual(events, ['c', 'b1'])
 
@@ -586,7 +584,7 @@ describe "KeymapManager", ->
       keymapManager.add 'test', '*': 'meta-shift-A': 'a'
       assert.equal(console.warn.callCount, 1)
 
-      event = buildKeydownEvent('A', shift: true, target: document.body)
+      event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
       keymapManager.handleKeyboardEvent(event)
       assert.equal(event.defaultPrevented, false)
 
@@ -595,27 +593,27 @@ describe "KeymapManager", ->
       assert.equal(keymapManager.add('test', '<>': 'shift-a': 'a'), undefined)
       assert.equal(console.warn.callCount, 1)
 
-      event = buildKeydownEvent('A', shift: true, target: document.body)
+      event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
       keymapManager.handleKeyboardEvent(event)
-      assert(!event.defaultPrevented)
+      assert(not event.defaultPrevented)
 
     it "rejects bindings with an empty command and logs a warning to the console", ->
       stub(console, 'warn')
       assert.equal(keymapManager.add('test', 'body': 'shift-a': ''), undefined)
       assert.equal(console.warn.callCount, 1)
 
-      event = buildKeydownEvent('A', shift: true, target: document.body)
+      event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
       keymapManager.handleKeyboardEvent(event)
-      assert(!event.defaultPrevented)
+      assert(not event.defaultPrevented)
 
     it "rejects bindings without a command and logs a warning to the console", ->
       stub(console, 'warn')
       assert.equal(keymapManager.add('test', 'body': 'shift-a': null), undefined)
       assert.equal(console.warn.callCount, 1)
 
-      event = buildKeydownEvent('A', shift: true, target: document.body)
+      event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
       keymapManager.handleKeyboardEvent(event)
-      assert(!event.defaultPrevented)
+      assert(not event.defaultPrevented)
 
     it "returns a disposable allowing the added bindings to be removed", ->
       disposable1 = keymapManager.add 'foo',
@@ -641,34 +639,57 @@ describe "KeymapManager", ->
   describe "::keystrokeForKeyboardEvent(event)", ->
     describe "when no extra modifiers are pressed", ->
       it "returns a string that identifies the unmodified keystroke", ->
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'a'}), 'a')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'A', shiftKey: true}), 'shift-A')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '['}), '[')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '*', shiftKey: true}), '*')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ArrowLeft'}), 'left')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Backspace'}), 'backspace')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Delete'}), 'delete')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'PageUp'}), 'pageup')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'a'})), 'a')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'A', shiftKey: true})), 'shift-A')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '['})), '[')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '*', shiftKey: true})), '*')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ArrowLeft'})), 'left')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Backspace'})), 'backspace')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Delete'})), 'delete')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'PageUp'})), 'pageup')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: ' ', code: 'Space'})), 'space')
 
     describe "when a modifier key is combined with a non-modifier key", ->
       it "returns a string that identifies the modified keystroke", ->
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'a', altKey: true}), 'alt-a')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '[', metaKey: true}), 'cmd-[')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '*', ctrlKey: true, shiftKey: true}), 'ctrl-*')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ArrowLeft', ctrlKey: true, altKey: true, metaKey: true}), 'ctrl-alt-cmd-left')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'A', shiftKey: true}), 'shift-A')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'A', ctrlKey: true, shiftKey: true}), 'ctrl-shift-A')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '{', shiftKey: true}), '{')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'a', altKey: true})), 'alt-a')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '[', metaKey: true})), 'cmd-[')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '*', ctrlKey: true, shiftKey: true})), 'ctrl-*')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ArrowLeft', ctrlKey: true, altKey: true, metaKey: true})), 'ctrl-alt-cmd-left')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'A', shiftKey: true})), 'shift-A')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'A', ctrlKey: true, shiftKey: true})), 'ctrl-shift-A')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '{', shiftKey: true})), '{')
+
+    describe "when the KeyboardEvent.key is a capital letter due to caps lock, but shift is not pressed", ->
+      it "converts the letter to lower case", ->
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'A', shiftKey: false})), 'a')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'A', shiftKey: false, altKey: true})), 'alt-a')
+
+    describe "when the KeyboardEvent.key is 'Delete' but KeyboardEvent.code is 'Backspace' due to pressing ctrl-delete with numlock enabled on Windows", ->
+      it "translates as ctrl-backspace instead of ctrl-delete", ->
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Delete', code: 'Backspace', ctrlKey: true})), 'ctrl-backspace')
+
+    describe "when the KeyboardEvent.key is '' but the KeyboardEvent.code is 'NumpadDecimal' and getModifierState('NumLock') returns false", ->
+      it "translates as delete to work around a Chrome bug on Linux", ->
+        mockProcessPlatform('linux')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '.', code: 'NumpadDecimal', modifierState: {NumLock: true}})), '.')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '', code: 'NumpadDecimal', modifierState: {NumLock: false}})), 'delete')
 
     describe "when the Dvorak QWERTY-⌘ layout is in use on macOS", ->
       it "uses the US layout equivalent when the command key is held down", ->
         mockProcessPlatform('darwin')
         stub(KeyboardLayout, 'getCurrentKeymap', -> require('./helpers/keymaps/mac-dvorak-qwerty-cmd'))
         stub(KeyboardLayout, 'getCurrentKeyboardLayout', -> 'com.apple.keylayout.DVORAK-QWERTYCMD')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', altKey: true}), 'alt-l')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', ctrlKey: true, altKey: true}), 'ctrl-alt-l')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'l', code: 'KeyP', metaKey: true}), 'cmd-p')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'L', code: 'KeyP', metaKey: true, shiftKey: true}), 'shift-cmd-P')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'l', code: 'KeyP', altKey: true})), 'alt-l')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'l', code: 'KeyP', ctrlKey: true, altKey: true})), 'ctrl-alt-l')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'l', code: 'KeyP', metaKey: true})), 'cmd-p')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'L', code: 'KeyP', metaKey: true, shiftKey: true})), 'shift-cmd-P')
+
+    describe "when the current system keymap cannot be obtained on macOS", ->
+      it "does not throw exceptions and just takes the current key value", ->
+        mockProcessPlatform('darwin')
+        stub(KeyboardLayout, 'getCurrentKeymap', -> null)
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', modifierState: {AltGraph: true}})), '@')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'KeyU', modifierState: {AltGraph: true}})), 'alt-dead')
 
     describe "international layouts", ->
       currentKeymap = null
@@ -681,73 +702,87 @@ describe "KeymapManager", ->
         mockProcessPlatform('darwin')
 
         currentKeymap = require('./helpers/keymaps/mac-swiss-german')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'KeyG', altKey: true}), '@')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', altKey: true})), '@')
         # Does not use alt variant characters outside of basic ASCII range
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '‚', code: 'KeyG', altKey: true, shiftKey: true}), 'alt-shift-G')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '‚', code: 'KeyG', altKey: true, shiftKey: true})), 'alt-shift-G')
         # Does not use alt variant character if ctrl modifier is used
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'KeyG', ctrlKey: true, altKey: true}), 'ctrl-alt-g')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', ctrlKey: true, altKey: true})), 'ctrl-alt-g')
 
       it "allows any AltGraph-modified character to be typed via the ctrl-alt- modifiers on Windows", ->
         mockProcessPlatform('win32')
 
         currentKeymap = require('./helpers/keymaps/windows-swiss-german')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', code: 'Digit2', ctrlKey: true, altKey: true}), '@')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '°', code: 'Digit4', ctrlKey: true, altKey: true}), '°')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'Digit2', ctrlKey: true, altKey: true})), '@')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '°', code: 'Digit4', ctrlKey: true, altKey: true})), '°')
 
         currentKeymap = require('./helpers/keymaps/windows-us-international')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '¢', code: 'KeyC', ctrlKey: true, altKey: true, shiftKey: true}), '¢')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '¢', code: 'KeyC', ctrlKey: true, altKey: true, shiftKey: true})), '¢')
 
       it "allows arbitrary characters to be typed via an altgraph modifier on Linux", ->
         mockProcessPlatform('linux')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '@', altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '@')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '€', altKey: true, getModifierState: (key) -> key is 'AltGraph'}), '€')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Ë', altKey: true, shiftKey: true, getModifierState: (key) -> key is 'AltGraph'}), 'shift-Ë')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'g', altKey: true, getModifierState: (key) -> false}), 'alt-g')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'e', altKey: true, getModifierState: (key) -> false}), 'alt-e')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'E', altKey: true, shiftKey: true, getModifierState: (key) -> false}), 'alt-shift-E')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', modifierState: {AltGraph: true}})), '@')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '€', modifierState: {AltGraph: true}})), '€')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Ë', shiftKey: true, modifierState: {AltGraph: true}})), 'shift-Ë')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'g', altKey: true, altGraphKey: false})), 'alt-g')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'e', altKey: true, altGraphKey: false})), 'alt-e')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'E', altKey: true, shiftKey: true, altGraphKey: false})), 'alt-shift-E')
+
+      it "falls back to the non-alt key if other modifiers are combined with ALtGraph on Linux", ->
+        mockProcessPlatform('linux')
+        currentKeymap = require('./helpers/keymaps/linux-swiss-german')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', ctrlKey: true, modifierState: {AltGraph: true}})), 'ctrl-alt-g')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', metaKey: true, modifierState: {AltGraph: true}})), 'alt-cmd-g')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', altKey: true, modifierState: {AltGraph: true}})), 'alt-g')
+
+      it "uses the keymap to fix incorrect KeyboardEvent.key values when ctrlKey is true", ->
+        mockProcessPlatform('linux')
+        currentKeymap = require('./helpers/keymaps/linux-dvorak')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'f', code: 'KeyF', ctrlKey: true})), 'ctrl-u')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'F', code: 'KeyF', ctrlKey: true, shiftKey: true})), 'ctrl-shift-U')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'F', code: 'KeyF', ctrlKey: true, altKey: true, shiftKey: true})), 'ctrl-alt-shift-U')
 
       it "converts non-latin keycaps to their U.S. counterpart for purposes of binding", ->
         mockProcessPlatform('darwin')
         currentKeymap = require('./helpers/keymaps/mac-greek')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'δ')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'Δ')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: '÷', altKey: true, code: 'KeyD'}), 'alt-d')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD', metaKey: true}), 'cmd-d')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', metaKey: true, shiftKey: true}), 'shift-cmd-D')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD'})), 'd')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', shiftKey: true})), 'shift-D')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '÷', altKey: true, code: 'KeyD'})), 'alt-d')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD', metaKey: true})), 'cmd-d')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', metaKey: true, shiftKey: true})), 'shift-cmd-D')
 
         # Don't use U.S. counterpart for latin characters
         currentKeymap = require('./helpers/keymaps/mac-turkish')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ö', code: 'KeyX', metaKey: true}), 'cmd-ö')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ö', code: 'KeyX', metaKey: true})), 'cmd-ö')
 
         currentKeymap = null
         mockProcessPlatform('windows')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'δ')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'Δ')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD', ctrlKey: true}), 'ctrl-d')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true}), 'ctrl-shift-D')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD'})), 'd')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', shiftKey: true})), 'shift-D')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD', ctrlKey: true})), 'ctrl-d')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true})), 'ctrl-shift-D')
         # Don't use U.S. counterpart for latin characters
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ö', code: 'KeyX', metaKey: true}), 'cmd-ö')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ö', code: 'KeyX', metaKey: true})), 'cmd-ö')
 
         mockProcessPlatform('linux')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD'}), 'δ')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', shiftKey: true}), 'Δ')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'δ', code: 'KeyD', ctrlKey: true}), 'ctrl-d')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true}), 'ctrl-shift-D')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD'})), 'd')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', shiftKey: true})), 'shift-D')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD', ctrlKey: true})), 'ctrl-d')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true})), 'ctrl-shift-D')
         # Don't use U.S. counterpart for latin characters
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'ö', code: 'KeyX', metaKey: true}), 'cmd-ö')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ö', code: 'KeyX', metaKey: true})), 'cmd-ö')
 
       it "translates dead keys to their printable equivalents", ->
         mockProcessPlatform('darwin')
         currentKeymap = require('./helpers/keymaps/mac-swedish')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight'}), '¨')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight', shiftKey: true}), '^')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight', altKey: true}), '~')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight'})), '¨')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', shiftKey: true})), '^')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', altKey: true})), '~')
 
         mockProcessPlatform('win32')
         currentKeymap = require('./helpers/keymaps/windows-swedish')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight'}), '¨')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight', shiftKey: true}), '^')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent({key: 'Dead', code: 'BracketRight', ctrlKey: true, altKey: true, shiftKey: true}), '~')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight'})), '¨')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', shiftKey: true})), '^')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', ctrlKey: true, altKey: true, shiftKey: true})), '~')
 
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
@@ -894,7 +929,7 @@ describe "KeymapManager", ->
           keymapManager.onDidReloadKeymap -> reloaded = true
 
           afterWaiting = ->
-            assert(!reloaded)
+            assert(not reloaded)
 
             # Can start watching again after cancelling
             keymapManager.loadKeymap(keymapFilePath, watch: true)
@@ -931,7 +966,7 @@ describe "KeymapManager", ->
         ".not-in-the-dom":
           "ctrl-x": "unmached-command"
 
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', ctrlKey: true, target: document.body))
       assert.equal(handler.callCount, 1)
 
       {keystrokes, binding, keyboardEventTarget} = handler.firstCall.args[0]
@@ -948,7 +983,7 @@ describe "KeymapManager", ->
           "ctrl-x 2": "command-2"
           "a c ^c ^a": "command-3"
 
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('x', ctrl: true, target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', ctrlKey: true, target: document.body))
       assert.equal(handler.callCount, 1)
 
       {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.firstCall.args[0]
@@ -964,8 +999,8 @@ describe "KeymapManager", ->
         "body":
           "a c ^c ^a": "command-1"
 
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('a', target: document.body))
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('c', target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'a', target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'c', target: document.body))
       assert(handler.callCount > 0)
 
       {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.firstCall.args[0]
@@ -978,7 +1013,7 @@ describe "KeymapManager", ->
       assert.equal(keyboardEventTarget, document.body)
 
       handler.reset()
-      keymapManager.handleKeyboardEvent(buildKeyupEvent('c', target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'c', target: document.body))
       assert.equal(handler.callCount, 1)
 
       {keystrokes, partiallyMatchedBindings, keyboardEventTarget} = handler.firstCall.args[0]
@@ -994,7 +1029,7 @@ describe "KeymapManager", ->
         "body":
           "ctrl-x": "command"
 
-      keymapManager.handleKeyboardEvent(buildKeydownEvent('y', ctrl: true, target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: document.body))
       assert.equal(handler.callCount, 1)
 
       {keystrokes, keyboardEventTarget} = handler.firstCall.args[0]

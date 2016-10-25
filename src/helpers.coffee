@@ -4,6 +4,10 @@ KeyboardLayout = require 'keyboard-layout'
 MODIFIERS = new Set(['ctrl', 'alt', 'shift', 'cmd'])
 ENDS_IN_MODIFIER_REGEX = /(ctrl|alt|shift|cmd)$/
 WHITESPACE_REGEX = /\s+/
+KEY_NAMES_BY_KEYBOARD_EVENT_CODE = {
+  'Space': 'space',
+  'Backspace': 'backspace'
+}
 NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY = {
   'Control': 'ctrl',
   'Meta': 'cmd',
@@ -90,10 +94,10 @@ parseKeystroke = (keystroke) ->
   keys
 
 exports.keystrokeForKeyboardEvent = (event) ->
-  {key, ctrlKey, altKey, shiftKey, metaKey} = event
+  {key, code, ctrlKey, altKey, shiftKey, metaKey} = event
 
   if key is 'Dead'
-    if process.platform isnt 'linux' and characters = KeyboardLayout.getCurrentKeymap()[event.code]
+    if process.platform isnt 'linux' and characters = KeyboardLayout.getCurrentKeymap()?[event.code]
       if ctrlKey and altKey and shiftKey and characters.withAltGraphShift?
         key = characters.withAltGraphShift
       else if process.platform is 'darwin' and altKey and characters.withAltGraph?
@@ -105,11 +109,29 @@ exports.keystrokeForKeyboardEvent = (event) ->
       else if characters.unmodified?
         key = characters.unmodified
 
+  if KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]?
+    key = KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
+
+  # Work around Chrome bug on Linux where NumpadDecimal key value is '' with
+  # NumLock disabled.
+  if process.platform is 'linux' and code is 'NumpadDecimal' and not event.getModifierState('NumLock')
+    key = 'delete'
+
   isNonCharacterKey = key.length > 1
   if isNonCharacterKey
-    key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[event.key] ? event.key.toLowerCase()
+    key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[key] ? key.toLowerCase()
   else
-    if altKey
+    # Chrome has a bug on Linux: It always reports the U.S. layout value for
+    # KeyboardEvent.key when ctrlKey is true. We work around it by consulting
+    # the current keymap.
+    if process.platform is 'linux' and ctrlKey
+      if event.code and (characters = KeyboardLayout.getCurrentKeymap()?[event.code])
+        if event.shiftKey and characters.withShift?
+          key = characters.withShift
+        else if characters.unmodified?
+          key = characters.unmodified
+
+    if event.getModifierState('AltGraph')
       # All macOS layouts have an alt-modified character variant for every
       # single key. Therefore, if we always favored the alt variant, it would
       # become impossible to bind `alt-*` to anything. Since `alt-*` bindings
@@ -128,7 +150,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
       # keystroke, it likely to be the intended character, and we always
       # interpret it as such rather than favoring a `ctrl-alt-*` binding
       # intepretation.
-      else if process.platform is 'win32' and ctrlKey and event.code
+      else if process.platform is 'win32' and event.code
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
         if metaKey
           key = nonAltModifiedKey
@@ -136,15 +158,22 @@ exports.keystrokeForKeyboardEvent = (event) ->
           ctrlKey = false
           altKey = false
       # Linux has a dedicated `AltGraph` key that is distinct from all other
-      # modifiers, so there is no potential ambiguity and we always honor
-      # AltGraph.
+      # modifiers, including LeftAlt. However, if AltGraph is used in
+      # combination with other modifiers, we want to treat it as a modifier and
+      # fall back to the non-alt-modified character.
       else if process.platform is 'linux'
-        if event.getModifierState('AltGraph')
-          altKey = false
+        nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
+        if (ctrlKey or altKey or metaKey) and nonAltModifiedKey
+          key = nonAltModifiedKey
+          altKey = event.getModifierState('AltGraph')
+
+    # Avoid caps-lock captilizing the key without shift being actually pressed
+    unless shiftKey
+      key = key.toLowerCase()
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
-  if (not isLatinCharacter(key) and (ctrlKey or altKey or metaKey)) or
+  if (key.length is 1 and not isLatinCharacter(key)) or
      (metaKey and KeyboardLayout.getCurrentKeyboardLayout() is 'com.apple.keylayout.DVORAK-QWERTYCMD')
     if characters = usCharactersForKeyCode(event.code)
       if event.shiftKey
@@ -176,7 +205,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
   keystroke
 
 nonAltModifiedKeyForKeyboardEvent = (event) ->
-  if event.code and (characters = KeyboardLayout.getCurrentKeymap()[event.code])
+  if event.code and (characters = KeyboardLayout.getCurrentKeymap()?[event.code])
     if event.shiftKey
       characters.withShift
     else
