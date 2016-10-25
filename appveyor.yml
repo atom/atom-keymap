@@ -8,4 +8,5 @@ install:
 test_script:
   - npm run ci
 
+build: off
 deploy: off
