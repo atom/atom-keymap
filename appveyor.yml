@@ -1,6 +1,6 @@
 version: "{build}"
 
-platform: x64
+platform: x86
 
 clone_depth: 10
 
