@@ -12,7 +12,9 @@ install:
 test_script:
   - node --version
   - npm --version
-  - npm run ci
+  - npm run coffee --no-header --output lib --compile src && babel src --out-dir lib
+  - npm run coffeelint -r src spec && eslint src spec
+  - npm run devtool  --quit --console node_modules/mocha/bin/_mocha --colors spec/helpers/setup.js spec/helpers-spec.coffee spec/keymap-manager-spec.coffee
 
 build: off
 deploy: off
