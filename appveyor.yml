@@ -12,8 +12,7 @@ install:
 test_script:
   - node --version
   - npm --version
-  - npm run coffeelint -r src spec && eslint src spec
-  - npm run devtool  --quit --console node_modules/mocha/bin/_mocha --colors spec/helpers/setup.js spec/helpers-spec.coffee spec/keymap-manager-spec.coffee
+  - npm run test-win
 
 build: off
 deploy: off
