@@ -12,7 +12,7 @@ install:
 test_script:
   - node --version
   - npm --version
-  - npm run test-win
+  - npm run ci
 
 build: off
 deploy: off
