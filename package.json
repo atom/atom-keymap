@@ -42,7 +42,7 @@
     "coffee-script": "1.7.0",
     "coffeelint": "1.16.0",
     "debounce": "1.0.0",
-    "devtool": "2.2.0",
+    "devtool": "2.3.0",
     "electron-rebuild": "1.2.1",
     "eslint": "2.2.0",
     "eslint-config-standard": "5.1.0",
