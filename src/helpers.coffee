@@ -136,7 +136,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
         else if characters.unmodified?
           key = characters.unmodified
 
-    if event.getModifierState('AltGraph')
+    if event.getModifierState('AltGraph') or (process.platform is 'darwin' and altKey)
       # All macOS layouts have an alt-modified character variant for every
       # single key. Therefore, if we always favored the alt variant, it would
       # become impossible to bind `alt-*` to anything. Since `alt-*` bindings
