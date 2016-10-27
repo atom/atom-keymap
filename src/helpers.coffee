@@ -117,10 +117,14 @@ exports.keystrokeForKeyboardEvent = (event) ->
   if KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]?
     key = KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
 
-  # Work around Chrome bug on Linux where NumpadDecimal key value is '' with
-  # NumLock disabled.
-  if process.platform is 'linux' and code is 'NumpadDecimal' and not event.getModifierState('NumLock')
-    key = 'delete'
+  # Work around Chrome bugs on Linux
+  if process.platform is 'linux'
+    # Fix NumpadDecimal key value being '' with NumLock disabled.
+    if code is 'NumpadDecimal' and not event.getModifierState('NumLock')
+      key = 'delete'
+    # Fix 'Unidentified' key value for '/' key on Brazillian keyboards
+    if code is 'IntlRo' and key is 'Unidentified' and ctrlKey
+      key = '/'
 
   isNonCharacterKey = key.length > 1
   if isNonCharacterKey

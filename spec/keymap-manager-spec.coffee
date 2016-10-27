@@ -713,12 +713,16 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', metaKey: true, modifierState: {AltGraph: true}})), 'alt-cmd-g')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', altKey: true, modifierState: {AltGraph: true}})), 'alt-g')
 
-      it "uses the keymap to fix incorrect KeyboardEvent.key values when ctrlKey is true", ->
+      it "uses the keymap to fix incorrect KeyboardEvent.key values when ctrlKey is true on Linux", ->
         mockProcessPlatform('linux')
         currentKeymap = require('./helpers/keymaps/linux-dvorak')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'f', code: 'KeyF', ctrlKey: true})), 'ctrl-u')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'F', code: 'KeyF', ctrlKey: true, shiftKey: true})), 'ctrl-shift-U')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'F', code: 'KeyF', ctrlKey: true, altKey: true, shiftKey: true})), 'ctrl-alt-shift-U')
+
+      it "resolves events with a key value of Unknown and a code of IntlRo to '/' (this occurs on a Brazillian Portuguese keyboard layout on Mint Linux)", ->
+        mockProcessPlatform('linux')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Unidentified', code: 'IntlRo', ctrlKey: true})), 'ctrl-/')
 
       it "converts non-latin keycaps to their U.S. counterpart for purposes of binding", ->
         mockProcessPlatform('darwin')
@@ -737,7 +741,7 @@ describe "KeymapManager", ->
         mockProcessPlatform('windows')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD'})), 'd')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', shiftKey: true})), 'shift-D')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD', ctrlKey: true})), 'ctrl-d')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ',  code: 'KeyD', ctrlKey: true})), 'ctrl-d')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true})), 'ctrl-shift-D')
         # Don't use U.S. counterpart for latin characters
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ö', code: 'KeyX', metaKey: true})), 'cmd-ö')
