@@ -653,6 +653,11 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '.', code: 'NumpadDecimal', modifierState: {NumLock: true}})), '.')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '', code: 'NumpadDecimal', modifierState: {NumLock: false}})), 'delete')
 
+    describe "when the KeyboardEvent.key is '¬' but the KeyboardEvent.code is 'KeyL' with altKey held down on some weird layout", ->
+      it.only "resolves the keystroke to alt-l", ->
+        mockProcessPlatform('linux')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '¬', code: 'KeyL', altKey: true})), 'alt-l')
+
     describe "when the Dvorak QWERTY-⌘ layout is in use on macOS", ->
       it "uses the US layout equivalent when the command key is held down", ->
         mockProcessPlatform('darwin')
