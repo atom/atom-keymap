@@ -8,7 +8,7 @@
     "clean": "rimraf lib && rimraf api.json",
     "compile": "coffee --no-header --output lib --compile src && babel src --out-dir lib",
     "lint": "coffeelint -r src spec && eslint src spec",
-    "test": "mocha --color spec/helpers/setup.js spec/*",
+    "test": "jasmine --captureExceptions --forceexit",
     "test-drive": "SUPPRESS_EXIT=true devtool --quit node_modules/mocha/bin/_mocha --no-colors spec/helpers/setup.js spec/*",
     "ci": "npm run compile && npm run lint && npm run test",
     "atomdoc": "grunt shell:update-atomdoc atomdoc"
@@ -58,6 +58,8 @@
     "rimraf": "2.2.2",
     "sinon": "1.17.3",
     "space-pencil": "0.3.0",
-    "temp": "0.8.3"
+    "temp": "0.8.3",
+    "jasmine-core": "^2.4.1",
+    "jasmine": "^2.4.1"
   }
 }
