@@ -12,7 +12,6 @@ install:
 test_script:
   - node --version
   - npm --version
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - npm run ci
 
 build: off
