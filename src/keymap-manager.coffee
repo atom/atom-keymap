@@ -1,7 +1,6 @@
 CSON = require 'season'
 fs = require 'fs-plus'
 {isSelectorValid} = require 'clear-cut'
-{observeCurrentKeyboardLayout} = require 'keyboard-layout'
 path = require 'path'
 {File} = require 'pathwatcher'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
@@ -93,7 +92,6 @@ class KeymapManager
   defaultTarget: null
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
-  dvorakQwertyWorkaroundEnabled: false
 
   ###
   Section: Construction and Destruction
@@ -111,7 +109,6 @@ class KeymapManager
     @watchSubscriptions = {}
     @customKeystrokeResolvers = []
     @clear()
-    @enableDvorakQwertyWorkaroundIfNeeded()
 
   # Public: Clear all registered key bindings and enqueued keystrokes. For use
   # in tests.
@@ -124,15 +121,10 @@ class KeymapManager
 
   # Public: Unwatch all watched paths.
   destroy: ->
-    @keyboardLayoutSubscription.dispose()
     for filePath, subscription of @watchSubscriptions
       subscription.dispose()
 
     return
-
-  enableDvorakQwertyWorkaroundIfNeeded: ->
-    @keyboardLayoutSubscription = observeCurrentKeyboardLayout (layoutId) =>
-      @dvorakQwertyWorkaroundEnabled = (layoutId?.indexOf('DVORAK-QWERTYCMD') > -1)
 
   ###
   Section: Event Subscription
@@ -662,7 +654,7 @@ class KeymapManager
   ###
 
   simulateTextInput: (keydownEvent) ->
-    if character = characterForKeyboardEvent(keydownEvent, @dvorakQwertyWorkaroundEnabled)
+    if character = characterForKeyboardEvent(keydownEvent)
       textInputEvent = document.createEvent("TextEvent")
       textInputEvent.initTextEvent("textInput", true, true, window, character)
       keydownEvent.path[0].dispatchEvent(textInputEvent)
