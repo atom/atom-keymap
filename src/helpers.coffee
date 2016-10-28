@@ -98,7 +98,7 @@ parseKeystroke = (keystroke) ->
   keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
   keys
 
-exports.keystrokeForKeyboardEvent = (event) ->
+exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
   {key, code, ctrlKey, altKey, shiftKey, metaKey} = event
 
   if key is 'Dead'
@@ -211,6 +211,17 @@ exports.keystrokeForKeyboardEvent = (event) ->
     keystroke += key
 
   keystroke = normalizeKeystroke("^#{keystroke}") if event.type is 'keyup'
+
+  if customKeystrokeResolvers?
+    for resolver in customKeystrokeResolvers
+      customKeystroke = resolver({
+        keystroke, event,
+        layoutName: KeyboardLayout.getCurrentKeyboardLayout(),
+        keymap: KeyboardLayout.getCurrentKeymap()
+      })
+      if customKeystroke
+        keystroke = normalizeKeystroke(customKeystroke)
+
   keystroke
 
 nonAltModifiedKeyForKeyboardEvent = (event) ->

@@ -109,6 +109,7 @@ class KeymapManager
   constructor: (options={}) ->
     @[key] = value for key, value of options
     @watchSubscriptions = {}
+    @customKeystrokeResolvers = []
     @clear()
     @enableDvorakQwertyWorkaroundIfNeeded()
 
@@ -623,7 +624,13 @@ class KeymapManager
   #
   # Returns a {String} describing the keystroke.
   keystrokeForKeyboardEvent: (event) ->
-    keystrokeForKeyboardEvent(event, @dvorakQwertyWorkaroundEnabled)
+    keystrokeForKeyboardEvent(event, @customKeystrokeResolvers)
+
+  addKeystrokeResolver: (resolver) ->
+    @customKeystrokeResolvers.push(resolver)
+    new Disposable =>
+      index = @customKeystrokeResolvers.indexOf(resolver)
+      @customKeystrokeResolvers.splice(index, 1) if index >= 0
 
   # Public: Get the number of milliseconds allowed before pending states caused
   # by partial matches of multi-keystroke bindings are terminated.
