@@ -626,6 +626,24 @@ class KeymapManager
   keystrokeForKeyboardEvent: (event) ->
     keystrokeForKeyboardEvent(event, @customKeystrokeResolvers)
 
+  # Public: Customize translation of raw keyboard events to keystroke strings.
+  # This API is useful for working around Chrome bugs or changing how Atom
+  # resolves certain key combinations. If multiple resolvers are installed,
+  # the most recently-added resolver returning a string for a given keystroke
+  # takes precedence.
+  #
+  # * `resolver` A {Function} that returns a keystroke {String} and is called
+  #    with an object containing the following keys:
+  #    * `keystroke` The currently resolved keystroke string. If your function
+  #      returns a falsy value, this is how Atom will resolve your keystroke.
+  #    * `event` The raw DOM 3 `KeyboardEvent` being resolved. See the DOM API
+  #      documentation for more details.
+  #    * `layoutName` The OS-specific name of the current keyboard layout.
+  #    * `keymap` An object mapping DOM 3 `KeyboardEvent.code` values to objects
+  #      with the typed character for that key in each modifier state, based on
+  #      the current operating system layout.
+  #
+  # Returns a {Disposable} that removes the added resolver.
   addKeystrokeResolver: (resolver) ->
     @customKeystrokeResolvers.push(resolver)
     new Disposable =>
