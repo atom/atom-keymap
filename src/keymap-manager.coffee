@@ -1,7 +1,6 @@
 CSON = require 'season'
 fs = require 'fs-plus'
 {isSelectorValid} = require 'clear-cut'
-{observeCurrentKeyboardLayout} = require 'keyboard-layout'
 path = require 'path'
 {File} = require 'pathwatcher'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
@@ -93,7 +92,6 @@ class KeymapManager
   defaultTarget: null
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
-  dvorakQwertyWorkaroundEnabled: false
 
   ###
   Section: Construction and Destruction
@@ -109,8 +107,8 @@ class KeymapManager
   constructor: (options={}) ->
     @[key] = value for key, value of options
     @watchSubscriptions = {}
+    @customKeystrokeResolvers = []
     @clear()
-    @enableDvorakQwertyWorkaroundIfNeeded()
 
   # Public: Clear all registered key bindings and enqueued keystrokes. For use
   # in tests.
@@ -123,15 +121,10 @@ class KeymapManager
 
   # Public: Unwatch all watched paths.
   destroy: ->
-    @keyboardLayoutSubscription.dispose()
     for filePath, subscription of @watchSubscriptions
       subscription.dispose()
 
     return
-
-  enableDvorakQwertyWorkaroundIfNeeded: ->
-    @keyboardLayoutSubscription = observeCurrentKeyboardLayout (layoutId) =>
-      @dvorakQwertyWorkaroundEnabled = (layoutId?.indexOf('DVORAK-QWERTYCMD') > -1)
 
   ###
   Section: Event Subscription
@@ -623,7 +616,31 @@ class KeymapManager
   #
   # Returns a {String} describing the keystroke.
   keystrokeForKeyboardEvent: (event) ->
-    keystrokeForKeyboardEvent(event, @dvorakQwertyWorkaroundEnabled)
+    keystrokeForKeyboardEvent(event, @customKeystrokeResolvers)
+
+  # Public: Customize translation of raw keyboard events to keystroke strings.
+  # This API is useful for working around Chrome bugs or changing how Atom
+  # resolves certain key combinations. If multiple resolvers are installed,
+  # the most recently-added resolver returning a string for a given keystroke
+  # takes precedence.
+  #
+  # * `resolver` A {Function} that returns a keystroke {String} and is called
+  #    with an object containing the following keys:
+  #    * `keystroke` The currently resolved keystroke string. If your function
+  #      returns a falsy value, this is how Atom will resolve your keystroke.
+  #    * `event` The raw DOM 3 `KeyboardEvent` being resolved. See the DOM API
+  #      documentation for more details.
+  #    * `layoutName` The OS-specific name of the current keyboard layout.
+  #    * `keymap` An object mapping DOM 3 `KeyboardEvent.code` values to objects
+  #      with the typed character for that key in each modifier state, based on
+  #      the current operating system layout.
+  #
+  # Returns a {Disposable} that removes the added resolver.
+  addKeystrokeResolver: (resolver) ->
+    @customKeystrokeResolvers.push(resolver)
+    new Disposable =>
+      index = @customKeystrokeResolvers.indexOf(resolver)
+      @customKeystrokeResolvers.splice(index, 1) if index >= 0
 
   # Public: Get the number of milliseconds allowed before pending states caused
   # by partial matches of multi-keystroke bindings are terminated.
@@ -637,7 +654,7 @@ class KeymapManager
   ###
 
   simulateTextInput: (keydownEvent) ->
-    if character = characterForKeyboardEvent(keydownEvent, @dvorakQwertyWorkaroundEnabled)
+    if character = characterForKeyboardEvent(keydownEvent)
       textInputEvent = document.createEvent("TextEvent")
       textInputEvent.initTextEvent("textInput", true, true, window, character)
       keydownEvent.path[0].dispatchEvent(textInputEvent)

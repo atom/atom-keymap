@@ -767,6 +767,44 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', shiftKey: true})), '^')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', ctrlKey: true, altKey: true, shiftKey: true})), '~')
 
+    describe "when custom keystroke resolvers are installed", ->
+      it "resolves to the keystroke string of the most recently-installed resolver returning a defined value", ->
+        mockProcessPlatform('darwin')
+        currentKeymap = require('./helpers/keymaps/mac-swiss-german')
+        currentLayoutName = 'com.apple.keylayout.SwissGerman'
+        stub(KeyboardLayout, 'getCurrentKeymap', -> currentKeymap)
+        stub(KeyboardLayout, 'getCurrentKeyboardLayout', -> currentLayoutName)
+
+        keydownEvent = buildKeydownEvent({key: '@', code: 'KeyG', ctrlKey: true, altKey: true})
+        disposable1 = keymapManager.addKeystrokeResolver(({keystroke, event, layoutName, keymap}) ->
+          assert.equal(keystroke, 'ctrl-alt-g')
+          assert.equal(event, keydownEvent)
+          assert.equal(layoutName, currentLayoutName)
+          assert.equal(keymap, currentKeymap)
+
+          # simulate the user wishing to honor the alt-modified character in the presence of other modifiers
+          'ctrl-@'
+        )
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(keydownEvent), 'ctrl-@')
+
+        # Test that multiple keytsroke resolvers cascade
+        disposable2 = keymapManager.addKeystrokeResolver(({keystroke}) ->
+          assert.equal(keystroke, 'ctrl-@')
+          # Ensure that we normalize the returned custom keystroke resolved
+          'alt-ctrl-X'
+        )
+        expectedKeystroke = 'ctrl-alt-shift-X'
+        disposable3 = keymapManager.addKeystrokeResolver(({keystroke}) ->
+          assert.equal(keystroke, expectedKeystroke)
+          null
+        )
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(keydownEvent), expectedKeystroke)
+
+        # Test that keystroke resolvers can be disposed
+        disposable2.dispose()
+        expectedKeystroke = 'ctrl-@'
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(keydownEvent), expectedKeystroke)
+
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []
     beforeEach ->
