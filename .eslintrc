@@ -9,4 +9,7 @@
   "plugins": [
     "promise"
   ],
+  "globals": {
+    "CustomEvent": true
+  }
 }

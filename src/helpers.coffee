@@ -16,11 +16,6 @@ NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY = {
   'ArrowLeft': 'left',
   'ArrowRight': 'right'
 }
-MATCH_TYPES = {
-  EXACT: 'exact'
-  KEYDOWN_EXACT: 'keydownExact'
-  PARTIAL: 'partial'
-}
 
 isASCIICharacter = (character) ->
   character? and character.length is 1 and character.charCodeAt(0) <= 127
@@ -49,7 +44,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 normalizeKeystroke = (keystroke) ->
-  if isKeyup = keystroke.startsWith('^')
+  if keyup = isKeyup(keystroke)
     keystroke = keystroke.slice(1)
   keys = parseKeystroke(keystroke)
   return false unless keys
@@ -67,7 +62,7 @@ normalizeKeystroke = (keystroke) ->
       else
         return false
 
-  if isKeyup
+  if keyup
     primaryKey = primaryKey.toLowerCase() if primaryKey?
   else
     modifiers.add('shift') if isUpperCaseCharacter(primaryKey)
@@ -75,14 +70,14 @@ normalizeKeystroke = (keystroke) ->
       primaryKey = primaryKey.toUpperCase()
 
   keystroke = []
-  if not isKeyup or (isKeyup and not primaryKey?)
+  if not keyup or (keyup and not primaryKey?)
     keystroke.push('ctrl') if modifiers.has('ctrl')
     keystroke.push('alt') if modifiers.has('alt')
     keystroke.push('shift') if modifiers.has('shift')
     keystroke.push('cmd') if modifiers.has('cmd')
   keystroke.push(primaryKey) if primaryKey?
   keystroke = keystroke.join('-')
-  keystroke = "^#{keystroke}" if isKeyup
+  keystroke = "^#{keystroke}" if keyup
   keystroke
 
 parseKeystroke = (keystroke) ->
@@ -191,18 +186,18 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
         key = characters.unmodified
 
   keystroke = ''
-  if key is 'ctrl' or ctrlKey
+  if key is 'ctrl' or (ctrlKey and event.type isnt 'keyup')
     keystroke += 'ctrl'
 
-  if key is 'alt' or altKey
+  if key is 'alt' or (altKey and event.type isnt 'keyup')
     keystroke += '-' if keystroke.length > 0
     keystroke += 'alt'
 
-  if key is 'shift' or (shiftKey and (isNonCharacterKey or (isLatinCharacter(key) and isUpperCaseCharacter(key))))
+  if key is 'shift' or (shiftKey and event.type isnt 'keyup' and (isNonCharacterKey or (isLatinCharacter(key) and isUpperCaseCharacter(key))))
     keystroke += '-' if keystroke
     keystroke += 'shift'
 
-  if key is 'cmd' or metaKey
+  if key is 'cmd' or (metaKey and event.type isnt 'keyup')
     keystroke += '-' if keystroke
     keystroke += 'cmd'
 
@@ -231,6 +226,8 @@ nonAltModifiedKeyForKeyboardEvent = (event) ->
     else
       characters.unmodified
 
+exports.MODIFIERS = MODIFIERS
+
 exports.characterForKeyboardEvent = (event) ->
   event.key unless event.ctrlKey or event.metaKey
 
@@ -238,11 +235,23 @@ exports.calculateSpecificity = calculateSpecificity
 
 exports.isBareModifier = (keystroke) -> ENDS_IN_MODIFIER_REGEX.test(keystroke)
 
+exports.isModifierKeyup = (keystroke) -> isKeyup(keystroke) and ENDS_IN_MODIFIER_REGEX.test(keystroke)
+
+exports.isKeyup = isKeyup = (keystroke) -> keystroke.startsWith('^')
+
 exports.keydownEvent = (key, options) ->
   return buildKeyboardEvent(key, 'keydown', options)
 
 exports.keyupEvent = (key, options) ->
   return buildKeyboardEvent(key, 'keyup', options)
+
+exports.getModifierKeys = (keystroke) ->
+  keys = keystroke.split('-')
+  mod_keys = []
+  for key in keys when MODIFIERS.has(key)
+    mod_keys.push(key)
+  mod_keys
+
 
 buildKeyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
   ctrlKey = ctrl ? false
@@ -260,51 +269,3 @@ buildKeyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, l
     Object.defineProperty(event, 'target', get: -> target)
     Object.defineProperty(event, 'path', get: -> [target])
   event
-
-# bindingKeystrokes and userKeystrokes are arrays of keystrokes
-# e.g. ['ctrl-y', 'ctrl-x', '^x']
-exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
-  userKeystrokeIndex = -1
-  userKeystrokesHasKeydownEvent = false
-  matchesNextUserKeystroke = (bindingKeystroke) ->
-    while userKeystrokeIndex < userKeystrokes.length - 1
-      userKeystrokeIndex += 1
-      userKeystroke = userKeystrokes[userKeystrokeIndex]
-      isKeydownEvent = not userKeystroke.startsWith('^')
-      userKeystrokesHasKeydownEvent = true if isKeydownEvent
-      if bindingKeystroke is userKeystroke
-        return true
-      else if isKeydownEvent
-        return false
-    null
-
-  isPartialMatch = false
-  bindingRemainderContainsOnlyKeyups = true
-  bindingKeystrokeIndex = 0
-  for bindingKeystroke in bindingKeystrokes
-    unless isPartialMatch
-      doesMatch = matchesNextUserKeystroke(bindingKeystroke)
-      if doesMatch is false
-        return false
-      else if doesMatch is null
-        # Make sure userKeystrokes with only keyup events doesn't match everything
-        if userKeystrokesHasKeydownEvent
-          isPartialMatch = true
-        else
-          return false
-
-    if isPartialMatch
-      bindingRemainderContainsOnlyKeyups = false unless bindingKeystroke.startsWith('^')
-
-  # Bindings that match the beginning of the user's keystrokes are not a match.
-  # e.g. This is not a match. It would have been a match on the previous keystroke:
-  # bindingKeystrokes = ['ctrl-tab', '^tab']
-  # userKeystrokes    = ['ctrl-tab', '^tab', '^ctrl']
-  return false if userKeystrokeIndex < userKeystrokes.length - 1
-
-  if isPartialMatch and bindingRemainderContainsOnlyKeyups
-    MATCH_TYPES.KEYDOWN_EXACT
-  else if isPartialMatch
-    MATCH_TYPES.PARTIAL
-  else
-    MATCH_TYPES.EXACT

@@ -4,9 +4,10 @@ fs = require 'fs-plus'
 path = require 'path'
 {File} = require 'pathwatcher'
 {Emitter, Disposable, CompositeDisposable} = require 'event-kit'
-KeyBinding = require './key-binding'
+{KeyBinding, MATCH_TYPES} = require './key-binding'
 CommandEvent = require './command-event'
-{normalizeKeystrokes, keystrokeForKeyboardEvent, isBareModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch} = require './helpers'
+{normalizeKeystrokes, keystrokeForKeyboardEvent, isBareModifier, keydownEvent, keyupEvent, characterForKeyboardEvent, keystrokesMatch, isKeyup} = require './helpers'
+PartialKeyupMatcher = require './partial-keyup-matcher'
 
 Platforms = ['darwin', 'freebsd', 'linux', 'sunos', 'win32']
 OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
@@ -92,6 +93,10 @@ class KeymapManager
   defaultTarget: null
   pendingPartialMatches: null
   pendingStateTimeoutHandle: null
+
+  # Pending matches to bindings that begin with keydowns and end with a subset
+  # of matching keyups
+  pendingKeyupMatcher: new PartialKeyupMatcher()
 
   ###
   Section: Construction and Destruction
@@ -483,6 +488,7 @@ class KeymapManager
     #
     # Godspeed.
 
+    # keystroke is the atom keybind syntax, e.g. 'ctrl-a'
     keystroke = @keystrokeForKeyboardEvent(event)
 
     # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
@@ -502,7 +508,7 @@ class KeymapManager
     # First screen for any bindings that match the current keystrokes,
     # regardless of their current selector. Matching strings is cheaper than
     # matching selectors.
-    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, disabledBindings)
+    {partialMatchCandidates, pendingKeyupMatchCandidates, exactMatchCandidates} = @findMatchCandidates(@queuedKeystrokes, disabledBindings)
     dispatchedExactMatch = null
     partialMatches = @findPartialMatches(partialMatchCandidates, target)
 
@@ -517,8 +523,11 @@ class KeymapManager
     hasPartialMatches = partialMatches.length > 0
     shouldUsePartialMatches = hasPartialMatches
 
+    if isKeyup(keystroke)
+      exactMatchCandidates = exactMatchCandidates.concat(@pendingKeyupMatcher.getMatches(keystroke))
+
     # Determine if the current keystrokes match any bindings *exactly*. If we
-    # do find and exact match, the next step depends on whether we have any
+    # do find an exact match, the next step depends on whether we have any
     # partial matches. If we have no partial matches, we dispatch the command
     # immediately. Otherwise we break and allow ourselves to enter the pending
     # state with a timeout.
@@ -545,11 +554,16 @@ class KeymapManager
           if hasPartialMatches
             # When there is a set of bindings like `'ctrl-y', 'ctrl-y ^ctrl'`,
             # and a `ctrl-y` comes in, this will allow the `ctrl-y` command to be
-            # dispatched without waiting for any other keystrokes
+            # dispatched without waiting for any other keystrokes.
             allPartialMatchesContainKeyupRemainder = true
             for partialMatch in partialMatches
-              if keydownExactMatchCandidates.indexOf(partialMatch) < 0
+              if pendingKeyupMatchCandidates.indexOf(partialMatch) < 0
                 allPartialMatchesContainKeyupRemainder = false
+                # We found one partial match with unmatched keydowns.
+                # We can stop looking.
+                break
+            # Don't dispatch this exact match. There are partial matches left
+            # that have keydowns.
             break if allPartialMatchesContainKeyupRemainder is false
           else
             shouldUsePartialMatches = false
@@ -557,6 +571,8 @@ class KeymapManager
           if @dispatchCommandEvent(exactMatchCandidate.command, target, event)
             dispatchedExactMatch = exactMatchCandidate
             eventHandled = true
+            for pendingKeyupMatch in pendingKeyupMatchCandidates
+              @pendingKeyupMatcher.addPendingMatch(pendingKeyupMatch)
             break
         currentTarget = currentTarget.parentElement
 
@@ -667,19 +683,19 @@ class KeymapManager
   findMatchCandidates: (keystrokeArray, disabledBindings) ->
     partialMatchCandidates = []
     exactMatchCandidates = []
-    keydownExactMatchCandidates = []
+    pendingKeyupMatchCandidates = []
     disabledBindingSet = new Set(disabledBindings)
 
     for binding in @keyBindings when not disabledBindingSet.has(binding)
-      doesMatch = keystrokesMatch(binding.keystrokeArray, keystrokeArray)
-      if doesMatch is 'exact'
+      doesMatch = binding.matchesKeystrokes(keystrokeArray)
+      if doesMatch is MATCH_TYPES.EXACT
         exactMatchCandidates.push(binding)
-      else if doesMatch is 'partial'
+      else if doesMatch is MATCH_TYPES.PARTIAL
         partialMatchCandidates.push(binding)
-      else if doesMatch is 'keydownExact'
+      else if doesMatch is MATCH_TYPES.PENDING_KEYUP
         partialMatchCandidates.push(binding)
-        keydownExactMatchCandidates.push(binding)
-    {partialMatchCandidates, keydownExactMatchCandidates, exactMatchCandidates}
+        pendingKeyupMatchCandidates.push(binding)
+    {partialMatchCandidates, pendingKeyupMatchCandidates, exactMatchCandidates}
 
   # Determine which of the given bindings have selectors matching the target or
   # one of its ancestors. This is used by {::handleKeyboardEvent} to determine
@@ -735,7 +751,7 @@ class KeymapManager
   #
   # Note that replaying events has a recursive behavior. Replaying will set
   # member state (e.g. @queuedKeyboardEvents) just like real events, and will
-  # likely result in another call this function. The replay process will
+  # likely result in another call to this function. The replay process will
   # potentially replay the events (or a subset of events) several times, while
   # disabling bindings here and there. See any spec that handles multiple
   # keystrokes failures to match a binding.
