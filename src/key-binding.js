@@ -1,9 +1,9 @@
-var {
+const {
   calculateSpecificity,
   isKeyup
 } = require('./helpers')
 
-var MATCH_TYPES = {
+const MATCH_TYPES = {
   EXACT: 'exact',
   PARTIAL: 'partial',
   PENDING_KEYUP: 'pendingKeyup'
