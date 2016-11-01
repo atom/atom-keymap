@@ -734,12 +734,16 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', metaKey: true, modifierState: {AltGraph: true}})), 'alt-cmd-g')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', altKey: true, modifierState: {AltGraph: true}})), 'alt-g')
 
-      it "uses the keymap to fix incorrect KeyboardEvent.key values when ctrlKey is true", ->
+      it "uses the keymap to fix incorrect KeyboardEvent.key values when ctrlKey is true on Linux", ->
         mockProcessPlatform('linux')
         currentKeymap = require('./helpers/keymaps/linux-dvorak')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'f', code: 'KeyF', ctrlKey: true})), 'ctrl-u')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'F', code: 'KeyF', ctrlKey: true, shiftKey: true})), 'ctrl-shift-U')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'F', code: 'KeyF', ctrlKey: true, altKey: true, shiftKey: true})), 'ctrl-alt-shift-U')
+
+      it "resolves events with a key value of Unknown and a code of IntlRo to '/' (this occurs on a Brazillian Portuguese keyboard layout on Mint Linux)", ->
+        mockProcessPlatform('linux')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Unidentified', code: 'IntlRo', ctrlKey: true})), 'ctrl-/')
 
       it "converts non-latin keycaps to their U.S. counterpart for purposes of binding", ->
         mockProcessPlatform('darwin')
@@ -758,7 +762,7 @@ describe "KeymapManager", ->
         mockProcessPlatform('windows')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD'})), 'd')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', shiftKey: true})), 'shift-D')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD', ctrlKey: true})), 'ctrl-d')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ',  code: 'KeyD', ctrlKey: true})), 'ctrl-d')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true})), 'ctrl-shift-D')
         # Don't use U.S. counterpart for latin characters
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ö', code: 'KeyX', metaKey: true})), 'cmd-ö')
@@ -783,6 +787,44 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight'})), '¨')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', shiftKey: true})), '^')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', ctrlKey: true, altKey: true, shiftKey: true})), '~')
+
+    describe "when custom keystroke resolvers are installed", ->
+      it "resolves to the keystroke string of the most recently-installed resolver returning a defined value", ->
+        mockProcessPlatform('darwin')
+        currentKeymap = require('./helpers/keymaps/mac-swiss-german')
+        currentLayoutName = 'com.apple.keylayout.SwissGerman'
+        stub(KeyboardLayout, 'getCurrentKeymap', -> currentKeymap)
+        stub(KeyboardLayout, 'getCurrentKeyboardLayout', -> currentLayoutName)
+
+        keydownEvent = buildKeydownEvent({key: '@', code: 'KeyG', ctrlKey: true, altKey: true})
+        disposable1 = keymapManager.addKeystrokeResolver(({keystroke, event, layoutName, keymap}) ->
+          assert.equal(keystroke, 'ctrl-alt-g')
+          assert.equal(event, keydownEvent)
+          assert.equal(layoutName, currentLayoutName)
+          assert.equal(keymap, currentKeymap)
+
+          # simulate the user wishing to honor the alt-modified character in the presence of other modifiers
+          'ctrl-@'
+        )
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(keydownEvent), 'ctrl-@')
+
+        # Test that multiple keytsroke resolvers cascade
+        disposable2 = keymapManager.addKeystrokeResolver(({keystroke}) ->
+          assert.equal(keystroke, 'ctrl-@')
+          # Ensure that we normalize the returned custom keystroke resolved
+          'alt-ctrl-X'
+        )
+        expectedKeystroke = 'ctrl-alt-shift-X'
+        disposable3 = keymapManager.addKeystrokeResolver(({keystroke}) ->
+          assert.equal(keystroke, expectedKeystroke)
+          null
+        )
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(keydownEvent), expectedKeystroke)
+
+        # Test that keystroke resolvers can be disposed
+        disposable2.dispose()
+        expectedKeystroke = 'ctrl-@'
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(keydownEvent), expectedKeystroke)
 
   describe "::findKeyBindings({command, target, keystrokes})", ->
     [elementA, elementB] = []

@@ -93,7 +93,7 @@ parseKeystroke = (keystroke) ->
   keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
   keys
 
-exports.keystrokeForKeyboardEvent = (event) ->
+exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
   {key, code, ctrlKey, altKey, shiftKey, metaKey} = event
 
   if key is 'Dead'
@@ -112,10 +112,14 @@ exports.keystrokeForKeyboardEvent = (event) ->
   if KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]?
     key = KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
 
-  # Work around Chrome bug on Linux where NumpadDecimal key value is '' with
-  # NumLock disabled.
-  if process.platform is 'linux' and code is 'NumpadDecimal' and not event.getModifierState('NumLock')
-    key = 'delete'
+  # Work around Chrome bugs on Linux
+  if process.platform is 'linux'
+    # Fix NumpadDecimal key value being '' with NumLock disabled.
+    if code is 'NumpadDecimal' and not event.getModifierState('NumLock')
+      key = 'delete'
+    # Fix 'Unidentified' key value for '/' key on Brazillian keyboards
+    if code is 'IntlRo' and key is 'Unidentified' and ctrlKey
+      key = '/'
 
   isNonCharacterKey = key.length > 1
   if isNonCharacterKey
@@ -131,7 +135,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
         else if characters.unmodified?
           key = characters.unmodified
 
-    if event.getModifierState('AltGraph')
+    if event.getModifierState('AltGraph') or (process.platform is 'darwin' and altKey)
       # All macOS layouts have an alt-modified character variant for every
       # single key. Therefore, if we always favored the alt variant, it would
       # become impossible to bind `alt-*` to anything. Since `alt-*` bindings
@@ -202,6 +206,17 @@ exports.keystrokeForKeyboardEvent = (event) ->
     keystroke += key
 
   keystroke = normalizeKeystroke("^#{keystroke}") if event.type is 'keyup'
+
+  if customKeystrokeResolvers?
+    for resolver in customKeystrokeResolvers
+      customKeystroke = resolver({
+        keystroke, event,
+        layoutName: KeyboardLayout.getCurrentKeyboardLayout(),
+        keymap: KeyboardLayout.getCurrentKeymap()
+      })
+      if customKeystroke
+        keystroke = normalizeKeystroke(customKeystroke)
+
   keystroke
 
 nonAltModifiedKeyForKeyboardEvent = (event) ->
