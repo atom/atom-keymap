@@ -1,48 +1,4 @@
 module.exports = {
-  "Space": {
-    "unmodified": " ",
-    "withShift": " "
-  },
-  "Digit0": {
-    "unmodified": "0",
-    "withShift": ")"
-  },
-  "Digit1": {
-    "unmodified": "1",
-    "withShift": "!"
-  },
-  "Digit2": {
-    "unmodified": "2",
-    "withShift": "@"
-  },
-  "Digit3": {
-    "unmodified": "3",
-    "withShift": "#"
-  },
-  "Digit4": {
-    "unmodified": "4",
-    "withShift": "$"
-  },
-  "Digit5": {
-    "unmodified": "5",
-    "withShift": "%"
-  },
-  "Digit6": {
-    "unmodified": "6",
-    "withShift": "^"
-  },
-  "Digit7": {
-    "unmodified": "7",
-    "withShift": "&"
-  },
-  "Digit8": {
-    "unmodified": "8",
-    "withShift": "*"
-  },
-  "Digit9": {
-    "unmodified": "9",
-    "withShift": "("
-  },
   "KeyA": {
     "unmodified": "a",
     "withShift": "A"
@@ -147,9 +103,109 @@ module.exports = {
     "unmodified": "z",
     "withShift": "Z"
   },
-  "Numpad0": {
+  "Digit1": {
+    "unmodified": "1",
+    "withShift": "!"
+  },
+  "Digit2": {
+    "unmodified": "2",
+    "withShift": "@"
+  },
+  "Digit3": {
+    "unmodified": "3",
+    "withShift": "#"
+  },
+  "Digit4": {
+    "unmodified": "4",
+    "withShift": "$"
+  },
+  "Digit5": {
+    "unmodified": "5",
+    "withShift": "%"
+  },
+  "Digit6": {
+    "unmodified": "6",
+    "withShift": "^"
+  },
+  "Digit7": {
+    "unmodified": "7",
+    "withShift": "&"
+  },
+  "Digit8": {
+    "unmodified": "8",
+    "withShift": "*"
+  },
+  "Digit9": {
+    "unmodified": "9",
+    "withShift": "("
+  },
+  "Digit0": {
     "unmodified": "0",
-    "withShift": "0"
+    "withShift": ")"
+  },
+  "Space": {
+    "unmodified": " ",
+    "withShift": " "
+  },
+  "Minus": {
+    "unmodified": "-",
+    "withShift": "_"
+  },
+  "Equal": {
+    "unmodified": "=",
+    "withShift": "+"
+  },
+  "BracketLeft": {
+    "unmodified": "[",
+    "withShift": "{"
+  },
+  "BracketRight": {
+    "unmodified": "]",
+    "withShift": "}"
+  },
+  "Backslash": {
+    "unmodified": "\\",
+    "withShift": "|"
+  },
+  "Semicolon": {
+    "unmodified": ";",
+    "withShift": ":"
+  },
+  "Quote": {
+    "unmodified": "'",
+    "withShift": "\""
+  },
+  "Backquote": {
+    "unmodified": "`",
+    "withShift": "~"
+  },
+  "Comma": {
+    "unmodified": ",",
+    "withShift": "<"
+  },
+  "Period": {
+    "unmodified": ".",
+    "withShift": ">"
+  },
+  "Slash": {
+    "unmodified": "/",
+    "withShift": "?"
+  },
+  "NumpadDivide": {
+    "unmodified": "/",
+    "withShift": "/"
+  },
+  "NumpadMultiply": {
+    "unmodified": "*",
+    "withShift": "*"
+  },
+  "NumpadSubtract": {
+    "unmodified": "-",
+    "withShift": "-"
+  },
+  "NumpadAdd": {
+    "unmodified": "+",
+    "withShift": "+"
   },
   "Numpad1": {
     "unmodified": "1",
@@ -187,68 +243,24 @@ module.exports = {
     "unmodified": "9",
     "withShift": "9"
   },
-  "NumpadMultiply": {
-    "unmodified": "*",
-    "withShift": "*"
-  },
-  "NumpadAdd": {
-    "unmodified": "+",
-    "withShift": "+"
-  },
-  "NumpadSubtract": {
-    "unmodified": "-",
-    "withShift": "-"
+  "Numpad0": {
+    "unmodified": "0",
+    "withShift": "0"
   },
   "NumpadDecimal": {
     "unmodified": ".",
     "withShift": "."
   },
-  "NumpadDivide": {
-    "unmodified": "/",
-    "withShift": "/"
+  "IntlBackslash": {
+    "unmodified": "§",
+    "withShift": "±"
   },
-  "Semicolon": {
-    "unmodified": ";",
-    "withShift": ":"
-  },
-  "Equal": {
+  "NumpadEqual": {
     "unmodified": "=",
-    "withShift": "+"
+    "withShift": "="
   },
-  "NumpadComma": {
-    "unmodified": ",",
-    "withShift": "<"
-  },
-  "Minus": {
-    "unmodified": "-",
-    "withShift": "_"
-  },
-  "Period": {
-    "unmodified": ".",
-    "withShift": ">"
-  },
-  "Slash": {
-    "unmodified": "/",
-    "withShift": "?"
-  },
-  "Backquote": {
-    "unmodified": "`",
-    "withShift": "~"
-  },
-  "BracketLeft": {
-    "unmodified": "[",
-    "withShift": "{"
-  },
-  "IntlYen": {
-    "unmodified": "\\",
-    "withShift": "|"
-  },
-  "BracketRight": {
-    "unmodified": "]",
-    "withShift": "}"
-  },
-  "Quote": {
-    "unmodified": "'",
-    "withShift": "\""
+  "AudioVolumeUp": {
+    "unmodified": null,
+    "withShift": "="
   }
 }
