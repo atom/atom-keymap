@@ -4,14 +4,13 @@
   "description": "Atom's DOM-aware keymap module",
   "main": "./lib/keymap-manager",
   "scripts": {
-    "prepublish": "npm run clean && npm run compile && npm run lint && npm run atomdoc",
+    "test": "mocha ./spec/helpers/setup spec/*",
     "clean": "rimraf lib && rimraf api.json",
     "compile": "coffee --no-header --output lib --compile src && babel src --out-dir lib",
     "lint": "coffeelint -r src spec && eslint src spec",
-    "test": "devtool  --quit --console node_modules/mocha/bin/_mocha --colors spec/helpers/setup.js spec/*.coffee",
-    "test-drive": "SUPPRESS_EXIT=true devtool --quit node_modules/mocha/bin/_mocha --no-colors spec/helpers/setup.js spec/*",
-    "ci": "npm run compile && npm run lint && npm run test",
     "atomdoc": "grunt shell:update-atomdoc atomdoc"
+    "prepublish": "npm run clean && npm run compile && npm run lint && npm run atomdoc",
+    "ci": "npm run compile && npm run lint && npm run test",
   },
   "repository": {
     "type": "git",
@@ -54,7 +53,7 @@
     "grunt-contrib-coffee": "0.9.0",
     "grunt-shell": "0.2.2",
     "lolex": "1.4.0",
-    "mocha": "2.4.5",
+    "mocha": "^2.4.5",
     "rimraf": "2.2.2",
     "sinon": "1.17.3",
     "space-pencil": "0.3.0",
