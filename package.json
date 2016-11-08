@@ -4,7 +4,7 @@
   "description": "Atom's DOM-aware keymap module",
   "main": "./lib/keymap-manager",
   "scripts": {
-    "test": "mocha ./spec/helpers/setup spec/*.coffee",
+    "test": "mocha ./spec/helpers/setup.js ./spec/*.coffee",
     "clean": "rimraf lib && rimraf api.json",
     "compile": "coffee --no-header --output lib --compile src && babel src --out-dir lib",
     "lint": "coffeelint -r src spec && eslint src spec",
@@ -32,6 +32,7 @@
     "season": "^5.4.1"
   },
   "devDependencies": {
+    "babel": "^5.0.0",
     "babel-cli": "6.5.1",
     "babel-eslint": "5.0.0-beta10",
     "babel-preset-es2015": "6.5.0",
