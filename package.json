@@ -4,7 +4,7 @@
   "description": "Atom's DOM-aware keymap module",
   "main": "./lib/keymap-manager",
   "scripts": {
-    "test": "mocha ./spec/helpers/setup spec/*",
+    "test": "mocha ./spec/helpers/setup spec/*.coffee",
     "clean": "rimraf lib && rimraf api.json",
     "compile": "coffee --no-header --output lib --compile src && babel src --out-dir lib",
     "lint": "coffeelint -r src spec && eslint src spec",
