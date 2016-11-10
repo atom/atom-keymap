@@ -232,7 +232,7 @@ nonAltModifiedKeyForKeyboardEvent = (event) ->
       characters.unmodified
 
 exports.characterForKeyboardEvent = (event) ->
-  event.key unless event.ctrlKey or event.metaKey
+  event.key if event.key.length is 1 and not (event.ctrlKey or event.metaKey)
 
 exports.calculateSpecificity = calculateSpecificity
 

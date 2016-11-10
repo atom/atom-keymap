@@ -222,6 +222,7 @@ describe "KeymapManager", ->
             'd p': 'dp'
             'v i v a': 'viva!'
             'v i v': 'viv'
+            'shift shift-S x': 'shift-then-s'
           '.editor':
             'v': 'enter-visual-mode'
             'm': 'focus-input2'
@@ -285,6 +286,12 @@ describe "KeymapManager", ->
 
           assert.deepEqual(events, ['input:d', 'input:o'])
           assert(not lastEvent.defaultPrevented)
+
+          events = []
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'Shift', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'S', target: editor, shiftKey: true))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', target: editor))
+          assert.deepEqual(events, ['input:S'])
 
       describe "when the currently queued keystrokes exactly match at least one binding", ->
         it "disables partially-matching bindings and replays the queued keystrokes if the ::partialMatchTimeout expires", ->
