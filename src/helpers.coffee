@@ -149,7 +149,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
       # basic ASCII character.
       if process.platform is 'darwin' and event.code
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
-        if ctrlKey or metaKey or not isASCIICharacter(key)
+        if nonAltModifiedKey and (ctrlKey or metaKey or not isASCIICharacter(key))
           key = nonAltModifiedKey
         else if key isnt nonAltModifiedKey
           altKey = false
@@ -161,7 +161,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
       # intepretation.
       else if process.platform is 'win32' and event.code
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
-        if metaKey
+        if nonAltModifiedKey and metaKey
           key = nonAltModifiedKey
         else if key isnt nonAltModifiedKey
           ctrlKey = false
@@ -172,7 +172,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
       # fall back to the non-alt-modified character.
       else if process.platform is 'linux'
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
-        if (ctrlKey or altKey or metaKey) and nonAltModifiedKey
+        if nonAltModifiedKey and (ctrlKey or altKey or metaKey)
           key = nonAltModifiedKey
           altKey = event.getModifierState('AltGraph')
 
