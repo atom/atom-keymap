@@ -113,6 +113,7 @@ class KeymapManager
     @[key] = value for key, value of options
     @watchSubscriptions = {}
     @customKeystrokeResolvers = []
+    @compositionInProgress = false
     @clear()
 
   # Public: Clear all registered key bindings and enqueued keystrokes. For use
@@ -491,6 +492,12 @@ class KeymapManager
     # keystroke is the atom keybind syntax, e.g. 'ctrl-a'
     keystroke = @keystrokeForKeyboardEvent(event)
 
+    # If an input method editor (IME) is visible, allow the operating system to
+    # fully handle all keyboard events to prevent interference with menu
+    # interactions.
+    if @compositionInProgress
+      return
+
     # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
     if event.type is 'keydown' and @queuedKeystrokes.length > 0 and isBareModifier(keystroke)
       event.preventDefault()
@@ -622,9 +629,15 @@ class KeymapManager
       # event. This means the current event has removed any hope that the queued
       # key events will ever match any binding. So we will clear the state and
       # start over after replaying the events in `terminatePendingState`.
-      @terminatePendingState()
+      @terminatePendingState() if event.type is 'keyup'
     else
       @clearQueuedKeystrokes()
+
+  handleCompositionStart: ->
+    @compositionInProgress = true
+
+  handleCompositionEnd: ->
+    @compositionInProgress = false
 
   # Public: Translate a keydown event to a keystroke string.
   #
@@ -762,16 +775,17 @@ class KeymapManager
     @cancelPendingState()
     @clearQueuedKeystrokes()
 
-    keyEventOptions =
-      replay: true
-      disabledBindings: bindingsToDisable
+    unless @compositionInProgress
+      keyEventOptions =
+        replay: true
+        disabledBindings: bindingsToDisable
 
-    for event in eventsToReplay
-      keyEventOptions.disabledBindings = bindingsToDisable
-      @handleKeyboardEvent(event, keyEventOptions)
+      for event in eventsToReplay
+        keyEventOptions.disabledBindings = bindingsToDisable
+        @handleKeyboardEvent(event, keyEventOptions)
 
-      # We can safely re-enable the bindings when we no longer have any partial matches
-      bindingsToDisable = null if bindingsToDisable? and not @pendingPartialMatches?
+        # We can safely re-enable the bindings when we no longer have any partial matches
+        bindingsToDisable = null if bindingsToDisable? and not @pendingPartialMatches?
 
     if fromTimeout and @pendingPartialMatches?
       @terminatePendingState(true)

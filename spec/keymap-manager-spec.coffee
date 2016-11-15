@@ -23,6 +23,7 @@ describe "KeymapManager", ->
         event = buildKeydownEvent(key: 'q')
         keymapManager.handleKeyboardEvent(event)
         assert(not event.defaultPrevented)
+
     describe "when the keystroke matches one binding on any particular element", ->
       [events, elementA, elementB] = []
 
@@ -261,8 +262,11 @@ describe "KeymapManager", ->
       describe "when subsequent keystrokes yield no matches", ->
         it "disables the bindings with the longest keystroke sequences and replays the queued keystrokes", ->
           keymapManager.handleKeyboardEvent(vEvent = buildKeydownEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'v', target: editor))
           keymapManager.handleKeyboardEvent(iEvent = buildKeydownEvent(key: 'i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'i', target: editor))
           keymapManager.handleKeyboardEvent(wEvent = buildKeydownEvent(key: 'w', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'w', target: editor))
           assert.equal(vEvent.defaultPrevented, true)
           assert.equal(iEvent.defaultPrevented, true)
           assert.equal(wEvent.defaultPrevented, true)
@@ -270,8 +274,11 @@ describe "KeymapManager", ->
 
           events = []
           keymapManager.handleKeyboardEvent(vEvent = buildKeydownEvent(key: 'v', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'v', target: editor))
           keymapManager.handleKeyboardEvent(iEvent = buildKeydownEvent(key: 'i', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'i', target: editor))
           keymapManager.handleKeyboardEvent(kEvent = buildKeydownEvent(key: 'k', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'k', target: editor))
           assert.equal(vEvent.defaultPrevented, true)
           assert.equal(iEvent.defaultPrevented, true)
           assert.equal(kEvent.defaultPrevented, false)
@@ -281,8 +288,11 @@ describe "KeymapManager", ->
 
         it "dispatches a text-input event for any replayed keyboard events that would have inserted characters", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'd', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'd', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'o', target: editor))
           keymapManager.handleKeyboardEvent(lastEvent = buildKeydownEvent(key: 'q', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'q', target: editor))
 
           assert.deepEqual(events, ['input:d', 'input:o'])
           assert(not lastEvent.defaultPrevented)
@@ -290,7 +300,10 @@ describe "KeymapManager", ->
           events = []
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'Shift', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'S', target: editor, shiftKey: true))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'S', target: editor, shiftKey: true))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'Shift', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'y', target: editor))
           assert.deepEqual(events, ['input:S'])
 
       describe "when the currently queued keystrokes exactly match at least one binding", ->
@@ -354,15 +367,19 @@ describe "KeymapManager", ->
           assert.deepEqual(events, ['control-dog'])
 
       describe "when focused element changed in the middle of replaying keystroke", ->
-        it "replay keystroke against newly focused element", ->
+        it "replays keystrokes against newly focused elements", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'm', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'm', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'j', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'j', target: editor))
           assert.deepEqual(events, ['editor-m-j'])
 
           events = []
           assert.deepEqual(document.activeElement, inputElement)
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'm', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'm', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'a', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'a', target: editor))
           assert.deepEqual(events, ['focus-input2', 'editor2-a'])
           assert.deepEqual(document.activeElement, input2Element)
 
@@ -380,10 +397,15 @@ describe "KeymapManager", ->
       describe "when a subsequent keystroke begins a new match of an already pending binding", ->
         it "recognizes the match", ->
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'd', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'd', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'o', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'd', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'd', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'o', target: editor))
           keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'g', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'g', target: editor))
 
           assert.deepEqual(events, ['input:d', 'input:o', 'dog'])
 
@@ -442,6 +464,8 @@ describe "KeymapManager", ->
         keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'y', ctrlKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown'])
         keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
+        assert.deepEqual(events, ['y-keydown'])
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'y', ctrlKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown', 'y-keydown'])
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['y-keydown', 'y-keydown'])
@@ -565,6 +589,22 @@ describe "KeymapManager", ->
       keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', target: elementC))
 
       assert.deepEqual(events, ['c', 'b1'])
+
+    it "does not attempt to handle keyboard events if composition is in progress", ->
+      eventCount = 0
+      elementA = document.createElement('div')
+      elementA.addEventListener 'x-command', -> eventCount++
+      keymapManager.add 'test', {'div': {'x': 'x-command'}}
+
+      keymapManager.handleKeyboardEvent(buildKeydownEvent({key: 'x', target: elementA}))
+      keymapManager.handleCompositionStart()
+      keymapManager.handleKeyboardEvent(buildKeyupEvent({key: 'x', target: elementA}))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent({key: 'x', target: elementA}))
+      keymapManager.handleKeyboardEvent(buildKeyupEvent({key: 'x', target: elementA}))
+      keymapManager.handleCompositionEnd()
+      keymapManager.handleKeyboardEvent(buildKeydownEvent({key: 'x', target: elementA}))
+
+      assert.equal(eventCount, 2)
 
   describe "::add(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->
