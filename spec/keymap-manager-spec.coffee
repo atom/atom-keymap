@@ -403,6 +403,7 @@ describe "KeymapManager", ->
         elementA.addEventListener 'x-command-ctrl-up', (e) -> events.push('x-ctrl-keyup')
         elementA.addEventListener 'y-command-y-up-ctrl-up', (e) -> events.push('y-up-ctrl-keyup')
         elementA.addEventListener 'abc-secret-code-command', (e) -> events.push('abc-secret-code')
+        elementA.addEventListener 'z-command-d-e-f', (e) -> events.push('z-keydown-d-e-f')
 
         keymapManager.add "test",
           ".a":
@@ -411,6 +412,7 @@ describe "KeymapManager", ->
             "ctrl-x ^ctrl": "x-command-ctrl-up"
             "ctrl-y ^y ^ctrl": "y-command-y-up-ctrl-up"
             "a b c ^b ^a ^c": "abc-secret-code-command"
+            "ctrl-z d e f": "z-command-d-e-f"
 
       it "dispatches the command for a binding containing only keydown events immediately even when there is a corresponding multi-stroke binding that contains only other keyup events", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
@@ -423,6 +425,15 @@ describe "KeymapManager", ->
         assert.deepEqual(events, ['y-keydown'])
         keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'Control', target: elementA))
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        assert.deepEqual(events, ['y-keydown', 'y-up-ctrl-keyup'])
+
+      it "dispatches the command when the keyup comes after the partial match timeout", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
+        assert.deepEqual(events, ['y-keydown'])
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'y', ctrlKey: true, cmd: true, shift: true, alt: true, target: elementA))
+        assert.deepEqual(events, ['y-keydown'])
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'ctrl', target: elementA))
         assert.deepEqual(events, ['y-keydown', 'y-up-ctrl-keyup'])
 
       it "dispatches the command multiple times when multiple keydown events for the binding come in before the binding with a keyup handler", ->
@@ -450,14 +461,24 @@ describe "KeymapManager", ->
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['x-ctrl-keyup'])
 
-      it "does _not_ dispatch the command when extra user-generated keydown events are not specified in the binding", ->
+      it "dispatches the command when extra user-generated keydown events not specified in the binding occur between keydown and keyup", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
         assert.deepEqual(events, ['y-keydown'])
-        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'z', ctrlKey: true, target: elementA)) # not specified in binding
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'j', ctrlKey: true, target: elementA)) # not specified in binding
         assert.deepEqual(events, ['y-keydown'])
         keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'Control', target: elementA))
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
-        assert.deepEqual(events, ['y-keydown'])
+        assert.deepEqual(events, ['y-keydown', 'y-ctrl-keyup'])
+
+      it "does _not_ dispatch the command when extra user-generated keydown events not specified in the binding occur between keydowns", ->
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('z', ctrl: true, target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeyupEvent('ctrl', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('z', target: elementA)) # not specified in binding
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('d', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('e', target: elementA))
+        keymapManager.handleKeyboardEvent(buildKeydownEvent('f', target: elementA))
+        assert.deepEqual(events, [])
 
       it "dispatches the command when multiple keyup keystrokes are specified", ->
         keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'a', target: elementA))
