@@ -483,6 +483,13 @@ class KeymapManager
     #
     # Godspeed.
 
+    # When a keyboard event is part of IME composition, the keyCode is always
+    # 229, which is the "composition key code". This API is deprecated, but this
+    # is the most simple and reliable way we found to ignore keystrokes that are
+    # part of IME compositions.
+    if event.keyCode is 229
+      return
+
     keystroke = @keystrokeForKeyboardEvent(event)
 
     # We dont care about bare modifier keys in the bindings. e.g. `ctrl y` isnt going to work.
