@@ -176,8 +176,12 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
           key = nonAltModifiedKey
           altKey = event.getModifierState('AltGraph')
 
-    # Avoid caps-lock captilizing the key without shift being actually pressed
-    unless shiftKey
+    # Deal with caps-lock issues. Key bindings should always adjust the
+    # capitalization of the key based on the shiftKey state and never the state
+    # of the caps-lock key
+    if shiftKey
+      key = key.toUpperCase()
+    else
       key = key.toLowerCase()
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers

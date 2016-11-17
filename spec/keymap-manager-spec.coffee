@@ -650,6 +650,12 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'A', shiftKey: false})), 'a')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'A', shiftKey: false, altKey: true})), 'alt-a')
 
+    describe "when the KeyboardEvent.key is a lower-case letter due to caps lock + shift", ->
+      it "converts the letter to upper case and honors the shift key", ->
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'a', shiftKey: true})), 'shift-A')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'a', shiftKey: true, altKey: true})), 'alt-shift-A')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'a', shiftKey: true, ctrlKey: true})), 'ctrl-shift-A')
+
     describe "when the KeyboardEvent.key is 'Delete' but KeyboardEvent.code is 'Backspace' due to pressing ctrl-delete with numlock enabled on Windows", ->
       it "translates as ctrl-backspace instead of ctrl-delete", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Delete', code: 'Backspace', ctrlKey: true})), 'ctrl-backspace')
