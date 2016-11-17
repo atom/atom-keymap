@@ -156,7 +156,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
       # intepretation.
       else if process.platform is 'win32' and event.code
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
-        if nonAltModifiedKey and metaKey
+        if nonAltModifiedKey and (metaKey or not isASCIICharacter(key))
           key = nonAltModifiedKey
         else if key isnt nonAltModifiedKey
           ctrlKey = false
