@@ -703,8 +703,7 @@ describe "KeymapManager", ->
         mockProcessPlatform('linux')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Unidentified', code: 'IntlRo', ctrlKey: true})), 'ctrl-/')
 
-      it "converts non-latin keycaps to their U.S. counterpart for purposes of binding", ->
-        mockProcessPlatform('darwin')
+      it "on non-Latin keyboards, converts keystrokes with modifiers to U.S. layout equivalent characters", ->
         currentKeymap = require('./helpers/keymaps/mac-greek')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD'})), 'd')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', shiftKey: true})), 'shift-D')
@@ -712,25 +711,15 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD', metaKey: true})), 'cmd-d')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', metaKey: true, shiftKey: true})), 'shift-cmd-D')
 
-        # Don't use U.S. counterpart for latin characters
+        # If *any* key on the keyboard is non-Latin, even characters that *are* Latin remap to the U.S. equivalent character for the physical key
+        currentKeymap = require('./helpers/keymaps/mac-russian-pc')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '.', code: 'Slash', ctrlKey: true})), 'ctrl-/')
+        currentKeymap = require('./helpers/keymaps/mac-hebrew')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: ']', code: 'BracketLeft', ctrlKey: true})), 'ctrl-[')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '[', code: 'BracketRight', ctrlKey: true})), 'ctrl-]')
+
+        # Don't use U.S. counterpart for keyboards with all Latin characters
         currentKeymap = require('./helpers/keymaps/mac-turkish')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ö', code: 'KeyX', metaKey: true})), 'cmd-ö')
-
-        currentKeymap = null
-        mockProcessPlatform('windows')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD'})), 'd')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', shiftKey: true})), 'shift-D')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ',  code: 'KeyD', ctrlKey: true})), 'ctrl-d')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true})), 'ctrl-shift-D')
-        # Don't use U.S. counterpart for latin characters
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ö', code: 'KeyX', metaKey: true})), 'cmd-ö')
-
-        mockProcessPlatform('linux')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD'})), 'd')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', shiftKey: true})), 'shift-D')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'δ', code: 'KeyD', ctrlKey: true})), 'ctrl-d')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Δ', code: 'KeyD', ctrlKey: true, shiftKey: true})), 'ctrl-shift-D')
-        # Don't use U.S. counterpart for latin characters
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ö', code: 'KeyX', metaKey: true})), 'cmd-ö')
 
       it "translates dead keys to their printable equivalents", ->

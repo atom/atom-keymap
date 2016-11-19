@@ -22,6 +22,22 @@ MATCH_TYPES = {
   PARTIAL: 'partial'
 }
 
+LATIN_KEYMAP_CACHE = new WeakMap()
+isLatinKeymap = (keymap) ->
+  return true unless keymap?
+
+  isLatin = LATIN_KEYMAP_CACHE.get(keymap)
+  if isLatin?
+    isLatin
+  else
+    isLatin =
+      isLatinCharacter(keymap.KeyA.unmodified) and
+        isLatinCharacter(keymap.KeyS.unmodified) and
+          isLatinCharacter(keymap.KeyD.unmodified) and
+            isLatinCharacter(keymap.KeyF.unmodified)
+    LATIN_KEYMAP_CACHE.set(keymap, isLatin)
+    isLatin
+
 isASCIICharacter = (character) ->
   character? and character.length is 1 and character.charCodeAt(0) <= 127
 
@@ -186,7 +202,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
-  if (key.length is 1 and not isLatinCharacter(key)) or
+  if (key.length is 1 and not isLatinKeymap(KeyboardLayout.getCurrentKeymap())) or
      (metaKey and KeyboardLayout.getCurrentKeyboardLayout() is 'com.apple.keylayout.DVORAK-QWERTYCMD')
     if characters = usCharactersForKeyCode(event.code)
       if event.shiftKey
