@@ -1,6 +1,6 @@
 {
   "name": "atom-keymap",
-  "version": "7.1.10",
+  "version": "7.1.11",
   "description": "Atom's DOM-aware keymap module",
   "main": "./lib/keymap-manager",
   "scripts": {
