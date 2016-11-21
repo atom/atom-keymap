@@ -227,26 +227,14 @@
     "withAltGraph": "\\",
     "withAltGraphShift": null
   },
-  "Equal": {
-    "unmodified": "´",
-    "withShift": "`",
-    "withAltGraph": null,
-    "withAltGraphShift": null
-  },
   "BracketLeft": {
     "unmodified": "å",
     "withShift": "Å",
     "withAltGraph": null,
     "withAltGraphShift": null
   },
-  "BracketRight": {
-    "unmodified": "¨",
-    "withShift": "^",
-    "withAltGraph": "~",
-    "withAltGraphShift": null
-  },
   "Backslash": {
-    "unmodified": "~'",
+    "unmodified": "'",
     "withShift": "*",
     "withAltGraph": null,
     "withAltGraphShift": null
