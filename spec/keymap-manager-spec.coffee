@@ -722,18 +722,20 @@ describe "KeymapManager", ->
         currentKeymap = require('./helpers/keymaps/mac-turkish')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ö', code: 'KeyX', metaKey: true})), 'cmd-ö')
 
-      it "translates dead keys to their printable equivalents", ->
+      it "translates dead keys to their printable equivalents on macOS, but not Windows", ->
         mockProcessPlatform('darwin')
         currentKeymap = require('./helpers/keymaps/mac-swedish')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight'})), '¨')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', shiftKey: true})), '^')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', altKey: true})), '~')
 
+        # We can't determine the character for a dead key on Windows without breaking dead key handling
+        # in some cases because they have a terrible API, so we don't try.
         mockProcessPlatform('win32')
         currentKeymap = require('./helpers/keymaps/windows-swedish')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight'})), '¨')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', shiftKey: true})), '^')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', ctrlKey: true, altKey: true, shiftKey: true})), '~')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight'})), 'dead')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', shiftKey: true})), 'shift-dead')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'BracketRight', ctrlKey: true, altKey: true, shiftKey: true})), 'ctrl-alt-shift-dead')
 
     describe "when custom keystroke resolvers are installed", ->
       it "resolves to the keystroke string of the most recently-installed resolver returning a defined value", ->

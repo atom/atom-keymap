@@ -118,12 +118,10 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
   {key, code, ctrlKey, altKey, shiftKey, metaKey} = event
 
   if key is 'Dead'
-    if process.platform isnt 'linux' and characters = KeyboardLayout.getCurrentKeymap()?[event.code]
-      if ctrlKey and altKey and shiftKey and characters.withAltGraphShift?
+    if process.platform is 'darwin' and characters = KeyboardLayout.getCurrentKeymap()?[event.code]
+      if altKey and shiftKey and characters.withAltGraphShift?
         key = characters.withAltGraphShift
-      else if process.platform is 'darwin' and altKey and characters.withAltGraph?
-        key = characters.withAltGraph
-      else if process.platform is 'win32' and ctrlKey and altKey and characters.withAltGraph?
+      else if altKey and characters.withAltGraph?
         key = characters.withAltGraph
       else if shiftKey and characters.withShift?
         key = characters.withShift
