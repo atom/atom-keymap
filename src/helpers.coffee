@@ -246,7 +246,7 @@ exports.isBareModifier = (keystroke) -> ENDS_IN_MODIFIER_REGEX.test(keystroke)
 exports.isModifierKeyup = (keystroke) -> isKeyup(keystroke) and ENDS_IN_MODIFIER_REGEX.test(keystroke)
 
 exports.isKeyup = isKeyup = (keystroke) ->
-  keystroke isnt '^' and keystroke.startsWith('^') 
+  keystroke isnt '^' and keystroke.startsWith('^')
 
 exports.keydownEvent = (key, options) ->
   return buildKeyboardEvent(key, 'keydown', options)
