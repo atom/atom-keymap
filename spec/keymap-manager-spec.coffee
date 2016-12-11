@@ -653,6 +653,32 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '.', code: 'NumpadDecimal', modifierState: {NumLock: true}})), '.')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '', code: 'NumpadDecimal', modifierState: {NumLock: false}})), 'delete')
 
+    describe "when numlock is on", ->
+      it "translates numpad digits using KeyboardEvent.code", ->
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '1', code: 'Numpad0', modifierState: {NumLock: true}})), 'numpad0')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '2', code: 'Numpad1', modifierState: {NumLock: true}})), 'numpad1')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '3', code: 'Numpad2', modifierState: {NumLock: true}})), 'numpad2')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '4', code: 'Numpad3', modifierState: {NumLock: true}})), 'numpad3')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '5', code: 'Numpad4', modifierState: {NumLock: true}})), 'numpad4')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '6', code: 'Numpad5', modifierState: {NumLock: true}})), 'numpad5')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '6', code: 'Numpad6', modifierState: {NumLock: true}})), 'numpad6')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '7', code: 'Numpad7', modifierState: {NumLock: true}})), 'numpad7')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '8', code: 'Numpad8', modifierState: {NumLock: true}})), 'numpad8')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '9', code: 'Numpad9', modifierState: {NumLock: true}})), 'numpad9')
+
+    describe "when numlock is off", ->
+      it "doesn't translate numpad digits", ->
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '1', code: 'Numpad0', modifierState: {NumLock: false}})), 'insert')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '2', code: 'Numpad1', modifierState: {NumLock: false}})), 'end')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '3', code: 'Numpad2', modifierState: {NumLock: false}})), 'down')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '4', code: 'Numpad3', modifierState: {NumLock: false}})), 'pagedown')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '5', code: 'Numpad4', modifierState: {NumLock: false}})), 'left')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '6', code: 'Numpad5', modifierState: {NumLock: false}})), 'clear')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '6', code: 'Numpad6', modifierState: {NumLock: false}})), 'right')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '7', code: 'Numpad7', modifierState: {NumLock: false}})), 'home')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '8', code: 'Numpad8', modifierState: {NumLock: false}})), 'up')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '9', code: 'Numpad9', modifierState: {NumLock: false}})), 'pageup')
+
     describe "when the Dvorak QWERTY-⌘ layout is in use on macOS", ->
       it "uses the US layout equivalent when the command key is held down", ->
         mockProcessPlatform('darwin')
