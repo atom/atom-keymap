@@ -16,6 +16,18 @@ NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY = {
   'ArrowLeft': 'left',
   'ArrowRight': 'right'
 }
+NUMPAD_KEYNAMES_BY_KEYBOARD_EVENT_CODE = {
+  'Numpad0': 'numpad0',
+  'Numpad1': 'numpad1',
+  'Numpad2': 'numpad2',
+  'Numpad3': 'numpad3',
+  'Numpad4': 'numpad4',
+  'Numpad5': 'numpad5',
+  'Numpad6': 'numpad6',
+  'Numpad7': 'numpad7',
+  'Numpad8': 'numpad8',
+  'Numpad9': 'numpad9'
+}
 
 LATIN_KEYMAP_CACHE = new WeakMap()
 isLatinKeymap = (keymap) ->
@@ -122,6 +134,9 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
         key = characters.withShift
       else if characters.unmodified?
         key = characters.unmodified
+
+  if NUMPAD_KEYNAMES_BY_KEYBOARD_EVENT_CODE[code]? and event.getModifierState('NumLock')
+    key = NUMPAD_KEYNAMES_BY_KEYBOARD_EVENT_CODE[code]
 
   if KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]?
     key = KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
