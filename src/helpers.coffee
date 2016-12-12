@@ -16,7 +16,7 @@ NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY = {
   'ArrowLeft': 'left',
   'ArrowRight': 'right'
 }
-NUMPAD_KEYNAMES_BY_KEYBOARD_EVENT_CODE = {
+NUMPAD_KEY_NAMES_BY_KEYBOARD_EVENT_CODE = {
   'Numpad0': 'numpad0',
   'Numpad1': 'numpad1',
   'Numpad2': 'numpad2',
@@ -135,8 +135,8 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
       else if characters.unmodified?
         key = characters.unmodified
 
-  if NUMPAD_KEYNAMES_BY_KEYBOARD_EVENT_CODE[code]? and event.getModifierState('NumLock')
-    key = NUMPAD_KEYNAMES_BY_KEYBOARD_EVENT_CODE[code]
+  if NUMPAD_KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]? and event.getModifierState('NumLock')
+    key = NUMPAD_KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
 
   if KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]?
     key = KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
