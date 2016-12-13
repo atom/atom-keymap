@@ -1,4 +1,4 @@
-{normalizeKeystrokes, keystrokesMatch, isModifierKeyup} = require '../src/helpers'
+{normalizeKeystrokes, keystrokesMatch, isModifierKeyup, isKeyup} = require '../src/helpers'
 
 describe ".normalizeKeystrokes(keystrokes)", ->
   it "parses and normalizes the keystrokes", ->
@@ -48,3 +48,12 @@ describe ".isModifierKeyup(keystroke)", ->
     assert.isFalse(isModifierKeyup('cmd-x'))
     assert.isFalse(isModifierKeyup('ctrl-shift-x'))
     assert.isFalse(isModifierKeyup('alt-cmd-x'))
+
+describe ".isKeyup(keystrokes)", ->
+  it "return false for single ^", ->
+    assert.isFalse(isKeyup('^'))
+
+  it "return true when keystroke starts with ^", ->
+    assert.isTrue(isKeyup('^a'))
+    assert.isTrue(isKeyup('^ctrl'))
+    assert.isTrue(isKeyup('^shift'))

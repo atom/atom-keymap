@@ -53,7 +53,7 @@ class KeyBinding
       while userKeystrokeIndex < userKeystrokes.length - 1
         userKeystrokeIndex += 1
         userKeystroke = userKeystrokes[userKeystrokeIndex]
-        isKeydownEvent = not userKeystroke.startsWith('^')
+        isKeydownEvent = not isKeyup(userKeystroke)
         userKeystrokesHasKeydownEvent = true if isKeydownEvent
         if bindingKeystroke is userKeystroke
           return true

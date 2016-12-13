@@ -7,6 +7,7 @@ describe "KeyBinding", ->
       assert.equal(keyBindingArgHelper('ctrl-tab ^ctrl').matchesKeystrokes(['ctrl-tab', '^tab', '^ctrl']), 'exact')
       assert.equal(keyBindingArgHelper('a b c').matchesKeystrokes(['a', '^a', 'b', '^b', 'c']), 'exact')
       assert.equal(keyBindingArgHelper('a b ^b c').matchesKeystrokes(['a', '^a', 'b', '^b', 'c']), 'exact')
+      assert.equal(keyBindingArgHelper('a ^').matchesKeystrokes(['a', '^a', '^']), 'exact')
 
     it "returns false for non-matches", ->
       assert.equal(keyBindingArgHelper('ctrl-tab ^tab').matchesKeystrokes(['ctrl-tab', '^tab', '^ctrl']), false)
