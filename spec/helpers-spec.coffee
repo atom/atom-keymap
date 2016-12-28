@@ -1,4 +1,4 @@
-{normalizeKeystrokes, keystrokesMatch} = require '../src/helpers'
+{normalizeKeystrokes, keystrokesMatch, isModifierKeyup, isKeyup} = require '../src/helpers'
 
 describe ".normalizeKeystrokes(keystrokes)", ->
   it "parses and normalizes the keystrokes", ->
@@ -32,32 +32,28 @@ describe ".normalizeKeystrokes(keystrokes)", ->
     assert.equal(normalizeKeystrokes('- '), false)
     assert.equal(normalizeKeystrokes('a '), false)
 
-describe ".keystrokesMatch(bindingKeystrokes, userKeystrokes)", ->
-  it "returns 'exact' for exact matches", ->
-    assert.equal(keystrokesMatch(['ctrl-tab', '^tab', '^ctrl'], ['ctrl-tab', '^tab', '^ctrl']), 'exact')
-    assert.equal(keystrokesMatch(['ctrl-tab', '^ctrl'], ['ctrl-tab', '^tab', '^ctrl']), 'exact')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c']), 'exact')
-    assert.equal(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c']), 'exact')
+describe ".isModifierKeyup(keystroke)", ->
+  it "returns true for single modifier keyups", ->
+    assert.isTrue(isModifierKeyup('^ctrl'))
+    assert.isTrue(isModifierKeyup('^shift'))
+    assert.isTrue(isModifierKeyup('^alt'))
+    assert.isTrue(isModifierKeyup('^cmd'))
+    assert.isTrue(isModifierKeyup('^ctrl-shift'))
+    assert.isTrue(isModifierKeyup('^alt-cmd'))
 
-  it "returns false for non-matches", ->
-    assert.equal(keystrokesMatch(['ctrl-tab', '^tab'], ['ctrl-tab', '^tab', '^ctrl']), false)
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-    assert.equal(keystrokesMatch(['a', 'b', '^b', 'c'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
+  it "returns false for modifier keydowns", ->
+    assert.isFalse(isModifierKeyup('ctrl-x'))
+    assert.isFalse(isModifierKeyup('shift-x'))
+    assert.isFalse(isModifierKeyup('alt-x'))
+    assert.isFalse(isModifierKeyup('cmd-x'))
+    assert.isFalse(isModifierKeyup('ctrl-shift-x'))
+    assert.isFalse(isModifierKeyup('alt-cmd-x'))
 
-    assert.equal(keystrokesMatch(['a'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-    assert.equal(keystrokesMatch(['a'], ['a', '^a']), false)
-    assert.equal(keystrokesMatch(['a', 'c'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-    assert.equal(keystrokesMatch(['a', 'b', '^d'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-    assert.equal(keystrokesMatch(['a', 'd', '^d'], ['a', '^a', 'b', '^b', 'c', '^c']), false)
-    assert.equal(keystrokesMatch(['a', 'd', '^d'], ['^c']), false)
+describe ".isKeyup(keystrokes)", ->
+  it "return false for single ^", ->
+    assert.isFalse(isKeyup('^'))
 
-  it "returns 'partial' for partial matches", ->
-    assert.equal(keystrokesMatch(['a', 'b', '^b'], ['a']), 'partial')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a']), 'partial')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a']), 'partial')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b']), 'partial')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'b', '^b']), 'partial')
-    assert.equal(keystrokesMatch(['a', 'b', 'c'], ['a', '^a', 'd', '^d']), false)
-
-  it "returns 'keydownExact' for bindings that match and contain a remainder of only keyup events", ->
-    assert.equal(keystrokesMatch(['a', 'b', '^b'], ['a', 'b']), 'keydownExact')
+  it "return true when keystroke starts with ^", ->
+    assert.isTrue(isKeyup('^a'))
+    assert.isTrue(isKeyup('^ctrl'))
+    assert.isTrue(isKeyup('^shift'))

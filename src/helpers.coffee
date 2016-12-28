@@ -16,11 +16,22 @@ NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY = {
   'ArrowLeft': 'left',
   'ArrowRight': 'right'
 }
-MATCH_TYPES = {
-  EXACT: 'exact'
-  KEYDOWN_EXACT: 'keydownExact'
-  PARTIAL: 'partial'
-}
+
+LATIN_KEYMAP_CACHE = new WeakMap()
+isLatinKeymap = (keymap) ->
+  return true unless keymap?
+
+  isLatin = LATIN_KEYMAP_CACHE.get(keymap)
+  if isLatin?
+    isLatin
+  else
+    isLatin =
+      isLatinCharacter(keymap.KeyA.unmodified) and
+        isLatinCharacter(keymap.KeyS.unmodified) and
+          isLatinCharacter(keymap.KeyD.unmodified) and
+            isLatinCharacter(keymap.KeyF.unmodified)
+    LATIN_KEYMAP_CACHE.set(keymap, isLatin)
+    isLatin
 
 isASCIICharacter = (character) ->
   character? and character.length is 1 and character.charCodeAt(0) <= 127
@@ -49,7 +60,7 @@ exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes.join(' ')
 
 normalizeKeystroke = (keystroke) ->
-  if isKeyup = keystroke.startsWith('^')
+  if keyup = isKeyup(keystroke)
     keystroke = keystroke.slice(1)
   keys = parseKeystroke(keystroke)
   return false unless keys
@@ -67,7 +78,7 @@ normalizeKeystroke = (keystroke) ->
       else
         return false
 
-  if isKeyup
+  if keyup
     primaryKey = primaryKey.toLowerCase() if primaryKey?
   else
     modifiers.add('shift') if isUpperCaseCharacter(primaryKey)
@@ -75,14 +86,14 @@ normalizeKeystroke = (keystroke) ->
       primaryKey = primaryKey.toUpperCase()
 
   keystroke = []
-  if not isKeyup or (isKeyup and not primaryKey?)
+  if not keyup or (keyup and not primaryKey?)
     keystroke.push('ctrl') if modifiers.has('ctrl')
     keystroke.push('alt') if modifiers.has('alt')
     keystroke.push('shift') if modifiers.has('shift')
     keystroke.push('cmd') if modifiers.has('cmd')
   keystroke.push(primaryKey) if primaryKey?
   keystroke = keystroke.join('-')
-  keystroke = "^#{keystroke}" if isKeyup
+  keystroke = "^#{keystroke}" if keyup
   keystroke
 
 parseKeystroke = (keystroke) ->
@@ -98,16 +109,14 @@ parseKeystroke = (keystroke) ->
   keys.push(keystroke.substring(keyStart)) if keyStart < keystroke.length
   keys
 
-exports.keystrokeForKeyboardEvent = (event) ->
+exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
   {key, code, ctrlKey, altKey, shiftKey, metaKey} = event
 
   if key is 'Dead'
-    if process.platform isnt 'linux' and characters = KeyboardLayout.getCurrentKeymap()[event.code]
-      if ctrlKey and altKey and shiftKey and characters.withAltGraphShift?
+    if process.platform is 'darwin' and characters = KeyboardLayout.getCurrentKeymap()?[event.code]
+      if altKey and shiftKey and characters.withAltGraphShift?
         key = characters.withAltGraphShift
-      else if process.platform is 'darwin' and altKey and characters.withAltGraph?
-        key = characters.withAltGraph
-      else if process.platform is 'win32' and ctrlKey and altKey and characters.withAltGraph?
+      else if altKey and characters.withAltGraph?
         key = characters.withAltGraph
       else if shiftKey and characters.withShift?
         key = characters.withShift
@@ -117,16 +126,20 @@ exports.keystrokeForKeyboardEvent = (event) ->
   if KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]?
     key = KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
 
-  # Work around Chrome bug on Linux where NumpadDecimal key value is '' with
-  # NumLock disabled.
-  if process.platform is 'linux' and code is 'NumpadDecimal' and not event.getModifierState('NumLock')
-    key = 'delete'
+  # Work around Chrome bugs on Linux
+  if process.platform is 'linux'
+    # Fix NumpadDecimal key value being '' with NumLock disabled.
+    if code is 'NumpadDecimal' and not event.getModifierState('NumLock')
+      key = 'delete'
+    # Fix 'Unidentified' key value for '/' key on Brazillian keyboards
+    if code is 'IntlRo' and key is 'Unidentified' and ctrlKey
+      key = '/'
 
   isNonCharacterKey = key.length > 1
   if isNonCharacterKey
     key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[key] ? key.toLowerCase()
   else
-    if altKey
+    if event.getModifierState('AltGraph') or (process.platform is 'darwin' and altKey)
       # All macOS layouts have an alt-modified character variant for every
       # single key. Therefore, if we always favored the alt variant, it would
       # become impossible to bind `alt-*` to anything. Since `alt-*` bindings
@@ -135,7 +148,7 @@ exports.keystrokeForKeyboardEvent = (event) ->
       # basic ASCII character.
       if process.platform is 'darwin' and event.code
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
-        if ctrlKey or metaKey or not isASCIICharacter(key)
+        if nonAltModifiedKey and (ctrlKey or metaKey or not isASCIICharacter(key))
           key = nonAltModifiedKey
         else if key isnt nonAltModifiedKey
           altKey = false
@@ -145,27 +158,34 @@ exports.keystrokeForKeyboardEvent = (event) ->
       # keystroke, it likely to be the intended character, and we always
       # interpret it as such rather than favoring a `ctrl-alt-*` binding
       # intepretation.
-      else if process.platform is 'win32' and ctrlKey and event.code
+      else if process.platform is 'win32' and event.code
         nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
-        if metaKey
+        if nonAltModifiedKey and (metaKey or not isASCIICharacter(key))
           key = nonAltModifiedKey
         else if key isnt nonAltModifiedKey
           ctrlKey = false
           altKey = false
       # Linux has a dedicated `AltGraph` key that is distinct from all other
-      # modifiers, so there is no potential ambiguity and we always honor
-      # AltGraph.
+      # modifiers, including LeftAlt. However, if AltGraph is used in
+      # combination with other modifiers, we want to treat it as a modifier and
+      # fall back to the non-alt-modified character.
       else if process.platform is 'linux'
-        if event.getModifierState('AltGraph')
-          altKey = false
+        nonAltModifiedKey = nonAltModifiedKeyForKeyboardEvent(event)
+        if nonAltModifiedKey and (ctrlKey or altKey or metaKey)
+          key = nonAltModifiedKey
+          altKey = event.getModifierState('AltGraph')
 
-    # Avoid caps-lock captilizing the key without shift being actually pressed
-    unless shiftKey
+    # Deal with caps-lock issues. Key bindings should always adjust the
+    # capitalization of the key based on the shiftKey state and never the state
+    # of the caps-lock key
+    if shiftKey
+      key = key.toUpperCase()
+    else
       key = key.toLowerCase()
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
-  if (key.length is 1 and not isLatinCharacter(key)) or
+  if (key.length is 1 and not isLatinKeymap(KeyboardLayout.getCurrentKeymap())) or
      (metaKey and KeyboardLayout.getCurrentKeyboardLayout() is 'com.apple.keylayout.DVORAK-QWERTYCMD')
     if characters = usCharactersForKeyCode(event.code)
       if event.shiftKey
@@ -174,18 +194,18 @@ exports.keystrokeForKeyboardEvent = (event) ->
         key = characters.unmodified
 
   keystroke = ''
-  if key is 'ctrl' or ctrlKey
+  if key is 'ctrl' or (ctrlKey and event.type isnt 'keyup')
     keystroke += 'ctrl'
 
-  if key is 'alt' or altKey
+  if key is 'alt' or (altKey and event.type isnt 'keyup')
     keystroke += '-' if keystroke.length > 0
     keystroke += 'alt'
 
-  if key is 'shift' or (shiftKey and (isNonCharacterKey or (isLatinCharacter(key) and isUpperCaseCharacter(key))))
+  if key is 'shift' or (shiftKey and event.type isnt 'keyup' and (isNonCharacterKey or (isLatinCharacter(key) and isUpperCaseCharacter(key))))
     keystroke += '-' if keystroke
     keystroke += 'shift'
 
-  if key is 'cmd' or metaKey
+  if key is 'cmd' or (metaKey and event.type isnt 'keyup')
     keystroke += '-' if keystroke
     keystroke += 'cmd'
 
@@ -194,27 +214,52 @@ exports.keystrokeForKeyboardEvent = (event) ->
     keystroke += key
 
   keystroke = normalizeKeystroke("^#{keystroke}") if event.type is 'keyup'
+
+  if customKeystrokeResolvers?
+    for resolver in customKeystrokeResolvers
+      customKeystroke = resolver({
+        keystroke, event,
+        layoutName: KeyboardLayout.getCurrentKeyboardLayout(),
+        keymap: KeyboardLayout.getCurrentKeymap()
+      })
+      if customKeystroke
+        keystroke = normalizeKeystroke(customKeystroke)
+
   keystroke
 
 nonAltModifiedKeyForKeyboardEvent = (event) ->
-  if event.code and (characters = KeyboardLayout.getCurrentKeymap()[event.code])
+  if event.code and (characters = KeyboardLayout.getCurrentKeymap()?[event.code])
     if event.shiftKey
       characters.withShift
     else
       characters.unmodified
 
+exports.MODIFIERS = MODIFIERS
+
 exports.characterForKeyboardEvent = (event) ->
-  event.key unless event.ctrlKey or event.metaKey
+  event.key if event.key.length is 1 and not (event.ctrlKey or event.metaKey)
 
 exports.calculateSpecificity = calculateSpecificity
 
 exports.isBareModifier = (keystroke) -> ENDS_IN_MODIFIER_REGEX.test(keystroke)
+
+exports.isModifierKeyup = (keystroke) -> isKeyup(keystroke) and ENDS_IN_MODIFIER_REGEX.test(keystroke)
+
+exports.isKeyup = isKeyup = (keystroke) -> keystroke.startsWith('^') and keystroke isnt '^'
 
 exports.keydownEvent = (key, options) ->
   return buildKeyboardEvent(key, 'keydown', options)
 
 exports.keyupEvent = (key, options) ->
   return buildKeyboardEvent(key, 'keyup', options)
+
+exports.getModifierKeys = (keystroke) ->
+  keys = keystroke.split('-')
+  mod_keys = []
+  for key in keys when MODIFIERS.has(key)
+    mod_keys.push(key)
+  mod_keys
+
 
 buildKeyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, location}={}) ->
   ctrlKey = ctrl ? false
@@ -232,51 +277,3 @@ buildKeyboardEvent = (key, eventType, {ctrl, shift, alt, cmd, keyCode, target, l
     Object.defineProperty(event, 'target', get: -> target)
     Object.defineProperty(event, 'path', get: -> [target])
   event
-
-# bindingKeystrokes and userKeystrokes are arrays of keystrokes
-# e.g. ['ctrl-y', 'ctrl-x', '^x']
-exports.keystrokesMatch = (bindingKeystrokes, userKeystrokes) ->
-  userKeystrokeIndex = -1
-  userKeystrokesHasKeydownEvent = false
-  matchesNextUserKeystroke = (bindingKeystroke) ->
-    while userKeystrokeIndex < userKeystrokes.length - 1
-      userKeystrokeIndex += 1
-      userKeystroke = userKeystrokes[userKeystrokeIndex]
-      isKeydownEvent = not userKeystroke.startsWith('^')
-      userKeystrokesHasKeydownEvent = true if isKeydownEvent
-      if bindingKeystroke is userKeystroke
-        return true
-      else if isKeydownEvent
-        return false
-    null
-
-  isPartialMatch = false
-  bindingRemainderContainsOnlyKeyups = true
-  bindingKeystrokeIndex = 0
-  for bindingKeystroke in bindingKeystrokes
-    unless isPartialMatch
-      doesMatch = matchesNextUserKeystroke(bindingKeystroke)
-      if doesMatch is false
-        return false
-      else if doesMatch is null
-        # Make sure userKeystrokes with only keyup events doesn't match everything
-        if userKeystrokesHasKeydownEvent
-          isPartialMatch = true
-        else
-          return false
-
-    if isPartialMatch
-      bindingRemainderContainsOnlyKeyups = false unless bindingKeystroke.startsWith('^')
-
-  # Bindings that match the beginning of the user's keystrokes are not a match.
-  # e.g. This is not a match. It would have been a match on the previous keystroke:
-  # bindingKeystrokes = ['ctrl-tab', '^tab']
-  # userKeystrokes    = ['ctrl-tab', '^tab', '^ctrl']
-  return false if userKeystrokeIndex < userKeystrokes.length - 1
-
-  if isPartialMatch and bindingRemainderContainsOnlyKeyups
-    MATCH_TYPES.KEYDOWN_EXACT
-  else if isPartialMatch
-    MATCH_TYPES.PARTIAL
-  else
-    MATCH_TYPES.EXACT

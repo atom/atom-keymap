@@ -1,107 +1,107 @@
-module.exports = {
+{
   "KeyA": {
     "unmodified": "a",
     "withShift": "A"
   },
   "KeyB": {
-    "unmodified": "b",
-    "withShift": "B"
+    "unmodified": "x",
+    "withShift": "X"
   },
   "KeyC": {
-    "unmodified": "c",
-    "withShift": "C"
-  },
-  "KeyD": {
-    "unmodified": "d",
-    "withShift": "D"
-  },
-  "KeyE": {
-    "unmodified": "e",
-    "withShift": "E"
-  },
-  "KeyF": {
-    "unmodified": "f",
-    "withShift": "F"
-  },
-  "KeyG": {
-    "unmodified": "g",
-    "withShift": "G"
-  },
-  "KeyH": {
-    "unmodified": "h",
-    "withShift": "H"
-  },
-  "KeyI": {
-    "unmodified": "i",
-    "withShift": "I"
-  },
-  "KeyJ": {
     "unmodified": "j",
     "withShift": "J"
   },
+  "KeyD": {
+    "unmodified": "e",
+    "withShift": "E"
+  },
+  "KeyE": {
+    "unmodified": ".",
+    "withShift": ">"
+  },
+  "KeyF": {
+    "unmodified": "u",
+    "withShift": "U"
+  },
+  "KeyG": {
+    "unmodified": "i",
+    "withShift": "I"
+  },
+  "KeyH": {
+    "unmodified": "d",
+    "withShift": "D"
+  },
+  "KeyI": {
+    "unmodified": "c",
+    "withShift": "C"
+  },
+  "KeyJ": {
+    "unmodified": "h",
+    "withShift": "H"
+  },
   "KeyK": {
-    "unmodified": "k",
-    "withShift": "K"
+    "unmodified": "t",
+    "withShift": "T"
   },
   "KeyL": {
-    "unmodified": "l",
-    "withShift": "L"
+    "unmodified": "n",
+    "withShift": "N"
   },
   "KeyM": {
     "unmodified": "m",
     "withShift": "M"
   },
   "KeyN": {
-    "unmodified": "n",
-    "withShift": "N"
+    "unmodified": "b",
+    "withShift": "B"
   },
   "KeyO": {
-    "unmodified": "o",
-    "withShift": "O"
-  },
-  "KeyP": {
-    "unmodified": "p",
-    "withShift": "P"
-  },
-  "KeyQ": {
-    "unmodified": "q",
-    "withShift": "Q"
-  },
-  "KeyR": {
     "unmodified": "r",
     "withShift": "R"
   },
+  "KeyP": {
+    "unmodified": "l",
+    "withShift": "L"
+  },
+  "KeyQ": {
+    "unmodified": "'",
+    "withShift": "\""
+  },
+  "KeyR": {
+    "unmodified": "p",
+    "withShift": "P"
+  },
   "KeyS": {
-    "unmodified": "s",
-    "withShift": "S"
+    "unmodified": "o",
+    "withShift": "O"
   },
   "KeyT": {
-    "unmodified": "t",
-    "withShift": "T"
-  },
-  "KeyU": {
-    "unmodified": "u",
-    "withShift": "U"
-  },
-  "KeyV": {
-    "unmodified": "v",
-    "withShift": "V"
-  },
-  "KeyW": {
-    "unmodified": "w",
-    "withShift": "W"
-  },
-  "KeyX": {
-    "unmodified": "x",
-    "withShift": "X"
-  },
-  "KeyY": {
     "unmodified": "y",
     "withShift": "Y"
   },
+  "KeyU": {
+    "unmodified": "g",
+    "withShift": "G"
+  },
+  "KeyV": {
+    "unmodified": "k",
+    "withShift": "K"
+  },
+  "KeyW": {
+    "unmodified": ",",
+    "withShift": "<"
+  },
+  "KeyX": {
+    "unmodified": "q",
+    "withShift": "Q"
+  },
+  "KeyY": {
+    "unmodified": "f",
+    "withShift": "F"
+  },
   "KeyZ": {
-    "unmodified": "z",
-    "withShift": "Z"
+    "unmodified": ";",
+    "withShift": ":"
   },
   "Digit1": {
     "unmodified": "1",
@@ -148,48 +148,48 @@ module.exports = {
     "withShift": " "
   },
   "Minus": {
-    "unmodified": "-",
-    "withShift": "_"
-  },
-  "Equal": {
-    "unmodified": "=",
-    "withShift": "+"
-  },
-  "BracketLeft": {
     "unmodified": "[",
     "withShift": "{"
   },
-  "BracketRight": {
+  "Equal": {
     "unmodified": "]",
     "withShift": "}"
+  },
+  "BracketLeft": {
+    "unmodified": "/",
+    "withShift": "?"
+  },
+  "BracketRight": {
+    "unmodified": "=",
+    "withShift": "+"
   },
   "Backslash": {
     "unmodified": "\\",
     "withShift": "|"
   },
   "Semicolon": {
-    "unmodified": ";",
-    "withShift": ":"
+    "unmodified": "s",
+    "withShift": "S"
   },
   "Quote": {
-    "unmodified": "'",
-    "withShift": "\""
+    "unmodified": "-",
+    "withShift": "_"
   },
   "Backquote": {
     "unmodified": "`",
     "withShift": "~"
   },
   "Comma": {
-    "unmodified": ",",
-    "withShift": "<"
+    "unmodified": "w",
+    "withShift": "W"
   },
   "Period": {
-    "unmodified": ".",
-    "withShift": ">"
+    "unmodified": "v",
+    "withShift": "V"
   },
   "Slash": {
-    "unmodified": "/",
-    "withShift": "?"
+    "unmodified": "z",
+    "withShift": "Z"
   },
   "NumpadDivide": {
     "unmodified": "/",
@@ -208,59 +208,67 @@ module.exports = {
     "withShift": "+"
   },
   "Numpad1": {
-    "unmodified": "1",
+    "unmodified": null,
     "withShift": "1"
   },
   "Numpad2": {
-    "unmodified": "2",
+    "unmodified": null,
     "withShift": "2"
   },
   "Numpad3": {
-    "unmodified": "3",
+    "unmodified": null,
     "withShift": "3"
   },
   "Numpad4": {
-    "unmodified": "4",
+    "unmodified": null,
     "withShift": "4"
   },
   "Numpad5": {
-    "unmodified": "5",
+    "unmodified": null,
     "withShift": "5"
   },
   "Numpad6": {
-    "unmodified": "6",
+    "unmodified": null,
     "withShift": "6"
   },
   "Numpad7": {
-    "unmodified": "7",
+    "unmodified": null,
     "withShift": "7"
   },
   "Numpad8": {
-    "unmodified": "8",
+    "unmodified": null,
     "withShift": "8"
   },
   "Numpad9": {
-    "unmodified": "9",
+    "unmodified": null,
     "withShift": "9"
   },
   "Numpad0": {
-    "unmodified": "0",
+    "unmodified": null,
     "withShift": "0"
   },
   "NumpadDecimal": {
-    "unmodified": ".",
+    "unmodified": null,
     "withShift": "."
   },
   "IntlBackslash": {
-    "unmodified": "§",
-    "withShift": "±"
+    "unmodified": "<",
+    "withShift": ">"
   },
   "NumpadEqual": {
     "unmodified": "=",
     "withShift": "="
   },
-  "AudioVolumeUp": {
-    "unmodified": null,
-    "withShift": "="
+  "NumpadComma": {
+    "unmodified": ".",
+    "withShift": "."
+  },
+  "NumpadParenLeft": {
+    "unmodified": "(",
+    "withShift": "("
+  },
+  "NumpadParenRight": {
+    "unmodified": ")",
+    "withShift": ")"
   }
 }

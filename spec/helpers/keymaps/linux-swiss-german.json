@@ -1,4 +1,4 @@
-module.exports = {
+{
   "KeyA": {
     "unmodified": "a",
     "withShift": "A"
@@ -96,28 +96,28 @@ module.exports = {
     "withShift": "X"
   },
   "KeyY": {
-    "unmodified": "y",
-    "withShift": "Y"
-  },
-  "KeyZ": {
     "unmodified": "z",
     "withShift": "Z"
   },
+  "KeyZ": {
+    "unmodified": "y",
+    "withShift": "Y"
+  },
   "Digit1": {
     "unmodified": "1",
-    "withShift": "!"
+    "withShift": "+"
   },
   "Digit2": {
     "unmodified": "2",
-    "withShift": "@"
+    "withShift": "\""
   },
   "Digit3": {
     "unmodified": "3",
-    "withShift": "#"
+    "withShift": "*"
   },
   "Digit4": {
     "unmodified": "4",
-    "withShift": "$"
+    "withShift": "�"
   },
   "Digit5": {
     "unmodified": "5",
@@ -125,71 +125,71 @@ module.exports = {
   },
   "Digit6": {
     "unmodified": "6",
-    "withShift": "^"
+    "withShift": "&"
   },
   "Digit7": {
     "unmodified": "7",
-    "withShift": "&"
+    "withShift": "/"
   },
   "Digit8": {
     "unmodified": "8",
-    "withShift": "*"
+    "withShift": "("
   },
   "Digit9": {
     "unmodified": "9",
-    "withShift": "("
+    "withShift": ")"
   },
   "Digit0": {
     "unmodified": "0",
-    "withShift": ")"
+    "withShift": "="
   },
   "Space": {
     "unmodified": " ",
-    "withShift": " "
+    "withShift": "�"
   },
   "Minus": {
-    "unmodified": "-",
-    "withShift": "_"
+    "unmodified": "'",
+    "withShift": "?"
   },
   "Equal": {
-    "unmodified": "=",
-    "withShift": "+"
+    "unmodified": "^",
+    "withShift": "`"
   },
   "BracketLeft": {
-    "unmodified": "[",
-    "withShift": "{"
+    "unmodified": "�",
+    "withShift": "�"
   },
   "BracketRight": {
-    "unmodified": "]",
-    "withShift": "}"
+    "unmodified": "�",
+    "withShift": "!"
   },
   "Backslash": {
-    "unmodified": "\\",
-    "withShift": "|"
+    "unmodified": "$",
+    "withShift": "�"
   },
   "Semicolon": {
-    "unmodified": ";",
-    "withShift": ":"
+    "unmodified": "�",
+    "withShift": "�"
   },
   "Quote": {
-    "unmodified": "'",
-    "withShift": "\""
+    "unmodified": "�",
+    "withShift": "�"
   },
   "Backquote": {
-    "unmodified": "`",
-    "withShift": "~"
+    "unmodified": "�",
+    "withShift": "�"
   },
   "Comma": {
     "unmodified": ",",
-    "withShift": "<"
+    "withShift": ";"
   },
   "Period": {
     "unmodified": ".",
-    "withShift": ">"
+    "withShift": ":"
   },
   "Slash": {
-    "unmodified": "/",
-    "withShift": "?"
+    "unmodified": "-",
+    "withShift": "_"
   },
   "NumpadDivide": {
     "unmodified": "/",
@@ -208,59 +208,67 @@ module.exports = {
     "withShift": "+"
   },
   "Numpad1": {
-    "unmodified": "1",
+    "unmodified": null,
     "withShift": "1"
   },
   "Numpad2": {
-    "unmodified": "2",
+    "unmodified": null,
     "withShift": "2"
   },
   "Numpad3": {
-    "unmodified": "3",
+    "unmodified": null,
     "withShift": "3"
   },
   "Numpad4": {
-    "unmodified": "4",
+    "unmodified": null,
     "withShift": "4"
   },
   "Numpad5": {
-    "unmodified": "5",
+    "unmodified": null,
     "withShift": "5"
   },
   "Numpad6": {
-    "unmodified": "6",
+    "unmodified": null,
     "withShift": "6"
   },
   "Numpad7": {
-    "unmodified": "7",
+    "unmodified": null,
     "withShift": "7"
   },
   "Numpad8": {
-    "unmodified": "8",
+    "unmodified": null,
     "withShift": "8"
   },
   "Numpad9": {
-    "unmodified": "9",
+    "unmodified": null,
     "withShift": "9"
   },
   "Numpad0": {
-    "unmodified": "0",
+    "unmodified": null,
     "withShift": "0"
   },
   "NumpadDecimal": {
-    "unmodified": ".",
-    "withShift": "."
+    "unmodified": null,
+    "withShift": ","
   },
   "IntlBackslash": {
-    "unmodified": "§",
-    "withShift": "±"
+    "unmodified": "<",
+    "withShift": ">"
   },
   "NumpadEqual": {
     "unmodified": "=",
     "withShift": "="
   },
-  "AudioVolumeUp": {
-    "unmodified": null,
-    "withShift": "="
+  "NumpadComma": {
+    "unmodified": ".",
+    "withShift": "."
+  },
+  "NumpadParenLeft": {
+    "unmodified": "(",
+    "withShift": "("
+  },
+  "NumpadParenRight": {
+    "unmodified": ")",
+    "withShift": ")"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "atom-keymap",
-  "version": "7.1.0",
+  "version": "7.1.15",
   "description": "Atom's DOM-aware keymap module",
   "main": "./lib/keymap-manager",
   "scripts": {
@@ -26,7 +26,7 @@
     "event-kit": "^1.0.0",
     "fs-plus": "^2.0.4",
     "grim": "^1.2.1",
-    "keyboard-layout": "^2.0.1",
+    "keyboard-layout": "2.0.7",
     "pathwatcher": "^6.2",
     "property-accessors": "^1",
     "season": "^5.4.1"

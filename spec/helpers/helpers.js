@@ -55,8 +55,6 @@ export function buildKeyboardEvent (type, props) {
   if (process.platform === 'darwin') {
     if (modifierState.AltGraph) {
       altKey = true
-    } else if (altKey) {
-      modifierState.AltGraph = true
     }
   } else if (process.platform === 'win32') {
     if (modifierState.AltGraph) {
