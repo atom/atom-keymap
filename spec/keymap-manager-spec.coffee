@@ -465,6 +465,22 @@ describe "KeymapManager", ->
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['abc-secret-code'])
 
+      it "does not replay any keystrokes due to the keyup suffix", ->
+        keymapManager.add "test",
+          "div.a":
+            "ctrl-y": "y-command-2"
+        elementA.addEventListener 'y-command-2', (e) -> events.push('y-keydown')
+
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        assert.deepEqual(events, ['y-keydown'])
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'y', target: elementA))
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        assert.deepEqual(events, ['y-keydown'])
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'Control', target: elementA))
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        assert.deepEqual(events, ['y-keydown', 'y-up-ctrl-keyup'])
+
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
       keymapManager.add 'test',
