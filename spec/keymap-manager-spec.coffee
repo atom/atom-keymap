@@ -736,6 +736,10 @@ describe "KeymapManager", ->
         currentKeymap = require('./helpers/keymaps/mac-turkish')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'ö', code: 'KeyX', metaKey: true})), 'cmd-ö')
 
+        # Don't blow up if A, S, D, or F don't have entries in the keymap
+        currentKeymap = {KeyA: null, KeyS: null, KeyD: null, KeyF: null}
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'a', code: 'KeyA', ctrlKey: true})), 'ctrl-a')
+
       it "translates dead keys to their printable equivalents on macOS, but not Windows", ->
         mockProcessPlatform('darwin')
         currentKeymap = require('./helpers/keymaps/mac-swedish')
