@@ -25,11 +25,13 @@ isLatinKeymap = (keymap) ->
   if isLatin?
     isLatin
   else
+    # To avoid exceptions, if the native keymap does not have entries for a key,
+    # assume that key is latin.
     isLatin =
-      isLatinCharacter(keymap.KeyA.unmodified) and
-        isLatinCharacter(keymap.KeyS.unmodified) and
-          isLatinCharacter(keymap.KeyD.unmodified) and
-            isLatinCharacter(keymap.KeyF.unmodified)
+      (not keymap.KeyA? or isLatinCharacter(keymap.KeyA.unmodified)) and
+      (not keymap.KeyS? or isLatinCharacter(keymap.KeyS.unmodified)) and
+      (not keymap.KeyD? or isLatinCharacter(keymap.KeyD.unmodified)) and
+      (not keymap.KeyF? or isLatinCharacter(keymap.KeyF.unmodified))
     LATIN_KEYMAP_CACHE.set(keymap, isLatin)
     isLatin
 
