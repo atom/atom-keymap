@@ -28,7 +28,7 @@
     "fs-plus": "^3.0.0",
     "grim": "^1.2.1",
     "keyboard-layout": "2.0.11",
-    "pathwatcher": "6.9.0",
+    "pathwatcher": "^7.0.0",
     "property-accessors": "^1",
     "season": "^5.4.1"
   },
