@@ -30,7 +30,7 @@
     "keyboard-layout": "2.0.11",
     "pathwatcher": "^7.0.0",
     "property-accessors": "^1",
-    "season": "^5.4.1"
+    "season": "^6.0.0"
   },
   "devDependencies": {
     "babel-cli": "6.5.1",
