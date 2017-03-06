@@ -588,6 +588,15 @@ describe "KeymapManager", ->
       keymapManager.handleKeyboardEvent(event)
       assert(not event.defaultPrevented)
 
+    it "rejects bindings with a non object command", ->
+      stub(console, 'warn')
+      assert.equal(keymapManager.add('test', 'body': 'my-sweet-command:that-is-evil'), undefined)
+      assert.equal(console.warn.callCount, 1)
+
+      event = buildKeydownEvent(key: '0', target: document.body)
+      keymapManager.handleKeyboardEvent(event)
+      assert(not event.defaultPrevented)
+
     it "returns a disposable allowing the added bindings to be removed", ->
       disposable1 = keymapManager.add 'foo',
         '.a':
