@@ -570,6 +570,11 @@ describe "KeymapManager", ->
       keymapManager.handleKeyboardEvent(event)
       assert(not event.defaultPrevented)
 
+    it "ignores bindings with an invalid selector when throwOnInvalidSelector is false", ->
+      stub(console, 'warn')
+      assert.notEqual(keymapManager.add('test', {'<>': 'shift-a': 'a'}, 0, false), undefined)
+      assert.equal(console.warn.callCount, 0)
+
     it "rejects bindings with an empty command and logs a warning to the console", ->
       stub(console, 'warn')
       assert.equal(keymapManager.add('test', 'body': 'shift-a': ''), undefined)
