@@ -222,11 +222,11 @@ class KeymapManager
   #   keystroke patterns to commands.
   # * `priority` A {Number} used to sort keybindings which have the same
   #   specificity. Defaults to `0`.
-  add: (source, keyBindingsBySelector, priority=0) ->
+  add: (source, keyBindingsBySelector, priority=0, throwOnInvalidSelector=true) ->
     addedKeyBindings = []
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
-      unless isSelectorValid(selector.replace(/!important/g, ''))
+      if throwOnInvalidSelector and not isSelectorValid(selector.replace(/!important/g, ''))
         console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
         return
 
