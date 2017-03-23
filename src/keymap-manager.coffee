@@ -230,6 +230,10 @@ class KeymapManager
         console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
         return
 
+      unless typeof keyBindings is 'object'
+        console.warn("Encountered an invalid key binding when adding key bindings from '#{source}' '#{keyBindings}'")
+        return
+
       for keystrokes, command of keyBindings
         command = command?.toString?() ? ''
 
