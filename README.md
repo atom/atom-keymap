@@ -1,5 +1,6 @@
 # Atom keymap
 [![Build Status](https://travis-ci.org/atom/atom-keymap.svg?branch=master)](https://travis-ci.org/atom/atom-keymap)
+[![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/Atom/atom-keymap?svg=true)](https://ci.appveyor.com/project/Atom/atom-keymap/branch/master)
 [![Dependency Status](https://david-dm.org/atom/atom-keymap.svg)](https://david-dm.org/atom/atom-keymap)
 
 Atom's DOM-aware keymap module
