@@ -210,6 +210,10 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
       else
         key = characters.unmodified
 
+    if key is 'unidentified'
+      hexCode = "0000#{event.keyCode.toString(16)}"[-4..]
+      key = "U+#{hexCode}"
+
   keystroke = ''
   if key is 'ctrl' or (ctrlKey and event.type isnt 'keyup')
     keystroke += 'ctrl'
