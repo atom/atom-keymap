@@ -532,75 +532,68 @@ describe "KeymapManager", ->
 
       assert.deepEqual(events, ['c', 'b1'])
 
-  describe "::add(source, bindings)", ->
+  describe "::build(source, bindings)", ->
     it "normalizes keystrokes containing capitalized alphabetic characters", ->
-      keymapManager.add 'test', '*': 'ctrl-shift-l': 'a'
-      keymapManager.add 'test', '*': 'ctrl-shift-L': 'b'
-      keymapManager.add 'test', '*': 'ctrl-L': 'c'
-      assert.equal(keymapManager.findKeyBindings(command: 'a')[0].keystrokes, 'ctrl-shift-L')
-      assert.equal(keymapManager.findKeyBindings(command: 'b')[0].keystrokes, 'ctrl-shift-L')
-      assert.equal(keymapManager.findKeyBindings(command: 'c')[0].keystrokes, 'ctrl-shift-L')
+      commandA = keymapManager.build 'test', '*': 'ctrl-shift-l': 'a'
+      commandB = keymapManager.build 'test', '*': 'ctrl-shift-L': 'b'
+      commandC = keymapManager.build 'test', '*': 'ctrl-L': 'c'
+
+      assert.equal(commandA[0].keystrokes, 'ctrl-shift-L')
+      assert.equal(commandB[0].keystrokes, 'ctrl-shift-L')
+      assert.equal(commandC[0].keystrokes, 'ctrl-shift-L')
 
     it "normalizes the order of modifier keys based on the Apple interface guidelines", ->
-      keymapManager.add 'test', '*': 'alt-cmd-ctrl-shift-l': 'a'
-      keymapManager.add 'test', '*': 'shift-ctrl-l': 'b'
-      keymapManager.add 'test', '*': 'alt-ctrl-l': 'c'
-      keymapManager.add 'test', '*': 'ctrl-alt--': 'd'
+      commandA = keymapManager.build 'test', '*': 'alt-cmd-ctrl-shift-l': 'a'
+      commandB = keymapManager.build 'test', '*': 'shift-ctrl-l': 'b'
+      commandC = keymapManager.build 'test', '*': 'alt-ctrl-l': 'c'
+      commandD = keymapManager.build 'test', '*': 'ctrl-alt--': 'd'
 
-      assert.equal(keymapManager.findKeyBindings(command: 'a')[0].keystrokes, 'ctrl-alt-shift-cmd-L')
-      assert.equal(keymapManager.findKeyBindings(command: 'b')[0].keystrokes, 'ctrl-shift-L')
-      assert.equal(keymapManager.findKeyBindings(command: 'c')[0].keystrokes, 'ctrl-alt-l')
-      assert.equal(keymapManager.findKeyBindings(command: 'd')[0].keystrokes, 'ctrl-alt--')
+      assert.equal(commandA[0].keystrokes, 'ctrl-alt-shift-cmd-L')
+      assert.equal(commandB[0].keystrokes, 'ctrl-shift-L')
+      assert.equal(commandC[0].keystrokes, 'ctrl-alt-l')
+      assert.equal(commandD[0].keystrokes, 'ctrl-alt--')
 
     it "rejects bindings with unknown modifier keys and logs a warning to the console", ->
       stub(console, 'warn')
-      keymapManager.add 'test', '*': 'meta-shift-A': 'a'
+      commandA = keymapManager.build 'test', '*': 'meta-shift-A': 'a'
       assert.equal(console.warn.callCount, 1)
-
-      event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
-      keymapManager.handleKeyboardEvent(event)
-      assert.equal(event.defaultPrevented, false)
+      assert.lengthOf(commandA, 0)
 
     it "rejects bindings with an invalid selector and logs a warning to the console", ->
       stub(console, 'warn')
-      assert.equal(keymapManager.add('test', '<>': 'shift-a': 'a'), undefined)
+      assert.lengthOf(keymapManager.build('test', '<>': 'shift-a': 'a'), 0)
       assert.equal(console.warn.callCount, 1)
-
-      event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
-      keymapManager.handleKeyboardEvent(event)
-      assert(not event.defaultPrevented)
 
     it "ignores bindings with an invalid selector when throwOnInvalidSelector is false", ->
       stub(console, 'warn')
-      assert.notEqual(keymapManager.add('test', {'<>': 'shift-a': 'a'}, 0, false), undefined)
+      assert.lengthOf(keymapManager.build('test', {'<>': 'shift-a': 'a'}, 0, false), 0)
       assert.equal(console.warn.callCount, 0)
 
     it "rejects bindings with an empty command and logs a warning to the console", ->
       stub(console, 'warn')
-      assert.equal(keymapManager.add('test', 'body': 'shift-a': ''), undefined)
+      assert.lengthOf(keymapManager.build('test', 'body': 'shift-a': ''), 0)
       assert.equal(console.warn.callCount, 1)
-
-      event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
-      keymapManager.handleKeyboardEvent(event)
-      assert(not event.defaultPrevented)
 
     it "rejects bindings without a command and logs a warning to the console", ->
       stub(console, 'warn')
-      assert.equal(keymapManager.add('test', 'body': 'shift-a': null), undefined)
+      assert.lengthOf(keymapManager.build('test', 'body': 'shift-a': null), 0)
       assert.equal(console.warn.callCount, 1)
-
-      event = buildKeydownEvent(key: 'A', shiftKey: true, target: document.body)
-      keymapManager.handleKeyboardEvent(event)
-      assert(not event.defaultPrevented)
 
     it "rejects bindings with a non object command", ->
       stub(console, 'warn')
-      assert.equal(keymapManager.add('test', 'body': 'my-sweet-command:that-is-evil'), undefined)
+      assert.lengthOf(keymapManager.build('test', 'body': 'my-sweet-command:that-is-evil'), 0)
       assert.equal(console.warn.callCount, 1)
 
-      event = buildKeydownEvent(key: '0', target: document.body)
+  describe "::add(source, bindings)", ->
+    it "registers the new bindings", ->
+      keymapManager.add 'foo',
+        'body':
+          'ctrl-a': 'x'
+          'ctrl-b': 'y'
+
+      event = buildKeydownEvent(key: 'A', ctrlKey: true, target: document.body)
       keymapManager.handleKeyboardEvent(event)
-      assert(not event.defaultPrevented)
+      assert.isTrue(event.defaultPrevented)
 
     it "returns a disposable allowing the added bindings to be removed", ->
       disposable1 = keymapManager.add 'foo',
