@@ -214,6 +214,14 @@ class KeymapManager
   Section: Adding and Removing Bindings
   ###
 
+  # Extended: Construct [KeyBindings]{KeyBinding} from an object grouping them by CSS selector.
+  #
+  # * `source` A {String} (usually a path) uniquely identifying the given bindings
+  #   so they can be removed later.
+  # * `bindings` An {Object} whose top-level keys point at sub-objects mapping
+  #   keystroke patterns to commands.
+  # * `priority` A {Number} used to sort keybindings which have the same
+  #   specificity. Defaults to `0`.
   build: (source, keyBindingsBySelector, priority=0, throwOnInvalidSelector=true) ->
     bindings = []
     for selector, keyBindings of keyBindingsBySelector
