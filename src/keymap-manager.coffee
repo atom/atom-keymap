@@ -214,6 +214,40 @@ class KeymapManager
   Section: Adding and Removing Bindings
   ###
 
+  # Extended: Construct [KeyBindings]{KeyBinding} from an object grouping them by CSS selector.
+  #
+  # * `source` A {String} (usually a path) uniquely identifying the given bindings
+  #   so they can be removed later.
+  # * `bindings` An {Object} whose top-level keys point at sub-objects mapping
+  #   keystroke patterns to commands.
+  # * `priority` A {Number} used to sort keybindings which have the same
+  #   specificity. Defaults to `0`.
+  build: (source, keyBindingsBySelector, priority=0, throwOnInvalidSelector=true) ->
+    bindings = []
+    for selector, keyBindings of keyBindingsBySelector
+      # Verify selector is valid before registering any bindings
+      unless isSelectorValid(selector.replace(/!important/g, ''))
+        if throwOnInvalidSelector
+          console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
+        continue
+
+      unless typeof keyBindings is 'object'
+        console.warn("Encountered an invalid key binding when adding key bindings from '#{source}' '#{keyBindings}'")
+        continue
+
+      for keystrokes, command of keyBindings
+        command = command?.toString?() ? ''
+
+        if command.length is 0
+          console.warn "Empty command for binding: `#{selector}` `#{keystrokes}` in #{source}"
+          continue
+
+        if normalizedKeystrokes = normalizeKeystrokes(keystrokes)
+          bindings.push new KeyBinding(source, command, normalizedKeystrokes, selector, priority)
+        else
+          console.warn "Invalid keystroke sequence for binding: `#{keystrokes}: #{command}` in #{source}"
+    bindings
+
   # Public: Add sets of key bindings grouped by CSS selector.
   #
   # * `source` A {String} (usually a path) uniquely identifying the given bindings
@@ -223,31 +257,8 @@ class KeymapManager
   # * `priority` A {Number} used to sort keybindings which have the same
   #   specificity. Defaults to `0`.
   add: (source, keyBindingsBySelector, priority=0, throwOnInvalidSelector=true) ->
-    addedKeyBindings = []
-    for selector, keyBindings of keyBindingsBySelector
-      # Verify selector is valid before registering any bindings
-      if throwOnInvalidSelector and not isSelectorValid(selector.replace(/!important/g, ''))
-        console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
-        return
-
-      unless typeof keyBindings is 'object'
-        console.warn("Encountered an invalid key binding when adding key bindings from '#{source}' '#{keyBindings}'")
-        return
-
-      for keystrokes, command of keyBindings
-        command = command?.toString?() ? ''
-
-        if command.length is 0
-          console.warn "Empty command for binding: `#{selector}` `#{keystrokes}` in #{source}"
-          return
-
-        if normalizedKeystrokes = normalizeKeystrokes(keystrokes)
-          keyBinding = new KeyBinding(source, command, normalizedKeystrokes, selector, priority)
-          addedKeyBindings.push(keyBinding)
-          @keyBindings.push(keyBinding)
-        else
-          console.warn "Invalid keystroke sequence for binding: `#{keystrokes}: #{command}` in #{source}"
-
+    addedKeyBindings = @build source, keyBindingsBySelector, priority, throwOnInvalidSelector
+    @keyBindings.push addedKeyBindings...
     new Disposable =>
       for keyBinding in addedKeyBindings
         index = @keyBindings.indexOf(keyBinding)
