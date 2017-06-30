@@ -226,9 +226,8 @@ class KeymapManager
     bindings = []
     for selector, keyBindings of keyBindingsBySelector
       # Verify selector is valid before registering any bindings
-      unless isSelectorValid(selector.replace(/!important/g, ''))
-        if throwOnInvalidSelector
-          console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
+      if throwOnInvalidSelector and not isSelectorValid(selector.replace(/!important/g, ''))
+        console.warn("Encountered an invalid selector adding key bindings from '#{source}': '#{selector}'")
         continue
 
       unless typeof keyBindings is 'object'
