@@ -566,7 +566,7 @@ describe "KeymapManager", ->
 
     it "ignores bindings with an invalid selector when throwOnInvalidSelector is false", ->
       stub(console, 'warn')
-      assert.lengthOf(keymapManager.build('test', {'<>': 'shift-a': 'a'}, 0, false), 0)
+      assert.lengthOf(keymapManager.build('test', {'<>': 'shift-a': 'a'}, 0, false), 1)
       assert.equal(console.warn.callCount, 0)
 
     it "rejects bindings with an empty command and logs a warning to the console", ->
