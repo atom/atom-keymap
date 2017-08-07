@@ -156,6 +156,13 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
   if isNonCharacterKey
     key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[key] ? key.toLowerCase()
   else
+    # Deal with caps-lock issues. Key bindings should always adjust the
+    # capitalization of the key based on the shiftKey state and never the state
+    # of the caps-lock key
+    if shiftKey
+      key = key.toUpperCase()
+    else
+      key = key.toLowerCase()
     if event.getModifierState('AltGraph') or (process.platform is 'darwin' and altKey)
       # All macOS layouts have an alt-modified character variant for every
       # single key. Therefore, if we always favored the alt variant, it would
@@ -191,14 +198,6 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
         if nonAltModifiedKey and (ctrlKey or altKey or metaKey)
           key = nonAltModifiedKey
           altKey = event.getModifierState('AltGraph')
-
-    # Deal with caps-lock issues. Key bindings should always adjust the
-    # capitalization of the key based on the shiftKey state and never the state
-    # of the caps-lock key
-    if shiftKey
-      key = key.toUpperCase()
-    else
-      key = key.toLowerCase()
 
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
