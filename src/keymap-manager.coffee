@@ -544,7 +544,8 @@ class KeymapManager
     hasPartialMatches = partialMatches.length > 0
     shouldUsePartialMatches = hasPartialMatches
 
-    if isKeyup(keystroke)
+    eventIsKeyup = isKeyup(keystroke)
+    if eventIsKeyup
       exactMatchCandidates = exactMatchCandidates.concat(@pendingKeyupMatcher.getMatches(keystroke))
 
     # Determine if the current keystrokes match any bindings *exactly*. If we
@@ -631,10 +632,10 @@ class KeymapManager
 
     @bindingsToDisable.push(dispatchedExactMatch) if dispatchedExactMatch
     if hasPartialMatches and shouldUsePartialMatches
-      enableTimeout = (
-        @pendingStateTimeoutHandle? or
-        dispatchedExactMatch? or
-        characterForKeyboardEvent(@queuedKeyboardEvents[0])?
+      enableTimeout = @pendingStateTimeoutHandle? or
+        not allPartialMatchesContainKeyupRemainder and (
+          dispatchedExactMatch? or
+          characterForKeyboardEvent(@queuedKeyboardEvents[0])? and not eventIsKeyup
       )
       enableTimeout = false if replay
       @enterPendingState(partialMatches, enableTimeout)

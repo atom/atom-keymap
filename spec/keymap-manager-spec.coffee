@@ -465,6 +465,44 @@ describe "KeymapManager", ->
         getFakeClock().tick(keymapManager.getPartialMatchTimeout())
         assert.deepEqual(events, ['abc-secret-code'])
 
+      it "does not replay any keystrokes due to the keyup suffix", ->
+        keymapManager.add "test",
+          "div.a":
+            "ctrl-y": "y-command-2"
+        elementA.addEventListener 'y-command-2', (e) -> events.push('y-keydown')
+
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', ctrlKey: true, target: elementA))
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        assert.deepEqual(events, ['y-keydown'])
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'y', target: elementA))
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        assert.deepEqual(events, ['y-keydown'])
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'Control', target: elementA))
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        assert.deepEqual(events, ['y-keydown', 'y-up-ctrl-keyup'])
+
+      it "does not replay any keystrokes due to an alt- keyup suffix either", ->
+        keymapManager.add "test",
+          ".a":
+            "alt-y": "alt-y-command-2"
+        keymapManager.add "test",
+          "div.a":
+            "alt-y": "alt-y-command"
+            "alt-y ^alt": "alt-y-release-command"
+
+        ['alt-y-command', 'alt-y-release-command', 'alt-y-command-2'].forEach (command) ->
+          elementA.addEventListener command, (e) -> events.push(command)
+
+        keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'y', altKey: true, target: elementA))
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        assert.deepEqual(events, ['alt-y-command'])
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'y', target: elementA))
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        assert.deepEqual(events, ['alt-y-command'])
+        keymapManager.handleKeyboardEvent(buildKeyupEvent(key: 'Alt', target: elementA))
+        getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+        assert.deepEqual(events, ['alt-y-command', 'alt-y-release-command'])
+
     it "only counts entire keystrokes when checking for partial matches", ->
       element = $$ -> @div class: 'a'
       keymapManager.add 'test',
