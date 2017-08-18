@@ -741,13 +741,6 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'e', altKey: true, altGraphKey: false})), 'alt-e')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'E', altKey: true, shiftKey: true, altGraphKey: false})), 'alt-shift-E')
 
-      it "falls back to the non-alt key if other modifiers are combined with ALtGraph on Linux", ->
-        mockProcessPlatform('linux')
-        currentKeymap = require('./helpers/keymaps/linux-swiss-german')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', ctrlKey: true, modifierState: {AltGraph: true}})), 'ctrl-alt-g')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', metaKey: true, modifierState: {AltGraph: true}})), 'alt-cmd-g')
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', altKey: true, modifierState: {AltGraph: true}})), 'alt-g')
-
       it "resolves events with a key value of Unknown and a code of IntlRo to '/' (this occurs on a Brazillian Portuguese keyboard layout on Mint Linux)", ->
         mockProcessPlatform('linux')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Unidentified', code: 'IntlRo', ctrlKey: true})), 'ctrl-/')
