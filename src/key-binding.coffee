@@ -77,7 +77,7 @@ class KeyBinding
             return false
 
       if isPartialMatch
-        bindingRemainderContainsOnlyKeyups = false unless bindingKeystroke.startsWith('^') and bindingKeystroke.length > 1
+        bindingRemainderContainsOnlyKeyups = false unless isKeyup(bindingKeystroke)
 
     # Bindings that match the beginning of the user's keystrokes are not a match.
     # e.g. This is not a match. It would have been a match on the previous keystroke:
