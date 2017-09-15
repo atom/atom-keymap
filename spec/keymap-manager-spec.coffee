@@ -652,10 +652,6 @@ describe "KeymapManager", ->
       it "doesn't drop the ctrl-alt modifiers when there is no AltGraph variant", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'p', shiftKey: true, altKey: true, ctrlKey: true})), 'ctrl-alt-shift-P')
 
-    describe "when the KeyboardEvent.key is 'Delete' but KeyboardEvent.code is 'Backspace' due to pressing ctrl-delete with numlock enabled on Windows", ->
-      it "translates as ctrl-backspace instead of ctrl-delete", ->
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Delete', code: 'Backspace', ctrlKey: true})), 'ctrl-backspace')
-
     describe "when the KeyboardEvent.key is '' but the KeyboardEvent.code is 'NumpadDecimal' and getModifierState('NumLock') returns false", ->
       it "translates as delete to work around a Chrome bug on Linux", ->
         mockProcessPlatform('linux')
