@@ -29,6 +29,9 @@ describe "KeyBinding", ->
       assert.equal(keyBindingArgHelper('a b c').matchesKeystrokes(['a', '^a', 'b', '^b']), 'partial')
       assert.equal(keyBindingArgHelper('a b c').matchesKeystrokes(['a', '^a', 'd', '^d']), false)
 
+    it "returns 'partial' correctly for bindings that end in ^", ->
+      assert.equal(keyBindingArgHelper('g a ^').matchesKeystrokes(['g', '^g', 'a', '^a']), 'partial')
+
     it "returns MATCH_TYPES.PENDING_KEYUP for bindings that match and contain a remainder of only keyup events", ->
       assert.equal(keyBindingArgHelper('a b ^b').matchesKeystrokes(['a', 'b']), MATCH_TYPES.PENDING_KEYUP)
 
