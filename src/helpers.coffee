@@ -66,7 +66,7 @@ usCharactersForKeyCode = (code) ->
 
 slovakCmdKeymap = null
 slovakCmdCharactersForKeyCode = (code) ->
-  slovakCmdKeymap ?= require('./slovak-cmd-keymap.coffee')
+  slovakCmdKeymap ?= require('./slovak-cmd-keymap')
   slovakCmdKeymap[code]
 
 exports.normalizeKeystrokes = (keystrokes) ->
