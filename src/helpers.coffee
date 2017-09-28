@@ -228,7 +228,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
 
   # Work around https://bugs.chromium.org/p/chromium/issues/detail?id=766800
   # TODO: Remove this workaround when we are using an Electron version based on chrome M62
-  if metaKey and currentLayout is 'com.apple.keylayout.Slovak' or currentLayout is 'com.apple.keylaout.Slovak-QWERTY'
+  if metaKey and currentLayout is 'com.apple.keylayout.Slovak' or currentLayout is 'com.apple.keylayout.Slovak-QWERTY'
     if characters = slovakCmdCharactersForKeyCode(event.code, currentLayout)
       if event.shiftKey
         key = characters.withShift
