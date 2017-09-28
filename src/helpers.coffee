@@ -73,7 +73,7 @@ slovakCmdCharactersForKeyCode = (code, layout) ->
   if layout is 'com.apple.keylayout.Slovak'
     slovakCmdKeymap[code]
   else
-    slovakCmdQwertyKeymap[code]
+    slovakQwertyCmdKeymap[code]
 
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
