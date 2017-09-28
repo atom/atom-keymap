@@ -64,6 +64,17 @@ usCharactersForKeyCode = (code) ->
   usKeymap ?= require('./us-keymap')
   usKeymap[code]
 
+slovakCmdKeymap = null
+slovakQwertyCmdKeymap = null
+slovakCmdCharactersForKeyCode = (code, layout) ->
+  slovakCmdKeymap ?= require('./slovak-cmd-keymap')
+  slovakQwertyCmdKeymap ?= require('./slovak-qwerty-cmd-keymap')
+
+  if layout is 'com.apple.keylayout.Slovak'
+    slovakCmdKeymap[code]
+  else
+    slovakQwertyCmdKeymap[code]
+
 exports.normalizeKeystrokes = (keystrokes) ->
   normalizedKeystrokes = []
   for keystroke in keystrokes.split(WHITESPACE_REGEX)
@@ -126,6 +137,8 @@ parseKeystroke = (keystroke) ->
 exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
   {key, code, ctrlKey, altKey, shiftKey, metaKey} = event
 
+  currentLayout = KeyboardLayout.getCurrentKeyboardLayout()
+
   if key is 'Dead'
     if process.platform is 'darwin' and characters = KeyboardLayout.getCurrentKeymap()?[event.code]
       if altKey and shiftKey and characters.withAltGraphShift?
@@ -163,6 +176,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
       key = key.toUpperCase()
     else
       key = key.toLowerCase()
+
     if event.getModifierState('AltGraph') or (process.platform is 'darwin' and altKey)
       # All macOS layouts have an alt-modified character variant for every
       # single key. Therefore, if we always favored the alt variant, it would
@@ -199,11 +213,23 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
           key = nonAltModifiedKey
           altKey = event.getModifierState('AltGraph')
 
+  # TODO: Remove the com.apple.keylayout.DVORAK-QWERTYCMD
+  # case when we are using an Electron version based on Chromium M62
+  # That issue was fixed in https://bugs.chromium.org/p/chromium/issues/detail?id=747358
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
   if (key.length is 1 and not isLatinKeymap(KeyboardLayout.getCurrentKeymap())) or
-     (metaKey and KeyboardLayout.getCurrentKeyboardLayout() is 'com.apple.keylayout.DVORAK-QWERTYCMD')
+     (metaKey and currentLayout is 'com.apple.keylayout.DVORAK-QWERTYCMD')
     if characters = usCharactersForKeyCode(event.code)
+      if event.shiftKey
+        key = characters.withShift
+      else
+        key = characters.unmodified
+
+  # Work around https://bugs.chromium.org/p/chromium/issues/detail?id=766800
+  # TODO: Remove this workaround when we are using an Electron version based on chrome M62
+  if metaKey and currentLayout is 'com.apple.keylayout.Slovak' or currentLayout is 'com.apple.keylayout.Slovak-QWERTY'
+    if characters = slovakCmdCharactersForKeyCode(event.code, currentLayout)
       if event.shiftKey
         key = characters.withShift
       else
