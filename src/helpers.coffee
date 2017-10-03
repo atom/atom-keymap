@@ -219,7 +219,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
   # Use US equivalent character for non-latin characters in keystrokes with modifiers
   # or when using the dvorak-qwertycmd layout and holding down the command key.
   if (key.length is 1 and not isLatinKeymap(KeyboardLayout.getCurrentKeymap())) or
-     (metaKey and currentLayout is 'com.apple.keylayout.DVORAK-QWERTYCMD')
+     (metaKey and currentLayout.indexOf('DVORAK-QWERTYCMD') > -1)
     if characters = usCharactersForKeyCode(event.code)
       if event.shiftKey
         key = characters.withShift
