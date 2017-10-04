@@ -702,7 +702,7 @@ describe "KeymapManager", ->
       it "uses the US layout equivalent when the command key is held down", ->
         mockProcessPlatform('darwin')
         stub(KeyboardLayout, 'getCurrentKeymap', -> require('./helpers/keymaps/mac-dvorak-qwerty-cmd'))
-        stub(KeyboardLayout, 'getCurrentKeyboardLayout', -> 'DVORAK-QWERTYCMD')
+        stub(KeyboardLayout, 'getCurrentKeyboardLayout', -> 'org.unknown.keylayout.DVORAK-QWERTYCMD')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'l', code: 'KeyP', altKey: true})), 'alt-l')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'l', code: 'KeyP', ctrlKey: true, altKey: true})), 'ctrl-alt-l')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'l', code: 'KeyP', metaKey: true})), 'cmd-p')
