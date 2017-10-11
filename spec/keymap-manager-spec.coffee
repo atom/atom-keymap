@@ -1013,7 +1013,7 @@ describe "KeymapManager", ->
 
     beforeEach ->
       elementA = appendContent $$ ->
-        @div class: 'a', ->
+        @div class: 'a'
 
     it "emits `matched` when a key binding matches an event", ->
       elementA.addEventListener 'aborted-command', (e) -> e.abortKeyBinding()
@@ -1025,18 +1025,18 @@ describe "KeymapManager", ->
           "ctrl-x": "used-command"
         ".a":
           "ctrl-x": "aborted-command"
-        "*":
+        "html":
           "ctrl-x": "unused-command"
         ".not-in-the-dom":
-          "ctrl-x": "unmached-command"
+          "ctrl-x": "unmatched-command"
 
-      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', ctrlKey: true, target: document.body))
+      keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'x', ctrlKey: true, target: elementA))
       assert.equal(handler.callCount, 1)
 
       {keystrokes, binding, keyboardEventTarget, abortedBindings} = handler.firstCall.args[0]
       assert.equal(keystrokes, 'ctrl-x')
       assert.equal(binding.command, 'used-command')
-      assert.equal(keyboardEventTarget, document.body)
+      assert.equal(keyboardEventTarget, elementA)
       assert.equal(abortedBindings[0].command, 'aborted-command')
 
     it "emits `matched-partially` when a key binding partially matches an event", ->
