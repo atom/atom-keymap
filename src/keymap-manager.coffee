@@ -214,7 +214,7 @@ class KeymapManager
   Section: Adding and Removing Bindings
   ###
 
-  # Extended: Construct [KeyBindings]{KeyBinding} from an object grouping them by CSS selector.
+  # Extended: Construct {KeyBinding}s from an object grouping them by CSS selector.
   #
   # * `source` A {String} (usually a path) uniquely identifying the given bindings
   #   so they can be removed later.
