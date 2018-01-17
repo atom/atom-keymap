@@ -56,7 +56,7 @@ OtherPlatforms = Platforms.filter (platform) -> platform isnt process.platform
 # Multi-keystroke bindings are possible. If a sequence of one or more keystrokes
 # *partially* matches a multi-keystroke binding, the keymap enters a pending
 # state. The pending state is terminated on the next keystroke, or after
-# {::partialMatchTimeout} milliseconds has elapsed. When the pending state is
+# {::getPartialMatchTimeout} milliseconds has elapsed. When the pending state is
 # terminated via a timeout or a keystroke that leads to no matches, the longest
 # ambiguous bindings that caused the pending state are temporarily disabled and
 # the previous keystrokes are replayed. If there is ambiguity again during the
