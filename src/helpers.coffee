@@ -1,8 +1,8 @@
 {calculateSpecificity} = require 'clear-cut'
 KeyboardLayout = require 'keyboard-layout'
 
-MODIFIERS = new Set(['ctrl', 'alt', 'shift', 'cmd'])
-ENDS_IN_MODIFIER_REGEX = /(ctrl|alt|shift|cmd)$/
+MODIFIERS = new Set(['ctrl', 'alt', 'shift', 'cmd', 'altgraph'])
+ENDS_IN_MODIFIER_REGEX = /(ctrl|alt|shift|cmd|altgraph)$/
 WHITESPACE_REGEX = /\s+/
 KEY_NAMES_BY_KEYBOARD_EVENT_CODE = {
   'Space': 'space',
@@ -240,6 +240,10 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
     keystroke += 'ctrl'
 
   if key is 'alt' or (altKey and event.type isnt 'keyup')
+    keystroke += '-' if keystroke.length > 0
+    keystroke += 'alt'
+
+  if key is 'altgraph' and process.platform isnt 'darwin' and event.type is 'keyup'
     keystroke += '-' if keystroke.length > 0
     keystroke += 'alt'
 
