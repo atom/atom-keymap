@@ -168,6 +168,8 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
   isNonCharacterKey = key.length > 1
   if isNonCharacterKey
     key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[key] ? key.toLowerCase()
+    if key is "altgraph" and process.platform is "win32"
+      key = "alt"
   else
     # Deal with caps-lock issues. Key bindings should always adjust the
     # capitalization of the key based on the shiftKey state and never the state
