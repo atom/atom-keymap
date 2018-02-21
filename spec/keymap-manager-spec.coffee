@@ -722,6 +722,10 @@ describe "KeymapManager", ->
         currentKeymap = null
         stub(KeyboardLayout, 'getCurrentKeymap', -> currentKeymap)
 
+      it "correctly resolves to AltGraph to ctrl-alt when key is AltGraph on Windows", ->
+        mockProcessPlatform('win32')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'AltGraph', code: 'AltRight', ctrlKey: true, altKey: true})), 'ctrl-alt')
+
       it "allows ASCII characters (<= 127) to be typed via an option modifier on macOS", ->
         mockProcessPlatform('darwin')
 
