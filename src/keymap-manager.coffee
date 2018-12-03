@@ -633,7 +633,7 @@ class KeymapManager
     if hasPartialMatches and shouldUsePartialMatches
       enableTimeout = (
         @pendingStateTimeoutHandle? or
-        dispatchedExactMatch? or
+        exactMatchCandidate? or
         characterForKeyboardEvent(@queuedKeyboardEvents[0])?
       )
       enableTimeout = false if replay

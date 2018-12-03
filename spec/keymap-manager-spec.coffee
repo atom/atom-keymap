@@ -301,6 +301,41 @@ describe "KeymapManager", ->
           getFakeClock().tick(keymapManager.getPartialMatchTimeout())
           assert.deepEqual(events, ['viv'])
 
+        it "disables partially-matching bindings and replays the queued keystrokes if the ::partialMatchTimeout expires, even when the exact match contains the control or meta key", ->
+          keymapManager.add 'test',
+            '.workspace':
+              'ctrl-d o g': 'control-dog'
+              'ctrl-d': 'control-d'
+          workspace.addEventListener 'control-dog', -> events.push('control-dog')
+          workspace.addEventListener 'control-d', -> events.push('control-d')
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'd', ctrlKey: true, target: editor))
+          assert.deepEqual(events, [])
+          getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+          assert.deepEqual(events, ['control-d'])
+
+          # Also make sure we canceled the arpeggio.
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'g', target: editor))
+          getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+          assert.deepEqual(events, ['control-d'])
+
+          # Alright, now let's just double check with meta instead of control.
+          events = []
+          keymapManager.add 'test',
+            '.workspace':
+              'cmd-d o g': 'meta-dog'
+              'cmd-d': 'meta-d'
+          workspace.addEventListener 'meta-dog', -> events.push('meta-dog')
+          workspace.addEventListener 'meta-d', -> events.push('meta-d')
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'd', metaKey: true, target: editor))
+          assert.deepEqual(events, [])
+          getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+          assert.deepEqual(events, ['meta-d'])
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'o', target: editor))
+          keymapManager.handleKeyboardEvent(buildKeydownEvent(key: 'g', target: editor))
+          getFakeClock().tick(keymapManager.getPartialMatchTimeout())
+          assert.deepEqual(events, ['meta-d'])
+
         it "does not enter a pending state or prevent the default action if the matching binding's command is 'native!'", ->
           keymapManager.add 'test', '.workspace': 'v': 'native!'
           event = buildKeydownEvent(key: 'v', target: editor)
