@@ -165,6 +165,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
     if code is 'IntlRo' and key is 'Unidentified' and ctrlKey
       key = '/'
 
+  isAltModifiedKey = false
   isNonCharacterKey = key.length > 1
   if isNonCharacterKey
     key = NON_CHARACTER_KEY_NAMES_BY_KEYBOARD_EVENT_KEY[key] ? key.toLowerCase()
@@ -192,6 +193,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
           key = nonAltModifiedKey
         else if key isnt nonAltModifiedKey
           altKey = false
+          isAltModifiedKey = true
       # Windows layouts are more sparing in their use of AltGr-modified
       # characters, and the U.S. layout doesn't have any of them at all. That
       # means that if an AltGr variant character exists for the current
@@ -205,6 +207,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
         else if key isnt nonAltModifiedKey
           ctrlKey = false
           altKey = false
+          isAltModifiedKey = true
       # Linux has a dedicated `AltGraph` key that is distinct from all other
       # modifiers, including LeftAlt. However, if AltGraph is used in
       # combination with other modifiers, we want to treat it as a modifier and
@@ -214,18 +217,30 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
         if nonAltModifiedKey and (ctrlKey or altKey or metaKey)
           key = nonAltModifiedKey
           altKey = event.getModifierState('AltGraph')
+          isAltModifiedKey = not altKey
 
-  # TODO: Remove the com.apple.keylayout.DVORAK-QWERTYCMD
-  # case when we are using an Electron version based on Chromium M62
-  # That issue was fixed in https://bugs.chromium.org/p/chromium/issues/detail?id=747358
-  # Use US equivalent character for non-latin characters in keystrokes with modifiers
-  # or when using the dvorak-qwertycmd layout and holding down the command key.
-  if (key.length is 1 and not isLatinKeymap(KeyboardLayout.getCurrentKeymap())) or
-     (metaKey and currentLayout.indexOf('DVORAK-QWERTYCMD') > -1)
-    if characters = usCharactersForKeyCode(event.code)
+  # Ensure that shifted writing system characters are reported correctly
+  if event.code and key.length is 1
+    characters =
+      # TODO: Remove the com.apple.keylayout.DVORAK-QWERTYCMD
+      # case when we are using an Electron version based on Chromium M62
+      # That issue was fixed in https://bugs.chromium.org/p/chromium/issues/detail?id=747358
+      # Use US equivalent character for non-latin characters in keystrokes with modifiers
+      # or when using the dvorak-qwertycmd layout and holding down the command key.
+      # if (key.length is 1 and not isLatinKeymap(KeyboardLayout.getCurrentKeymap())) or
+      if (not isLatinKeymap(KeyboardLayout.getCurrentKeymap())) or
+         (metaKey and currentLayout.indexOf('DVORAK-QWERTYCMD') > -1)
+        usCharactersForKeyCode(event.code)
+      # As of Chromium ~62, KeyboardEvent.key is now sent in its un-shifted
+      # for writing system characters (`8` vs `*`) so we need to manually
+      # fetch the shifted version to maintain our former keystroke output
+      else if not isAltModifiedKey
+        KeyboardLayout.getCurrentKeymap()?[event.code]
+
+    if characters
       if event.shiftKey
         key = characters.withShift
-      else
+      else if characters.unmodified?
         key = characters.unmodified
 
   # Work around https://bugs.chromium.org/p/chromium/issues/detail?id=766800
