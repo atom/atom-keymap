@@ -240,7 +240,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
     if characters
       if event.shiftKey
         key = characters.withShift
-      else
+      else if characters.unmodified?
         key = characters.unmodified
 
   # Work around https://bugs.chromium.org/p/chromium/issues/detail?id=766800
