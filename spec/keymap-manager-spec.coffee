@@ -756,7 +756,7 @@ describe "KeymapManager", ->
       it "resolves using the native keymap", ->
         mockProcessPlatform('darwin')
         stub(KeyboardLayout, 'getCurrentKeymap', -> require('./helpers/keymaps/mac-undefined-keys.json'))
-        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: undefined, code: 'KeyF', modifierState: {altKey: true}}), 'alt-f')
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: undefined, code: 'KeyF', modifierState: {altKey: true}})), 'alt-f')
 
     describe "international layouts", ->
       currentKeymap = null
