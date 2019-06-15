@@ -139,7 +139,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
 
   currentLayout = KeyboardLayout.getCurrentKeyboardLayout()
 
-  if key is 'Dead'
+  if not key or key is 'Dead'
     if process.platform is 'darwin' and characters = KeyboardLayout.getCurrentKeymap()?[event.code]
       if altKey and shiftKey and characters.withAltGraphShift?
         key = characters.withAltGraphShift
@@ -149,10 +149,6 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
         key = characters.withShift
       else if characters.unmodified?
         key = characters.unmodified
-
-  if key is undefined
-    if process.platform is 'darwin'
-      key = KeyboardLayout.getCurrentKeymap()?[event.code]
 
   if NUMPAD_KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]? and event.getModifierState('NumLock')
     key = NUMPAD_KEY_NAMES_BY_KEYBOARD_EVENT_CODE[code]
