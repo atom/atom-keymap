@@ -752,6 +752,12 @@ describe "KeymapManager", ->
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: '@', code: 'KeyG', modifierState: {AltGraph: true}})), '@')
         assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: 'Dead', code: 'KeyU', modifierState: {AltGraph: true}})), 'alt-dead')
 
+    describe "when the key is undefined on macOS", ->
+      it "resolves using the native keymap", ->
+        mockProcessPlatform('darwin')
+        stub(KeyboardLayout, 'getCurrentKeymap', -> require('./helpers/keymaps/mac-undefined-keys.json'))
+        assert.equal(keymapManager.keystrokeForKeyboardEvent(buildKeydownEvent({key: undefined, code: 'KeyF', altKey: true})), 'alt-f')
+
     describe "international layouts", ->
       currentKeymap = null
 

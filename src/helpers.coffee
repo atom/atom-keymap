@@ -139,7 +139,7 @@ exports.keystrokeForKeyboardEvent = (event, customKeystrokeResolvers) ->
 
   currentLayout = KeyboardLayout.getCurrentKeyboardLayout()
 
-  if key is 'Dead'
+  if not key or key is 'Dead'
     if process.platform is 'darwin' and characters = KeyboardLayout.getCurrentKeymap()?[event.code]
       if altKey and shiftKey and characters.withAltGraphShift?
         key = characters.withAltGraphShift
