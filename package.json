@@ -55,7 +55,6 @@
     "grunt-contrib-coffee": "0.9.0",
     "grunt-shell": "0.2.2",
     "lolex": "1.4.0",
-    "mocha": "2.4.5",
     "rimraf": "2.2.2",
     "sinon": "1.17.3",
     "space-pencil": "0.3.0",
