@@ -4,7 +4,7 @@
   "description": "Atom's DOM-aware keymap module",
   "main": "./lib/keymap-manager",
   "scripts": {
-    "prepublish": "npm run clean && npm run compile && npm run lint && npm run atomdoc",
+    "prepare": "npm run clean && npm run compile && npm run lint && npm run atomdoc",
     "clean": "rimraf lib && rimraf api.json",
     "compile": "coffee --no-header --output lib --compile src && babel src --out-dir lib",
     "lint": "coffeelint -r src spec && eslint src spec",
