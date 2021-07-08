@@ -42,7 +42,7 @@
     "coffee-script": "1.7.0",
     "coffeelint": "1.16.0",
     "debounce": "1.0.0",
-    "electron": "^4.2.12",
+    "electron": "^9.4.0",
     "electron-mocha": "^6.0.4",
     "electron-rebuild": "^2.3.5",
     "eslint": "2.2.0",
