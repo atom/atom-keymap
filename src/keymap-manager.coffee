@@ -144,6 +144,8 @@ class KeymapManager
   #     * `binding` {KeyBinding} that the keystrokes matched.
   #     * `keyboardEventTarget` DOM element that was the target of the most
   #        recent keyboard event.
+  #     * `abortedBindings` {KeyBinding} objects that were matched but the command aborted itself
+  #        prior to `binding` being executed.
   #
   # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidMatchBinding: (callback) ->
@@ -547,6 +549,8 @@ class KeymapManager
     if isKeyup(keystroke)
       exactMatchCandidates = exactMatchCandidates.concat(@pendingKeyupMatcher.getMatches(keystroke))
 
+    abortedBindings = []
+
     # Determine if the current keystrokes match any bindings *exactly*. If we
     # do find an exact match, the next step depends on whether we have any
     # partial matches. If we have no partial matches, we dispatch the command
@@ -595,6 +599,9 @@ class KeymapManager
             for pendingKeyupMatch in pendingKeyupMatchCandidates
               @pendingKeyupMatcher.addPendingMatch(pendingKeyupMatch)
             break
+          else
+            abortedBindings.push(exactMatchCandidate)
+
         currentTarget = currentTarget.parentElement
 
     # Emit events. These are done on their own for clarity.
@@ -604,7 +611,8 @@ class KeymapManager
         keystrokes,
         eventType: event.type,
         binding: dispatchedExactMatch,
-        keyboardEventTarget: target
+        keyboardEventTarget: target,
+        abortedBindings
       }
     else if hasPartialMatches and shouldUsePartialMatches
       event.preventDefault()
