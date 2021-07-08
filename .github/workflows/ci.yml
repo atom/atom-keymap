@@ -21,6 +21,8 @@ jobs:
         run: npm config set msvs_version 2019
       - name: Install dependencies
         run: npm i
+      - name: Rebuild dependencies for Electron
+        run: npx electron-rebuild
       - name: Run tests
         uses: GabrielBB/xvfb-action@v1
         with:
