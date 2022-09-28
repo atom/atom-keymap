@@ -1,4 +1,5 @@
-# Atom keymap
+##### Atom and all repositories under Atom will be archived on December 15, 2022. Learn more in our [official announcement](https://github.blog/2022-06-08-sunsetting-atom/)
+ # Atom keymap
 [![Build Status](https://travis-ci.org/atom/atom-keymap.svg?branch=master)](https://travis-ci.org/atom/atom-keymap)
 [![Dependency Status](https://david-dm.org/atom/atom-keymap.svg)](https://david-dm.org/atom/atom-keymap)
 
